@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban | Portal de Marketing</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Ícones (Phosphor Icons) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Biblioteca Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <div class="portal-container">
+        <!-- Barra Lateral de Navegação (a mesma do index.html) -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="ph ph-rocket-launch"></i>
+                <h3>Marketing Hub</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item">
+                    <i class="ph ph-layout"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="kanban.html" class="nav-item active">
+                    <i class="ph ph-columns"></i>
+                    <span>Kanban</span>
+                </a>
+                <a href="#" class="nav-item disabled">
+                    <i class="ph ph-calendar-blank"></i>
+                    <span>Calendário (em breve)</span>
+                </a>
+                 <a href="#" class="nav-item disabled">
+                    <i class="ph ph-chart-line-up"></i>
+                    <span>Relatórios (em breve)</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                 <div class="user-profile">
+                    <i class="ph ph-user-circle"></i>
+                    <span>Meu Perfil</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Conteúdo Principal -->
+        <main class="main-content">
+            <header class="main-header">
+                <h1>Quadro Kanban</h1>
+                <p>Arraste e solte as tarefas para organizar seu fluxo de trabalho.</p>
+                <button id="add-task-btn" class="btn-primary"><i class="ph ph-plus-circle"></i> Nova Tarefa</button>
+            </header>
+
+            <section class="kanban-board" id="kanban-board">
+                <!-- As colunas e tarefas serão geradas pelo JavaScript -->
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal para adicionar/editar tarefa -->
+    <div id="task-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <form id="task-form">
+                <h3 id="modal-title">Nova Tarefa</h3>
+                <input type="hidden" id="task-id">
+                
+                <label for="task-title">Título</label>
+                <input type="text" id="task-title" required>
+
+                <label for="task-description">Descrição</label>
+                <textarea id="task-description" rows="3"></textarea>
+
+                <label for="task-channel">Canal</label>
+                <select id="task-channel" required>
+                    <!-- Opções de canais serão carregadas pelo JavaScript -->
+                </select>
+
+                <label for="task-assignee">Responsável</label>
+                <input type="text" id="task-assignee" placeholder="Ex: João Silva">
+
+                <label for="task-due-date">Data de Entrega</label>
+                <input type="date" id="task-due-date">
+
+                <label for="task-file">Anexar Arquivo</label>
+                <input type="file" id="task-file">
+                <div class="file-info" id="file-info"></div>
+
+                <div class="modal-actions">
+                    <button type="button" id="delete-task-btn" class="btn-danger hidden">Excluir</button>
+                    <button type="button" id="cancel-btn" class="btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Nosso script principal -->
+    <script src="script.js"></script>
+</body>
+</html>
+
