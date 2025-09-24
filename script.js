@@ -1,292 +1,201 @@
-// =============================================
-//      CONFIGURAÇÃO E INICIALIZAÇÃO
-// =============================================
-
+// Configuração do Cliente Supabase
 const SUPABASE_URL = 'https://ccenxfyqwtfpexltuwrn.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZW54Znlxd3RmcGV4bHR1d3JuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNzE1MTMsImV4cCI6MjA2ODg0NzUxM30.6un31sODuCyd5Dz_pR_kn656k74jjh5CNAfF0YteT7I';
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const { createClient } = supabase;
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Função para tratar erros de forma consistente
+const handleSupabaseError = (error, context) => {
+    console.error(`Erro em ${context}:`, error);
+    alert(`Ocorreu um erro: ${error.message}. Verifique o console para mais detalhes.`);
+};
 
-// =============================================
-//      LÓGICA DO PORTAL (GERAL)
-// =============================================
+// =================================================================================
+// LÓGICA GERAL E INICIALIZAÇÃO
+// =================================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (document.querySelector('.dashboard-grid')) {
-        initDashboard();
-    }
-    if (document.querySelector('.kanban-board')) {
-        initKanban();
+    const path = window.location.pathname;
+
+    if (path.endsWith('/') || path.endsWith('index.html')) {
+        carregarDadosDashboard();
+    } else if (path.endsWith('kanban.html')) {
+        inicializarPaginaKanban();
+    } else if (path.endsWith('calendario.html')) {
+        inicializarPaginaCalendario();
     }
 });
 
-// =============================================
-//      LÓGICA DA DASHBOARD
-// =============================================
+// =================================================================================
+// LÓGICA DO DASHBOARD (index.html)
+// =================================================================================
+async function carregarDadosDashboard() {
+    const totalTasksElement = document.getElementById('total-tasks-value');
+    const completedTasksElement = document.getElementById('completed-tasks-value');
+    const upcomingTasksElement = document.getElementById('upcoming-tasks-value');
 
-async function initDashboard() {
-    console.log("Inicializando a Dashboard...");
-    // Em breve: Carregar KPIs e dados para os cards da dashboard
+    // Carregar total de tarefas
+    const { count: totalCount, error: totalError } = await supabase
+        .from('mkt_tasks')
+        .select('*', { count: 'exact', head: true });
+
+    if (totalError) handleSupabaseError(totalError, 'Contagem total de tarefas');
+    else totalTasksElement.textContent = totalCount || 0;
+
+    // Carregar tarefas concluídas (assumindo que o último status é 'Concluído')
+    const { data: statusData, error: statusError } = await supabase
+        .from('mkt_status')
+        .select('id')
+        .order('order', { ascending: false })
+        .limit(1);
+
+    if (statusError) {
+        handleSupabaseError(statusError, 'Busca de status concluído');
+    } else if (statusData.length > 0) {
+        const completedStatusId = statusData[0].id;
+        const { count: completedCount, error: completedError } = await supabase
+            .from('mkt_tasks')
+            .select('*', { count: 'exact', head: true })
+            .eq('status_id', completedStatusId);
+        
+        if (completedError) handleSupabaseError(completedError, 'Contagem de tarefas concluídas');
+        else completedTasksElement.textContent = completedCount || 0;
+    }
+
+    // Carregar tarefas com prazo nos próximos 7 dias
+    const today = new Date();
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
+
+    const { count: upcomingCount, error: upcomingError } = await supabase
+        .from('mkt_tasks')
+        .select('*', { count: 'exact', head: true })
+        .gte('due_date', today.toISOString().split('T')[0])
+        .lte('due_date', nextWeek.toISOString().split('T')[0]);
+
+    if (upcomingError) handleSupabaseError(upcomingError, 'Contagem de tarefas futuras');
+    else upcomingTasksElement.textContent = upcomingCount || 0;
 }
 
-// =============================================
-//      LÓGICA DO KANBAN
-// =============================================
 
-// Elementos do DOM
-let modal, taskForm, kanbanBoard;
-
-async function initKanban() {
-    console.log("Inicializando o Kanban...");
-    modal = document.getElementById('task-modal');
-    taskForm = document.getElementById('task-form');
-    kanbanBoard = document.getElementById('kanban-board');
-    
+// =================================================================================
+// LÓGICA DA PÁGINA DO KANBAN (kanban.html)
+// =================================================================================
+async function inicializarPaginaKanban() {
     await carregarDadosKanban();
-    configurarEventosModal();
-}
-
-function configurarEventosModal() {
-    const addTaskBtn = document.getElementById('add-task-btn');
-    const cancelBtn = document.getElementById('cancel-btn');
-
-    addTaskBtn.addEventListener('click', abrirModalParaNovaTarefa);
-    cancelBtn.addEventListener('click', fecharModal);
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) fecharModal();
-    });
-    taskForm.addEventListener('submit', handleFormSubmit);
+    configurarEventosKanban();
+    configurarModalTarefa();
+    configurarModalCanais();
 }
 
 async function carregarDadosKanban() {
-    console.log("Carregando dados do Supabase para o Kanban...");
-    kanbanBoard.innerHTML = '<p>Carregando colunas e tarefas...</p>';
+    const kanbanBoard = document.getElementById('kanban-board');
+    if (!kanbanBoard) return;
+    kanbanBoard.innerHTML = '<p>Carregando quadro...</p>';
 
-    const [statusRes, channelsRes, tasksRes] = await Promise.all([
-        supabaseClient.from('mkt_statuses').select('*').order('order', { ascending: true }),
-        supabaseClient.from('mkt_channels').select('*'),
-        supabaseClient.from('mkt_tasks').select(`*, channel:mkt_channels(name)`)
-    ]);
+    // 1. Buscar Status (Colunas)
+    const { data: status, error: statusError } = await supabase
+        .from('mkt_status')
+        .select('*')
+        .order('order', { ascending: true });
 
-    if (statusRes.error || channelsRes.error || tasksRes.error) {
-        console.error("Erro ao carregar dados:", statusRes.error || channelsRes.error || tasksRes.error);
-        kanbanBoard.innerHTML = '<p>Ocorreu um erro ao carregar os dados. Verifique o console.</p>';
-        return;
-    }
+    if (statusError) return handleSupabaseError(statusError, 'carregar status');
 
-    const statuses = statusRes.data;
-    const channels = channelsRes.data;
-    const tasks = tasksRes.data;
+    // 2. Buscar Canais
+    const { data: channels, error: channelsError } = await supabase
+        .from('mkt_channels')
+        .select('*');
+    if (channelsError) return handleSupabaseError(channelsError, 'carregar canais');
+    
+    // 3. Buscar Tarefas
+    const { data: tasks, error: tasksError } = await supabase
+        .from('mkt_tasks')
+        .select('*, mkt_channels(name)'); // Join com canais para pegar o nome
+    if (tasksError) return handleSupabaseError(tasksError, 'carregar tarefas');
+    
+    kanbanBoard.innerHTML = '';
+    
+    // Renderizar colunas
+    status.forEach(stat => {
+        const column = document.createElement('div');
+        column.className = 'kanban-column';
+        column.dataset.statusId = stat.id;
+        
+        const tasksInColumn = tasks.filter(task => task.status_id === stat.id);
 
-    renderizarColunas(statuses);
-    renderizarTarefas(tasks);
-    popularCanaisNoModal(channels);
-}
-
-function renderizarColunas(statuses) {
-    kanbanBoard.innerHTML = ''; // Limpa o "Carregando..."
-    statuses.forEach(status => {
-        const columnEl = document.createElement('div');
-        columnEl.className = 'kanban-column';
-        columnEl.dataset.statusId = status.id;
-        columnEl.innerHTML = `
-            <div class="kanban-column-header">
-                <h4>${status.name}</h4>
-                <span class="task-count" id="count-${status.id}">0</span>
+        column.innerHTML = `
+            <div class="column-header">
+                <span>${stat.name}</span>
+                <span class="task-count">${tasksInColumn.length}</span>
             </div>
-            <div class="kanban-tasks" id="tasks-${status.id}"></div>
+            <div class="kanban-cards"></div>
         `;
-        kanbanBoard.appendChild(columnEl);
+        kanbanBoard.appendChild(column);
+
+        const cardsContainer = column.querySelector('.kanban-cards');
+        // Renderizar tarefas na coluna
+        tasksInColumn.forEach(task => {
+            const card = criarCardTarefa(task);
+            cardsContainer.appendChild(card);
+        });
     });
+
     configurarDragAndDrop();
 }
 
-function renderizarTarefas(tasks) {
-    // Primeiro, limpa todas as colunas
-    document.querySelectorAll('.kanban-tasks').forEach(col => col.innerHTML = '');
-    // Zera contadores
-    document.querySelectorAll('.task-count').forEach(count => count.textContent = '0');
+function criarCardTarefa(task) {
+    const card = document.createElement('div');
+    card.className = 'kanban-card';
+    card.draggable = true;
+    card.dataset.taskId = task.id;
 
-    tasks.forEach(task => {
-        const columnContent = document.getElementById(`tasks-${task.status_id}`);
-        if (columnContent) {
-            const taskEl = document.createElement('div');
-            taskEl.className = 'kanban-task';
-            taskEl.draggable = true;
-            taskEl.dataset.taskId = task.id;
-            
-            taskEl.innerHTML = `
-                <p class="task-title">${task.title}</p>
-                <div class="task-footer">
-                    <span class="task-channel">${task.channel ? task.channel.name : 'Sem Canal'}</span>
-                    ${task.assignee ? `<span><i class="ph ph-user"></i> ${task.assignee}</span>` : ''}
-                </div>
-            `;
-            
-            taskEl.addEventListener('click', () => abrirModalParaEdicao(task));
-            columnContent.appendChild(taskEl);
+    const dueDate = task.due_date ? new Date(task.due_date + 'T00:00:00') : null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const isOverdue = dueDate && dueDate < today;
 
-            // Atualiza contador
-            const countEl = document.getElementById(`count-${task.status_id}`);
-            countEl.textContent = parseInt(countEl.textContent) + 1;
+    card.innerHTML = `
+        <h4>${task.title}</h4>
+        <div class="card-footer">
+            <span class="card-channel-tag">${task.mkt_channels ? task.mkt_channels.name : 'Sem Canal'}</span>
+            <span class="card-due-date ${isOverdue ? 'overdue' : ''}">
+                ${dueDate ? `<i class="ph ph-clock"></i> ${dueDate.toLocaleDateString('pt-BR')}` : ''}
+            </span>
+        </div>
+    `;
+    return card;
+}
+
+function configurarEventosKanban() {
+    // Evento para abrir o modal de nova tarefa
+    document.getElementById('add-task-btn').addEventListener('click', () => abrirModalTarefa());
+
+    // Evento para abrir o modal de gerenciar canais
+    document.getElementById('manage-channels-btn').addEventListener('click', () => abrirModalCanais());
+
+    // Evento para abrir tarefa existente ao clicar no card
+    document.getElementById('kanban-board').addEventListener('click', (e) => {
+        const card = e.target.closest('.kanban-card');
+        if (card) {
+            const taskId = card.dataset.taskId;
+            abrirModalTarefa(taskId);
         }
     });
 }
 
-function popularCanaisNoModal(channels) {
-    const channelSelect = document.getElementById('task-channel');
-    channelSelect.innerHTML = '<option value="">Selecione um canal...</option>';
-    channels.forEach(channel => {
-        const option = document.createElement('option');
-        option.value = channel.id;
-        option.textContent = channel.name;
-        channelSelect.appendChild(option);
-    });
-}
-
-function abrirModalParaNovaTarefa() {
-    taskForm.reset();
-    document.getElementById('modal-title').textContent = 'Nova Tarefa';
-    document.getElementById('task-id').value = '';
-    document.getElementById('delete-task-btn').classList.add('hidden');
-    document.getElementById('file-info').innerHTML = '';
-    modal.classList.remove('hidden');
-}
-
-function abrirModalParaEdicao(task) {
-    taskForm.reset();
-    document.getElementById('modal-title').textContent = 'Editar Tarefa';
-    document.getElementById('task-id').value = task.id;
-    document.getElementById('task-title').value = task.title;
-    document.getElementById('task-description').value = task.description || '';
-    document.getElementById('task-channel').value = task.channel_id;
-    document.getElementById('task-assignee').value = task.assignee || '';
-    document.getElementById('task-due-date').value = task.due_date || '';
-
-    // Lógica do arquivo
-    const fileInfo = document.getElementById('file-info');
-    if (task.file_path) {
-        const { data } = supabaseClient.storage.from('mkt_files').getPublicUrl(task.file_path);
-        fileInfo.innerHTML = `Arquivo atual: <a href="${data.publicUrl}" target="_blank">${task.file_path.split('/').pop()}</a>`;
-    } else {
-        fileInfo.innerHTML = '';
-    }
-
-    const deleteBtn = document.getElementById('delete-task-btn');
-    deleteBtn.classList.remove('hidden');
-    deleteBtn.onclick = () => deletarTarefa(task.id, task.file_path);
-
-    modal.classList.remove('hidden');
-}
-
-
-function fecharModal() {
-    modal.classList.add('hidden');
-}
-
-async function handleFormSubmit(event) {
-    event.preventDefault();
-    const taskId = document.getElementById('task-id').value;
-    const fileInput = document.getElementById('task-file');
-    const file = fileInput.files[0];
-    let filePath = null;
-
-    // 1. Fazer upload do arquivo, se existir um novo
-    if (file) {
-        filePath = `public/${Date.now()}-${file.name}`;
-        const { error: uploadError } = await supabaseClient.storage
-            .from('mkt_files')
-            .upload(filePath, file);
-
-        if (uploadError) {
-            console.error('Erro no upload do arquivo:', uploadError);
-            alert('Não foi possível enviar o arquivo.');
-            return;
-        }
-    }
-
-    // 2. Montar o objeto da tarefa
-    const taskData = {
-        title: document.getElementById('task-title').value,
-        description: document.getElementById('task-description').value,
-        channel_id: document.getElementById('task-channel').value,
-        assignee: document.getElementById('task-assignee').value,
-        due_date: document.getElementById('task-due-date').value || null,
-    };
-    if (filePath) {
-        taskData.file_path = filePath;
-    }
-
-    // 3. Salvar no banco (criar ou atualizar)
-    let error;
-    if (taskId) { // Atualizar
-        const { error: updateError } = await supabaseClient
-            .from('mkt_tasks')
-            .update(taskData)
-            .eq('id', taskId);
-        error = updateError;
-    } else { // Criar
-        // Por padrão, novas tarefas vão para a primeira coluna (status)
-        const firstStatus = kanbanBoard.querySelector('.kanban-column')?.dataset.statusId;
-        if(firstStatus) taskData.status_id = firstStatus;
-
-        const { error: insertError } = await supabaseClient
-            .from('mkt_tasks')
-            .insert(taskData);
-        error = insertError;
-    }
-
-    if (error) {
-        console.error('Erro ao salvar tarefa:', error);
-        alert('Ocorreu um erro ao salvar a tarefa.');
-    } else {
-        fecharModal();
-        carregarDadosKanban(); // Recarrega o quadro
-    }
-}
-
-async function deletarTarefa(taskId, filePath) {
-    if (!confirm('Tem certeza que deseja excluir esta tarefa?')) return;
-
-    // Deletar o arquivo do storage, se existir
-    if (filePath) {
-        await supabaseClient.storage.from('mkt_files').remove([filePath]);
-    }
-    
-    const { error } = await supabaseClient
-        .from('mkt_tasks')
-        .delete()
-        .eq('id', taskId);
-
-    if (error) {
-        console.error('Erro ao deletar tarefa:', error);
-        alert('Ocorreu um erro ao deletar a tarefa.');
-    } else {
-        fecharModal();
-        carregarDadosKanban();
-    }
-}
-
-// =============================================
-//      LÓGICA DE DRAG AND DROP
-// =============================================
-
+// Lógica de Drag and Drop
 function configurarDragAndDrop() {
-    const tasks = document.querySelectorAll('.kanban-task');
-    const columns = document.querySelectorAll('.kanban-column .kanban-tasks');
-    let draggedTask = null;
+    const cards = document.querySelectorAll('.kanban-card');
+    const columns = document.querySelectorAll('.kanban-cards');
+    let draggedItem = null;
 
-    tasks.forEach(task => {
-        task.addEventListener('dragstart', () => {
-            draggedTask = task;
-            setTimeout(() => task.style.display = 'none', 0);
+    cards.forEach(card => {
+        card.addEventListener('dragstart', () => {
+            draggedItem = card;
+            setTimeout(() => card.classList.add('dragging'), 0);
         });
-        task.addEventListener('dragend', () => {
-            setTimeout(() => {
-                draggedTask.style.display = 'block';
-                draggedTask = null;
-            }, 0);
+        card.addEventListener('dragend', () => {
+            draggedItem.classList.remove('dragging');
+            draggedItem = null;
         });
     });
 
@@ -294,29 +203,369 @@ function configurarDragAndDrop() {
         column.addEventListener('dragover', e => {
             e.preventDefault();
         });
-        column.addEventListener('drop', async (e) => {
+        column.addEventListener('drop', async e => {
             e.preventDefault();
-            if (draggedTask) {
-                const newStatusId = column.parentElement.dataset.statusId;
-                const taskId = draggedTask.dataset.taskId;
+            if (draggedItem) {
+                const targetColumnDiv = e.target.closest('.kanban-column');
+                const newStatusId = targetColumnDiv.dataset.statusId;
+                const taskId = draggedItem.dataset.taskId;
 
-                // Atualizar no DOM para feedback imediato
-                column.appendChild(draggedTask);
-
-                // Atualizar no Supabase
-                const { error } = await supabaseClient
+                column.appendChild(draggedItem);
+                
+                // Atualizar status no Supabase
+                const { error } = await supabase
                     .from('mkt_tasks')
                     .update({ status_id: newStatusId })
                     .eq('id', taskId);
-                
+
                 if (error) {
-                    console.error('Erro ao atualizar status da tarefa:', error);
-                    alert('Não foi possível mover a tarefa. Recarregando...');
+                    handleSupabaseError(error, 'atualizar status da tarefa');
+                    carregarDadosKanban(); // Recarrega para reverter a mudança visual
+                } else {
+                    // Atualizar contadores
+                    document.querySelectorAll('.kanban-column').forEach(col => {
+                        const count = col.querySelectorAll('.kanban-card').length;
+                        col.querySelector('.task-count').textContent = count;
+                    });
                 }
-                // Recarregar o quadro para garantir consistência
-                carregarDadosKanban();
             }
         });
+    });
+}
+
+
+// =================================================================================
+// LÓGICA DO MODAL DE TAREFAS (usado em Kanban e Calendário)
+// =================================================================================
+const taskModal = document.getElementById('task-modal');
+const taskForm = document.getElementById('task-form');
+const modalTitle = document.getElementById('modal-title');
+const taskIdInput = document.getElementById('task-id');
+const deleteTaskBtn = document.getElementById('delete-task-btn');
+const fileInfo = document.getElementById('file-info');
+let currentFilePath = null;
+
+async function preencherSelectCanais() {
+    const channelSelect = document.getElementById('task-channel');
+    const { data, error } = await supabase.from('mkt_channels').select('*');
+    if (error) {
+        handleSupabaseError(error, 'carregar canais para o select');
+        channelSelect.innerHTML = '<option value="">Erro ao carregar</option>';
+        return;
+    }
+    channelSelect.innerHTML = '<option value="">Selecione um canal</option>';
+    data.forEach(channel => {
+        const option = document.createElement('option');
+        option.value = channel.id;
+        option.textContent = channel.name;
+        channelSelect.appendChild(option);
+    });
+}
+
+async function abrirModalTarefa(taskId = null) {
+    taskForm.reset();
+    fileInfo.innerHTML = '';
+    currentFilePath = null;
+    deleteTaskBtn.classList.add('hidden');
+    await preencherSelectCanais();
+    
+    if (taskId) {
+        modalTitle.textContent = 'Editar Tarefa';
+        const { data, error } = await supabase
+            .from('mkt_tasks')
+            .select('*')
+            .eq('id', taskId)
+            .single();
+
+        if (error) return handleSupabaseError(error, 'buscar dados da tarefa para edição');
+        
+        taskIdInput.value = data.id;
+        document.getElementById('task-title').value = data.title;
+        document.getElementById('task-description').value = data.description || '';
+        document.getElementById('task-channel').value = data.channel_id;
+        document.getElementById('task-assignee').value = data.assignee || '';
+        document.getElementById('task-due-date').value = data.due_date;
+        
+        if (data.file_path) {
+            currentFilePath = data.file_path;
+            const fileName = data.file_path.split('/').pop();
+            const { data: fileURL } = supabase.storage.from('mkt_files').getPublicUrl(data.file_path);
+            fileInfo.innerHTML = `Arquivo atual: <a href="${fileURL.publicUrl}" target="_blank">${fileName}</a>`;
+        }
+        
+        deleteTaskBtn.classList.remove('hidden');
+    } else {
+        modalTitle.textContent = 'Nova Tarefa';
+        taskIdInput.value = '';
+    }
+    
+    taskModal.classList.remove('hidden');
+}
+
+function fecharModalTarefa() {
+    taskModal.classList.add('hidden');
+}
+
+async function salvarTarefa(e) {
+    e.preventDefault();
+    const id = taskIdInput.value;
+    const title = document.getElementById('task-title').value;
+    const description = document.getElementById('task-description').value;
+    const channel_id = document.getElementById('task-channel').value;
+    const assignee = document.getElementById('task-assignee').value;
+    const due_date = document.getElementById('task-due-date').value;
+    const fileInput = document.getElementById('task-file');
+    const file = fileInput.files[0];
+
+    let filePath = currentFilePath;
+    
+    if (file) {
+        // Faz o upload do novo arquivo
+        const newFileName = `${Date.now()}-${file.name}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('mkt_files')
+            .upload(newFileName, file);
+
+        if (uploadError) return handleSupabaseError(uploadError, 'upload de arquivo');
+        filePath = uploadData.path;
+    }
+
+    const taskData = {
+        title,
+        description,
+        channel_id,
+        assignee,
+        due_date: due_date || null,
+        file_path: filePath
+    };
+
+    let error;
+    if (id) { // Editar
+        const { error: updateError } = await supabase
+            .from('mkt_tasks')
+            .update(taskData)
+            .eq('id', id);
+        error = updateError;
+    } else { // Criar
+        // Pega o primeiro status_id para ser o padrão
+        const { data: firstStatus, error: statusError } = await supabase
+            .from('mkt_status')
+            .select('id')
+            .order('order', { ascending: true })
+            .limit(1);
+        if (statusError) return handleSupabaseError(statusError, 'buscar status inicial');
+        
+        taskData.status_id = firstStatus[0].id;
+        
+        const { error: insertError } = await supabase
+            .from('mkt_tasks')
+            .insert([taskData]);
+        error = insertError;
+    }
+    
+    if (error) handleSupabaseError(error, 'salvar tarefa');
+    else {
+        fecharModalTarefa();
+        // Recarregar a view apropriada
+        if (window.location.pathname.endsWith('kanban.html')) carregarDadosKanban();
+        if (window.location.pathname.endsWith('calendario.html')) renderizarCalendario();
+    }
+}
+
+async function deletarTarefa() {
+    const id = taskIdInput.value;
+    if (!id || !confirm('Tem certeza que deseja excluir esta tarefa?')) return;
+
+    // Primeiro, deleta o arquivo do storage se existir
+    if (currentFilePath) {
+        const { error: fileError } = await supabase.storage
+            .from('mkt_files')
+            .remove([currentFilePath]);
+        if (fileError) handleSupabaseError(fileError, 'deletar arquivo do storage');
+    }
+
+    // Depois, deleta a tarefa
+    const { error } = await supabase
+        .from('mkt_tasks')
+        .delete()
+        .eq('id', id);
+
+    if (error) handleSupabaseError(error, 'deletar tarefa');
+    else {
+        fecharModalTarefa();
+        if (window.location.pathname.endsWith('kanban.html')) carregarDadosKanban();
+        if (window.location.pathname.endsWith('calendario.html')) renderizarCalendario();
+    }
+}
+
+function configurarModalTarefa() {
+    if(!taskModal) return;
+    taskModal.querySelector('#cancel-btn').addEventListener('click', fecharModalTarefa);
+    deleteTaskBtn.addEventListener('click', deletarTarefa);
+    taskForm.addEventListener('submit', salvarTarefa);
+}
+
+
+// =================================================================================
+// LÓGICA DO MODAL DE CANAIS (kanban.html)
+// =================================================================================
+const channelsModal = document.getElementById('channels-modal');
+const newChannelInput = document.getElementById('new-channel-name');
+const channelsListContainer = document.getElementById('channels-list-container');
+
+async function carregarCanais() {
+    channelsListContainer.innerHTML = '<p>Carregando...</p>';
+    const { data, error } = await supabase.from('mkt_channels').select('*');
+    if (error) {
+        handleSupabaseError(error, 'carregar lista de canais');
+        channelsListContainer.innerHTML = '<p>Erro ao carregar canais.</p>';
+        return;
+    }
+
+    channelsListContainer.innerHTML = '';
+    data.forEach(channel => {
+        const item = document.createElement('div');
+        item.className = 'channel-item';
+        item.innerHTML = `
+            <span>${channel.name}</span>
+            <button class="delete-channel-btn" data-id="${channel.id}"><i class="ph ph-trash"></i></button>
+        `;
+        channelsListContainer.appendChild(item);
+    });
+}
+
+async function abrirModalCanais() {
+    await carregarCanais();
+    channelsModal.classList.remove('hidden');
+}
+
+function fecharModalCanais() {
+    channelsModal.classList.add('hidden');
+}
+
+async function adicionarCanal() {
+    const name = newChannelInput.value.trim();
+    if (!name) return;
+
+    const { error } = await supabase.from('mkt_channels').insert([{ name }]);
+    if (error) handleSupabaseError(error, 'adicionar canal');
+    else {
+        newChannelInput.value = '';
+        await carregarCanais();
+    }
+}
+
+async function deletarCanal(id) {
+     if (!confirm('Excluir um canal também removerá a associação de todas as tarefas a ele. Deseja continuar?')) return;
+    
+    // Antes de deletar o canal, é preciso desassociar as tarefas.
+    const { error: updateError } = await supabase
+      .from('mkt_tasks')
+      .update({ channel_id: null })
+      .eq('channel_id', id);
+      
+    if (updateError) return handleSupabaseError(updateError, 'desassociar tarefas do canal');
+    
+    // Agora pode deletar o canal
+    const { error: deleteError } = await supabase.from('mkt_channels').delete().eq('id', id);
+    if (deleteError) handleSupabaseError(deleteError, 'deletar canal');
+    else await carregarCanais();
+}
+
+function configurarModalCanais() {
+    if(!channelsModal) return;
+    channelsModal.querySelector('#close-channels-modal-btn').addEventListener('click', fecharModalCanais);
+    channelsModal.querySelector('#add-channel-btn').addEventListener('click', adicionarCanal);
+    channelsListContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.delete-channel-btn');
+        if (btn) deletarCanal(btn.dataset.id);
+    });
+}
+
+
+// =================================================================================
+// LÓGICA DA PÁGINA DO CALENDÁRIO (calendario.html)
+// =================================================================================
+let currentDate = new Date();
+let tasksDoCalendario = [];
+
+function inicializarPaginaCalendario() {
+    renderizarCalendario();
+    configurarEventosCalendario();
+    configurarModalTarefa(); // O calendário também usa o modal de tarefa
+}
+
+async function renderizarCalendario() {
+    const calendarGrid = document.getElementById('calendar-grid');
+    if (!calendarGrid) return;
+
+    // Buscar todas as tarefas que têm data de entrega
+    const { data, error } = await supabase.from('mkt_tasks').select('*').not('due_date', 'is', null);
+    if (error) return handleSupabaseError(error, 'buscar tarefas para o calendário');
+    tasksDoCalendario = data;
+    
+    calendarGrid.innerHTML = '';
+    const month = currentDate.getMonth();
+    const year = currentDate.getFullYear();
+    
+    document.getElementById('current-month-year').textContent = `${currentDate.toLocaleString('pt-BR', { month: 'long' })} ${year}`;
+
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    const lastDayOfPrevMonth = new Date(year, month, 0);
+
+    const startDayOfWeek = firstDayOfMonth.getDay(); // 0 = Domingo, 1 = Segunda, ...
+
+    // Preencher dias do mês anterior
+    for (let i = startDayOfWeek; i > 0; i--) {
+        const day = lastDayOfPrevMonth.getDate() - i + 1;
+        calendarGrid.innerHTML += `<div class="calendar-day not-in-month"><span>${day}</span></div>`;
+    }
+
+    // Preencher dias do mês atual
+    for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'calendar-day';
+        
+        const dayDate = new Date(year, month, day);
+        if (dayDate.toDateString() === new Date().toDateString()) {
+            dayDiv.classList.add('today');
+        }
+
+        let tasksHtml = '';
+        const tasksForThisDay = tasksDoCalendario.filter(t => {
+            const taskDate = new Date(t.due_date + 'T00:00:00');
+            return taskDate.toDateString() === dayDate.toDateString();
+        });
+
+        tasksForThisDay.forEach(task => {
+            tasksHtml += `<div class="calendar-task-item" data-task-id="${task.id}">${task.title}</div>`;
+        });
+        
+        dayDiv.innerHTML = `<div class="day-number">${day}</div><div class="calendar-tasks">${tasksHtml}</div>`;
+        calendarGrid.appendChild(dayDiv);
+    }
+}
+
+function configurarEventosCalendario() {
+    const calendarNav = document.getElementById('calendar-nav');
+    if(!calendarNav) return;
+    
+    calendarNav.querySelector('#prev-month-btn').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderizarCalendario();
+    });
+    calendarNav.querySelector('#next-month-btn').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderizarCalendario();
+    });
+
+    document.getElementById('calendar-grid').addEventListener('click', (e) => {
+        const taskItem = e.target.closest('.calendar-task-item');
+        if (taskItem) {
+            const taskId = taskItem.dataset.taskId;
+            abrirModalTarefa(taskId);
+        }
     });
 }
 
