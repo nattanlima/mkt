@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendário | Portal de Marketing</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="ph ph-squares-four"></i>
+                <h2>Portal MKT</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item">
+                    <i class="ph ph-gauge"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="kanban.html" class="nav-item">
+                    <i class="ph ph-trello-logo"></i>
+                    <span>Kanban</span>
+                </a>
+                <a href="calendario.html" class="nav-item active">
+                    <i class="ph ph-calendar"></i>
+                    <span>Calendário</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="main-header">
+                <h1>Calendário de Conteúdo</h1>
+                <div class="calendar-nav" id="calendar-nav">
+                    <button id="prev-month-btn"><i class="ph ph-caret-left"></i></button>
+                    <h2 id="current-month-year"></h2>
+                    <button id="next-month-btn"><i class="ph ph-caret-right"></i></button>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <div class="calendar-grid-container">
+                    <div class="calendar-header-days">
+                        <div>Dom</div>
+                        <div>Seg</div>
+                        <div>Ter</div>
+                        <div>Qua</div>
+                        <div>Qui</div>
+                        <div>Sex</div>
+                        <div>Sáb</div>
+                    </div>
+                    <div class="calendar-grid" id="calendar-grid">
+                        <!-- Os dias do calendário serão gerados aqui pelo script.js -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Reutilizaremos o modal de tarefas do kanban, que será controlado pelo script.js -->
+     <div id="task-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 id="modal-title">Nova Tarefa</h3>
+            <form id="task-form">
+                <input type="hidden" id="task-id">
+                <div class="form-group">
+                    <label for="task-title">Título da Tarefa</label>
+                    <input type="text" id="task-title" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="task-description">Descrição</label>
+                    <textarea id="task-description" class="form-input" rows="4"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="task-channel">Canal</label>
+                        <select id="task-channel" class="form-input" required>
+                            <option value="">Carregando canais...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="task-assignee">Responsável</label>
+                        <input type="text" id="task-assignee" class="form-input" placeholder="Ex: João Silva">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="task-due-date">Data de Entrega</label>
+                    <input type="date" id="task-due-date" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="task-file">Anexar Arquivo</label>
+                    <input type="file" id="task-file" class="form-input">
+                    <div id="file-info" class="file-info-text"></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="button-danger hidden" id="delete-task-btn">Excluir</button>
+                    <div class="actions-right">
+                        <button type="button" class="button-secondary" id="cancel-btn">Cancelar</button>
+                        <button type="submit" class="button-primary">Salvar Tarefa</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+
