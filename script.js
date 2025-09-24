@@ -1,7 +1,10 @@
 // Configuração do Cliente Supabase
 const SUPABASE_URL = 'https://ccenxfyqwtfpexltuwrn.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZW54Znlxd3RmcGV4bHR1d3JuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNzE1MTMsImV4cCI6MjA2ODg0NzUxM30.6un31sODuCyd5Dz_pR_kn656k74jjh5CNAfF0YteT7I';
-// CORREÇÃO: A variável do cliente foi renomeada para 'supabaseClient' para evitar conflito.
+
+// CORREÇÃO CRÍTICA:
+// Usamos o objeto global 'supabase' (do script CDN) para criar nosso cliente.
+// A variável que guarda nosso cliente deve ter um nome diferente, como 'supabaseClient'.
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Função para tratar erros de forma consistente
