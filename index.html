@@ -186,7 +186,7 @@
                             <div id="file-list-container" class="mt-2 space-y-2"></div>
                             <div class="mt-2">
                                 <label id="drop-zone" for="task-file-input" class="w-full flex items-center justify-center px-4 py-3 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 transition-all duration-300">
-                                    <div class="text-center">
+                                    <div id="drop-zone-content" class="text-center">
                                         <i class="fas fa-cloud-upload-alt text-2xl text-slate-400"></i>
                                         <p class="mt-1 text-sm text-slate-600">Arraste ou clique para enviar</p>
                                     </div>
@@ -682,12 +682,17 @@
             document.getElementById('delete-task-btn').addEventListener('click', deletarTarefa);
             document.getElementById('manage-tags-btn').addEventListener('click', abrirModalTags);
             
-            const addTagBtn = document.getElementById('add-tag-btn');
-            if(addTagBtn) addTagBtn.addEventListener('click', adicionarTag);
+            document.getElementById('add-tag-btn').addEventListener('click', adicionarTag);
+            document.getElementById('add-channel-btn').addEventListener('click', adicionarCanal);
             
-            const addChannelBtn = document.getElementById('add-channel-btn');
-            if(addChannelBtn) addChannelBtn.addEventListener('click', adicionarCanal);
-
+            document.getElementById('file-list-container').addEventListener('click', (e) => {
+                const deleteButton = e.target.closest('.delete-file-btn');
+                if (deleteButton) {
+                    const fileId = Number(deleteButton.dataset.fileId);
+                    const filePath = deleteButton.dataset.filePath;
+                    deletarArquivo(fileId, filePath);
+                }
+            });
 
             quillEditor = new Quill('#quill-editor', { theme: 'snow' });
 
@@ -696,7 +701,7 @@
 
             fileInput.addEventListener('change', () => {
                 const taskId = document.getElementById('task-id').value;
-                if (taskId) handleFileUpload(fileInput.files, taskId);
+                if (taskId) handleFileUpload(fileInput.files, Number(taskId));
             });
 
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => dropZone.addEventListener(eventName, e => {
@@ -708,27 +713,25 @@
             
             dropZone.addEventListener('drop', (e) => {
                 const taskId = document.getElementById('task-id').value;
-                if (taskId) handleFileUpload(e.dataTransfer.files, taskId);
+                if (taskId) handleFileUpload(e.dataTransfer.files, Number(taskId));
             });
         }
         
         async function handleFileUpload(files, taskId) {
-            const fileListContainer = document.getElementById('file-list-container');
-            for (const file of files) {
-                const tempId = `temp-${Date.now()}`;
-                fileListContainer.innerHTML += `
-                    <div id="${tempId}" class="flex items-center justify-between p-2 bg-slate-100 rounded-md">
-                        <span class="text-sm font-medium text-slate-500">Enviando: ${file.name}</span>
-                        <i class="fas fa-spinner fa-spin text-slate-400"></i>
-                    </div>`;
+            const dropZone = document.getElementById('drop-zone');
+            const dropZoneContent = document.getElementById('drop-zone-content');
+            const originalDropZoneContent = dropZoneContent.innerHTML;
+            
+            dropZone.classList.add('pointer-events-none');
+            dropZoneContent.innerHTML = `<i class="fas fa-spinner fa-spin text-2xl text-slate-400"></i><p class="mt-1 text-sm text-slate-600">Enviando ${files.length} arquivo(s)...</p>`;
 
+            const uploadPromises = Array.from(files).map(async (file) => {
                 const filePath = `${state.currentUser.id}/${taskId}/${Date.now()}-${file.name}`;
                 const { error: uploadError } = await supabaseClient.storage.from('mk_files').upload(filePath, file);
 
                 if (uploadError) {
-                    handleSupabaseError(uploadError, 'upload de ficheiro');
-                    document.getElementById(tempId)?.remove();
-                    continue;
+                    handleSupabaseError(uploadError, `upload de ${file.name}`);
+                    return null;
                 }
 
                 const { data: newFile, error: insertError } = await supabaseClient
@@ -738,16 +741,26 @@
                     .single();
 
                 if (insertError) {
-                    handleSupabaseError(insertError, 'salvar anexo no banco');
-                    document.getElementById(tempId)?.remove();
-                    continue;
+                    handleSupabaseError(insertError, `salvar anexo ${file.name}`);
+                    await supabaseClient.storage.from('mk_files').remove([filePath]);
+                    return null;
                 }
-                
-                state.taskFiles.push(newFile);
-                document.getElementById(tempId)?.remove();
-                renderTaskFiles(taskId);
-                renderizarQuadroKanban();
+                return newFile;
+            });
+
+            const newFiles = await Promise.all(uploadPromises);
+            const successfulUploads = newFiles.filter(Boolean);
+
+            if (successfulUploads.length > 0) {
+                state.taskFiles.push(...successfulUploads);
             }
+            
+            renderTaskFiles(taskId);
+            renderizarQuadroKanban();
+            
+            dropZone.classList.remove('pointer-events-none');
+            dropZoneContent.innerHTML = originalDropZoneContent;
+            document.getElementById('task-file-input').value = '';
         }
 
         async function abrirModalTarefa(taskId = null) {
@@ -810,7 +823,8 @@
         
         function renderTaskFiles(taskId) {
             const container = document.getElementById('file-list-container');
-            const filesForTask = state.taskFiles.filter(f => f.task_id === taskId);
+            const numericTaskId = Number(taskId);
+            const filesForTask = state.taskFiles.filter(f => f.task_id === numericTaskId);
 
             if (filesForTask.length === 0) {
                 container.innerHTML = '<p class="text-xs text-center text-slate-400">Nenhum anexo nesta tarefa.</p>';
@@ -826,7 +840,7 @@
                             ${isImage ? `<img src="${data.publicUrl}" class="w-8 h-8 object-cover rounded-sm">` : '<i class="fas fa-file-alt text-2xl text-slate-400"></i>'}
                             <span class="text-sm font-medium text-slate-700 truncate">${file.file_name}</span>
                         </a>
-                        <button type="button" class="delete-file-btn text-slate-400 hover:text-red-500 opacity-0 transition-opacity" onclick="deletarArquivo(${file.id}, '${file.file_path}')">
+                        <button type="button" class="delete-file-btn text-slate-400 hover:text-red-500 opacity-0 transition-opacity" data-file-id="${file.id}" data-file-path="${file.file_path}">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>`;
@@ -834,7 +848,9 @@
         }
 
         async function deletarArquivo(fileId, filePath) {
-            if (!confirm('Tem a certeza que deseja excluir este anexo?')) return;
+            const fileToDelete = state.taskFiles.find(f => f.id === fileId);
+            if (!fileToDelete) return;
+            const taskId = fileToDelete.task_id;
 
             const { error: storageError } = await supabaseClient.storage.from('mk_files').remove([filePath]);
             if (storageError) return handleSupabaseError(storageError, 'deletar do storage');
@@ -842,7 +858,6 @@
             const { error: dbError } = await supabaseClient.from('mkt_task_files').delete().eq('id', fileId);
             if (dbError) return handleSupabaseError(dbError, 'deletar do banco');
             
-            const taskId = state.taskFiles.find(f => f.id === fileId).task_id;
             state.taskFiles = state.taskFiles.filter(f => f.id !== fileId);
             
             renderTaskFiles(taskId);
