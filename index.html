@@ -3,75 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | Portal de Marketing</title>
+    <title>Dashboard - Marketing Hub</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
-<body class="bg-slate-50">
-    <div class="app-container">
-        <!-- Barra Lateral de Navegação -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <i class="ph ph-rocket-launch logo-icon"></i>
-                <h1 class="logo-text">Marketing Hub</h1>
-            </div>
-            <nav class="sidebar-nav">
-                <a href="index.html" class="nav-item active">
-                    <i class="ph ph-layout"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="kanban.html" class="nav-item">
-                    <i class="ph ph-columns"></i>
-                    <span>Kanban</span>
-                </a>
-                <a href="calendario.html" class="nav-item">
-                    <i class="ph ph-calendar"></i>
-                    <span>Calendário</span>
-                </a>
-            </nav>
-        </aside>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="ph ph-rocket-launch logo"></i>
+            <h1>Marketing Hub</h1>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="index.html" class="active">
+                <i class="ph ph-layout"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="kanban.html">
+                <i class="ph ph-trello-logo"></i>
+                <span>Kanban</span>
+            </a>
+            <a href="calendario.html">
+                <i class="ph ph-calendar"></i>
+                <span>Calendário</span>
+            </a>
+        </nav>
+    </aside>
 
-        <!-- Conteúdo Principal -->
-        <main class="main-content">
-            <header class="main-header">
-                <h2>Dashboard</h2>
-            </header>
-            
+    <main class="main-content">
+        <header class="page-header">
+            <h2>Dashboard</h2>
+            <!-- Ações do cabeçalho podem ser adicionadas aqui no futuro -->
+        </header>
+
+        <section class="content-body">
             <div class="dashboard-grid">
                 <div class="stat-card">
-                    <div class="stat-icon-wrapper bg-blue-100 text-blue-600">
-                        <i class="ph ph-stack-simple"></i>
-                    </div>
-                    <div>
-                        <p class="stat-label">Total de Tarefas</p>
-                        <p id="total-tasks-value" class="stat-value">0</p>
-                    </div>
+                    <div class="stat-card-title">Total de Tarefas</div>
+                    <div id="total-tasks-value" class="stat-card-value">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon-wrapper bg-green-100 text-green-600">
-                        <i class="ph ph-check-circle"></i>
-                    </div>
-                    <div>
-                        <p class="stat-label">Tarefas Concluídas</p>
-                        <p id="completed-tasks-value" class="stat-value">0</p>
-                    </div>
+                    <div class="stat-card-title">Tarefas Concluídas</div>
+                    <div id="completed-tasks-value" class="stat-card-value">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon-wrapper bg-yellow-100 text-yellow-600">
-                        <i class="ph ph-clock-countdown"></i>
-                    </div>
-                    <div>
-                        <p class="stat-label">Próximos Vencimentos (7d)</p>
-                        <p id="upcoming-tasks-value" class="stat-value">0</p>
-                    </div>
+                    <div class="stat-card-title">Próximos Prazos (7 dias)</div>
+                    <div id="upcoming-tasks-value" class="stat-card-value">0</div>
                 </div>
             </div>
-        </main>
-    </div>
+            <!-- Outros componentes do dashboard podem ser adicionados aqui -->
+        </section>
+    </main>
 
-    <!-- CORREÇÃO CRÍTICA: Adicionado 'defer' a ambos os scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="script.js"></script>
+    <script src="script.js" defer></script>
 </body>
 </html>
 
