@@ -3,61 +3,1206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Marketing Hub</title>
-    <!-- Alteração Crítica: Adicionado ?v=1.1 para forçar o recarregamento do CSS -->
-    <link rel="stylesheet" href="style.css?v=1.1">
+    <title>Marketing Hub</title>
+    
+    <!-- Fontes e Ícones -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Todo o CSS do Portal está aqui -->
+    <style>
+        /* ==========================================================================
+           Configuração Global e Variáveis
+           ========================================================================== */
+        :root {
+            --primary-color: #16a34a; /* green-600 */
+            --primary-color-dark: #15803d; /* green-700 */
+            --sidebar-bg: #1f2937; /* gray-800 */
+            --sidebar-text: #d1d5db; /* gray-300 */
+            --sidebar-active-bg: #374151; /* gray-700 */
+            --main-bg: #f3f4f6; /* gray-100 */
+            --card-bg: #ffffff;
+            --text-color: #111827; /* gray-900 */
+            --text-muted: #6b7280; /* gray-500 */
+            --border-color: #e5e7eb; /* gray-200 */
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --font-family: 'Inter', sans-serif;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--main-bg);
+            color: var(--text-color);
+            display: flex;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* ==========================================================================
+           Layout Principal (Sidebar + Main Content)
+           ========================================================================== */
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 1rem;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            padding: 0 0.5rem;
+        }
+
+        .sidebar-header .logo {
+            font-size: 2rem;
+            color: var(--primary-color);
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            color: var(--sidebar-text);
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .sidebar-nav a:hover {
+            background-color: var(--sidebar-active-bg);
+        }
+
+        .sidebar-nav a.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .sidebar-nav a i {
+            font-size: 1.25rem;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .page-header h2 {
+            margin: 0;
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .content-body {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+        
+        .page-content {
+            display: none;
+        }
+        
+        .page-content.active {
+            display: block;
+            height: 100%;
+        }
+
+        /* ==========================================================================
+           Componentes (Botões, Inputs, Modais, etc.)
+           ========================================================================== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-color-dark);
+        }
+
+        .btn-secondary {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #f9fafb;
+        }
+        
+        .btn-danger {
+            background-color: #ef4444; /* red-500 */
+            color: white;
+        }
+        
+        .btn-danger:hover {
+             background-color: #dc2626; /* red-600 */
+        }
+
+        .btn i {
+            font-size: 1.1rem;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, visibility 0.2s;
+        }
+
+        .modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: #f9fafb;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+        }
+
+        .modal-footer .actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* ==========================================================================
+           Estilos Específicos das Páginas
+           ========================================================================== */
+        /* Dashboard */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-card-title {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .stat-card-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+
+        /* Kanban */
+        .kanban-board-container {
+            display: flex;
+            gap: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+            height: 100%;
+        }
+
+        .kanban-column {
+            width: 300px;
+            flex-shrink: 0;
+            background-color: #f9fafb;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 2px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .column-header span:first-child {
+            font-weight: 600;
+        }
+
+        .task-count {
+            background-color: var(--border-color);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .kanban-cards {
+            flex-grow: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .kanban-card {
+            background-color: var(--card-bg);
+            padding: 1rem;
+            border-radius: 6px;
+            box-shadow: var(--shadow);
+            cursor: grab;
+            user-select: none;
+        }
+
+        .kanban-card.dragging {
+            opacity: 0.5;
+            transform: rotate(3deg);
+        }
+
+        .kanban-card h4 {
+            margin: 0 0 1rem 0;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+
+        .card-channel-tag {
+            background-color: #dbeafe; /* blue-100 */
+            color: #1e40af; /* blue-800 */
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .card-due-date {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            color: var(--text-muted);
+        }
+
+        .card-due-date.overdue {
+            color: #dc2626;
+        }
+
+        /* Modal de Canais */
+        #channels-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .channel-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        .channel-item:hover {
+            background-color: #f9fafb;
+        }
+        .delete-channel-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+        .delete-channel-btn:hover {
+            color: #ef4444;
+        }
+
+        /* Calendário */
+        .calendar-container {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #calendar-page {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .calendar-weekdays, .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+        }
+
+        .calendar-weekdays div {
+            text-align: center;
+            font-weight: 600;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-muted);
+        }
+
+        .calendar-grid {
+            flex-grow: 1;
+        }
+
+        .calendar-day {
+            border-bottom: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            padding: 0.5rem;
+        }
+
+        .calendar-day:nth-child(7n) {
+            border-right: none;
+        }
+
+        .day-number {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .calendar-day.not-in-month {
+            background-color: #f9fafb;
+            color: #d1d5db;
+        }
+
+        .calendar-day.today .day-number {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .calendar-tasks {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .calendar-task-item {
+            background-color: #dbeafe;
+            color: #1e40af;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
 </head>
 <body>
+
+    <!-- BARRA LATERAL (SIDEBAR) -->
     <aside class="sidebar">
         <div class="sidebar-header">
             <i class="ph ph-rocket-launch logo"></i>
             <h1>Marketing Hub</h1>
         </div>
         <nav class="sidebar-nav">
-            <a href="index.html" class="active">
+            <a data-page="dashboard" class="active">
                 <i class="ph ph-layout"></i>
                 <span>Dashboard</span>
             </a>
-            <a href="kanban.html">
+            <a data-page="kanban">
                 <i class="ph ph-trello-logo"></i>
                 <span>Kanban</span>
             </a>
-            <a href="calendario.html">
+            <a data-page="calendar">
                 <i class="ph ph-calendar"></i>
                 <span>Calendário</span>
             </a>
         </nav>
     </aside>
 
+    <!-- CONTEÚDO PRINCIPAL -->
     <main class="main-content">
         <header class="page-header">
-            <h2>Dashboard</h2>
+            <h2 id="page-title">Dashboard</h2>
+            <div id="header-actions" class="header-actions">
+                <!-- Botões específicos da página serão inseridos aqui pelo JS -->
+            </div>
         </header>
 
         <section class="content-body">
-            <div class="dashboard-grid">
-                <div class="stat-card">
-                    <div class="stat-card-title">Total de Tarefas</div>
-                    <div id="total-tasks-value" class="stat-card-value">0</div>
+            <!-- PÁGINA DASHBOARD -->
+            <div id="dashboard-page" class="page-content active">
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-title">Total de Tarefas</div>
+                        <div id="total-tasks-value" class="stat-card-value">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">Tarefas Concluídas</div>
+                        <div id="completed-tasks-value" class="stat-card-value">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-title">Próximos Prazos (7 dias)</div>
+                        <div id="upcoming-tasks-value" class="stat-card-value">0</div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-card-title">Tarefas Concluídas</div>
-                    <div id="completed-tasks-value" class="stat-card-value">0</div>
+            </div>
+
+            <!-- PÁGINA KANBAN -->
+            <div id="kanban-page" class="page-content">
+                <div id="kanban-board" class="kanban-board-container">
+                    <!-- Colunas do Kanban inseridas pelo JS -->
                 </div>
-                <div class="stat-card">
-                    <div class="stat-card-title">Próximos Prazos (7 dias)</div>
-                    <div id="upcoming-tasks-value" class="stat-card-value">0</div>
+            </div>
+
+            <!-- PÁGINA CALENDÁRIO -->
+            <div id="calendar-page" class="page-content">
+                 <div class="calendar-container">
+                    <div class="calendar-weekdays">
+                        <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+                    </div>
+                    <div id="calendar-grid" class="calendar-grid">
+                        <!-- Dias do calendário inseridos pelo JS -->
+                    </div>
                 </div>
             </div>
         </section>
     </main>
 
+    <!-- MODAIS GLOBAIS -->
+    <!-- Modal para Nova Tarefa / Editar Tarefa -->
+    <div id="task-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Nova Tarefa</h3>
+                 <button type="button" class="close-btn" data-modal-id="task-modal">&times;</button>
+            </div>
+            <form id="task-form">
+                <input type="hidden" id="task-id">
+                <div class="form-group">
+                    <label for="task-title">Título da Tarefa</label>
+                    <input type="text" id="task-title" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="task-description">Descrição</label>
+                    <textarea id="task-description" class="form-textarea"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="task-channel">Canal</label>
+                    <select id="task-channel" class="form-select" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="task-assignee">Responsável</label>
+                    <input type="text" id="task-assignee" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="task-due-date">Data de Entrega</label>
+                    <input type="date" id="task-due-date" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="task-file">Anexar Ficheiro</label>
+                    <input type="file" id="task-file" class="form-input">
+                    <div id="file-info" style="font-size: 0.8rem; margin-top: 0.5rem;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="delete-task-btn" class="btn btn-danger">Excluir</button>
+                    <div class="actions">
+                        <button type="button" class="btn btn-secondary" data-modal-id="task-modal">Cancelar</button>
+                        <button type="submit" id="save-task-btn" class="btn btn-primary">Salvar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal para Gerir Canais -->
+    <div id="channels-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Gerir Canais</h3>
+                <button type="button" class="close-btn" data-modal-id="channels-modal">&times;</button>
+            </div>
+            <div id="channels-list-container"></div>
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="new-channel-name">Adicionar novo canal</label>
+                <div style="display: flex; gap: 1rem;">
+                    <input type="text" id="new-channel-name" class="form-input" placeholder="Nome do canal">
+                    <button type="button" id="add-channel-btn" class="btn btn-primary">Adicionar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bibliotecas Externas e o nosso Script Principal -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="script.js" defer></script>
+    <script>
+        // =================================================================================
+        // CONFIGURAÇÃO E ESTADO GLOBAL
+        // =================================================================================
+        const SUPABASE_URL = 'https://ccenxfyqwtfpexltuwrn.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZW54Znlxd3RmcGV4bHR1d3JuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNzE1MTMsImV4cCI6MjA2ODg0NzUxM30.6un31sODuCyd5Dz_pR_kn656k74jjh5CNAfF0YteT7I';
+        
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Estado centralizado para evitar múltiplas chamadas à DB
+        const state = {
+            channels: [],
+            status: [],
+            tasks: [],
+            currentPage: 'dashboard',
+            pagesLoaded: {
+                dashboard: false,
+                kanban: false,
+                calendar: false
+            }
+        };
+
+        // =================================================================================
+        // FUNÇÕES UTILITÁRIAS
+        // =================================================================================
+        const handleSupabaseError = (error, context) => {
+            console.error(`Erro em ${context}:`, error);
+            alert(`Ocorreu um erro: ${error.message}. Verifique a consola para mais detalhes.`);
+        };
+        
+        const toggleButtonLoading = (button, isLoading, originalText = '') => {
+            if (isLoading) {
+                button.disabled = true;
+                button.dataset.originalText = button.innerHTML;
+                button.innerHTML = `<i class="ph ph-circle-notch animate-spin"></i> Carregando...`;
+            } else {
+                button.disabled = false;
+                button.innerHTML = button.dataset.originalText || originalText;
+            }
+        };
+
+        // =================================================================================
+        // GESTÃO DE PÁGINAS (NAVEGAÇÃO SPA)
+        // =================================================================================
+        const pageElements = {
+            title: document.getElementById('page-title'),
+            headerActions: document.getElementById('header-actions'),
+        };
+
+        const pageConfigs = {
+            dashboard: {
+                title: 'Dashboard',
+                actions: '',
+                loader: carregarDadosDashboard,
+            },
+            kanban: {
+                title: 'Quadro Kanban',
+                actions: `
+                    <button id="manage-channels-btn" class="btn btn-secondary"><i class="ph ph-tag"></i>Gerir Canais</button>
+                    <button id="add-task-btn" class="btn btn-primary"><i class="ph ph-plus"></i>Nova Tarefa</button>
+                `,
+                loader: inicializarPaginaKanban,
+            },
+            calendar: {
+                title: 'Calendário',
+                actions: `
+                    <div class="calendar-navigation">
+                        <button id="prev-month-btn" class="btn btn-secondary"><i class="ph ph-caret-left"></i></button>
+                        <span id="current-month-year"></span>
+                        <button id="next-month-btn" class="btn btn-secondary"><i class="ph ph-caret-right"></i></button>
+                    </div>
+                `,
+                loader: inicializarPaginaCalendario,
+            }
+        };
+        
+        async function showPage(pageId) {
+            if (!pageConfigs[pageId]) return;
+
+            state.currentPage = pageId;
+
+            // Atualizar links da sidebar
+            document.querySelectorAll('.sidebar-nav a').forEach(a => {
+                a.classList.toggle('active', a.dataset.page === pageId);
+            });
+            
+            // Esconder todas as páginas
+            document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+
+            // Atualizar cabeçalho
+            const config = pageConfigs[pageId];
+            pageElements.title.textContent = config.title;
+            pageElements.headerActions.innerHTML = config.actions;
+            
+            // Mostrar a página correta
+            document.getElementById(`${pageId}-page`).classList.add('active');
+            
+            // Carregar dados da página se for a primeira vez
+            if (!state.pagesLoaded[pageId]) {
+                await config.loader();
+                state.pagesLoaded[pageId] = true;
+            }
+
+            // Re-anexar eventos dos botões do cabeçalho
+            attachHeaderEventListeners(pageId);
+        }
+        
+        function attachHeaderEventListeners(pageId) {
+            if(pageId === 'kanban') {
+                document.getElementById('manage-channels-btn').addEventListener('click', () => abrirModal('channels-modal'));
+                document.getElementById('add-task-btn').addEventListener('click', () => abrirModalTarefa());
+            }
+            if(pageId === 'calendar') {
+                document.getElementById('prev-month-btn').addEventListener('click', () => {
+                    currentDate.setMonth(currentDate.getMonth() - 1);
+                    renderizarCalendario();
+                });
+                document.getElementById('next-month-btn').addEventListener('click', () => {
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                    renderizarCalendario();
+                });
+            }
+        }
+        
+        // =================================================================================
+        // INICIALIZAÇÃO GERAL
+        // =================================================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Navegação da Sidebar
+            document.querySelector('.sidebar-nav').addEventListener('click', (e) => {
+                const link = e.target.closest('a');
+                if (link && link.dataset.page) {
+                    e.preventDefault();
+                    showPage(link.dataset.page);
+                }
+            });
+
+            // Eventos dos modais
+            configurarModais();
+
+            // Carregar dados iniciais e mostrar a primeira página
+            showPage('dashboard');
+        });
+
+        // =================================================================================
+        // DADOS GLOBAIS (Carregados uma vez)
+        // =================================================================================
+        async function fetchGlobalData() {
+            const [channelsRes, statusRes] = await Promise.all([
+                supabaseClient.from('mkt_channels').select('*'),
+                supabaseClient.from('mkt_status').select('*').order('order', { ascending: true })
+            ]);
+
+            if (channelsRes.error) handleSupabaseError(channelsRes.error, 'buscar canais');
+            else state.channels = channelsRes.data;
+
+            if (statusRes.error) handleSupabaseError(statusRes.error, 'buscar status');
+            else state.status = statusRes.data;
+        }
+
+        // =================================================================================
+        // LÓGICA DO DASHBOARD
+        // =================================================================================
+        async function carregarDadosDashboard() {
+            const { data, error } = await supabaseClient.from('mkt_tasks').select('status_id, due_date');
+            if (error) return handleSupabaseError(error, 'carregar dados do dashboard');
+
+            const completedStatusId = state.status.length > 0 ? state.status[state.status.length - 1].id : null;
+            
+            const totalCount = data.length;
+            const completedCount = completedStatusId ? data.filter(t => t.status_id === completedStatusId).length : 0;
+            
+            const today = new Date();
+            const nextWeek = new Date();
+            nextWeek.setDate(today.getDate() + 7);
+            const upcomingCount = data.filter(t => {
+                if(!t.due_date) return false;
+                const dueDate = new Date(t.due_date);
+                return dueDate >= today && dueDate <= nextWeek;
+            }).length;
+
+            document.getElementById('total-tasks-value').textContent = totalCount;
+            document.getElementById('completed-tasks-value').textContent = completedCount;
+            document.getElementById('upcoming-tasks-value').textContent = upcomingCount;
+        }
+
+        // =================================================================================
+        // LÓGICA DO KANBAN
+        // =================================================================================
+        async function inicializarPaginaKanban() {
+            await fetchGlobalData();
+            await fetchKanbanTasks();
+            renderizarQuadroKanban();
+            configurarDragAndDrop();
+            document.getElementById('kanban-page').addEventListener('click', (e) => {
+                 const card = e.target.closest('.kanban-card');
+                 if(card) abrirModalTarefa(card.dataset.taskId);
+            });
+        }
+        
+        async function fetchKanbanTasks() {
+            const { data, error } = await supabaseClient.from('mkt_tasks').select('*');
+            if (error) handleSupabaseError(error, 'buscar tarefas do kanban');
+            else state.tasks = data;
+        }
+        
+        function renderizarQuadroKanban() {
+            const kanbanBoard = document.getElementById('kanban-board');
+            kanbanBoard.innerHTML = '';
+
+            for(const stat of state.status) {
+                const column = document.createElement('div');
+                column.className = 'kanban-column';
+                column.dataset.statusId = stat.id;
+                
+                const tasksInColumn = state.tasks.filter(task => task.status_id === stat.id);
+
+                column.innerHTML = `
+                    <div class="column-header">
+                        <span>${stat.name}</span>
+                        <span class="task-count">${tasksInColumn.length}</span>
+                    </div>
+                    <div class="kanban-cards"></div>
+                `;
+                kanbanBoard.appendChild(column);
+                
+                const cardsContainer = column.querySelector('.kanban-cards');
+                tasksInColumn.forEach(task => cardsContainer.appendChild(criarCardTarefa(task)));
+            }
+        }
+        
+        function criarCardTarefa(task) {
+            const card = document.createElement('div');
+            card.className = 'kanban-card';
+            card.draggable = true;
+            card.dataset.taskId = task.id;
+
+            const channel = state.channels.find(c => c.id === task.channel_id);
+            const dueDate = task.due_date ? new Date(task.due_date + 'T00:00:00') : null;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const isOverdue = dueDate && dueDate < today;
+
+            card.innerHTML = `
+                <h4>${task.title}</h4>
+                <div class="card-footer">
+                    <span class="card-channel-tag">${channel ? channel.name : 'Sem Canal'}</span>
+                    <span class="card-due-date ${isOverdue ? 'overdue' : ''}">
+                        ${dueDate ? `<i class="ph ph-clock"></i> ${dueDate.toLocaleDateString('pt-BR')}` : ''}
+                    </span>
+                </div>
+            `;
+            return card;
+        }
+        
+        function configurarDragAndDrop() {
+            let draggedItem = null;
+            const kanbanBoard = document.getElementById('kanban-board');
+
+            kanbanBoard.addEventListener('dragstart', (e) => {
+                if (e.target.classList.contains('kanban-card')) {
+                    draggedItem = e.target;
+                    setTimeout(() => e.target.classList.add('dragging'), 0);
+                }
+            });
+            
+            kanbanBoard.addEventListener('dragend', (e) => {
+                if(draggedItem) {
+                    draggedItem.classList.remove('dragging');
+                    draggedItem = null;
+                }
+            });
+
+            kanbanBoard.addEventListener('dragover', e => e.preventDefault());
+
+            kanbanBoard.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                const column = e.target.closest('.kanban-column');
+                if (draggedItem && column) {
+                    const cardsContainer = column.querySelector('.kanban-cards');
+                    cardsContainer.appendChild(draggedItem);
+
+                    const taskId = draggedItem.dataset.taskId;
+                    const newStatusId = column.dataset.statusId;
+
+                    // Atualizar no estado local primeiro para resposta rápida
+                    const task = state.tasks.find(t => t.id == taskId);
+                    task.status_id = parseInt(newStatusId);
+                    
+                    // Atualizar na DB
+                    const { error } = await supabaseClient.from('mkt_tasks').update({ status_id: newStatusId }).eq('id', taskId);
+                    if (error) {
+                        handleSupabaseError(error, 'atualizar status da tarefa');
+                        // Reverter se houver erro
+                        fetchKanbanTasks().then(renderizarQuadroKanban);
+                    }
+                }
+            });
+        }
+
+
+        // =================================================================================
+        // LÓGICA DO CALENDÁRIO
+        // =================================================================================
+        let currentDate = new Date();
+        
+        async function inicializarPaginaCalendario() {
+            await fetchKanbanTasks(); // Calendário usa as mesmas tarefas
+            renderizarCalendario();
+            document.getElementById('calendar-grid').addEventListener('click', (e) => {
+                const taskItem = e.target.closest('.calendar-task-item');
+                if (taskItem) abrirModalTarefa(taskItem.dataset.taskId);
+            });
+        }
+        
+        function renderizarCalendario() {
+            const calendarGrid = document.getElementById('calendar-grid');
+            const month = currentDate.getMonth();
+            const year = currentDate.getFullYear();
+            
+            document.getElementById('current-month-year').textContent = `${currentDate.toLocaleString('pt-BR', { month: 'long' })} ${year}`;
+            
+            calendarGrid.innerHTML = '';
+            
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+            const lastDayOfPrevMonth = new Date(year, month, 0);
+            const startDayOfWeek = firstDayOfMonth.getDay();
+
+            for (let i = startDayOfWeek; i > 0; i--) {
+                const day = lastDayOfPrevMonth.getDate() - i + 1;
+                calendarGrid.innerHTML += `<div class="calendar-day not-in-month"><span>${day}</span></div>`;
+            }
+
+            for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'calendar-day';
+                const dayDate = new Date(year, month, day);
+                
+                let tasksHtml = '';
+                const tasksForThisDay = state.tasks.filter(t => {
+                     if(!t.due_date) return false;
+                     const taskDate = new Date(t.due_date + 'T00:00:00');
+                     return taskDate.toDateString() === dayDate.toDateString();
+                });
+                tasksForThisDay.forEach(task => {
+                    tasksHtml += `<div class="calendar-task-item" data-task-id="${task.id}">${task.title}</div>`;
+                });
+
+                dayDiv.innerHTML = `<div class="day-number">${day}</div><div class="calendar-tasks">${tasksHtml}</div>`;
+                if (dayDate.toDateString() === new Date().toDateString()) {
+                    dayDiv.querySelector('.day-number').classList.add('today');
+                }
+                calendarGrid.appendChild(dayDiv);
+            }
+        }
+
+        // =================================================================================
+        // LÓGICA DOS MODAIS (TAREFAS E CANAIS)
+        // =================================================================================
+        const modals = {
+            task: document.getElementById('task-modal'),
+            channels: document.getElementById('channels-modal')
+        };
+        const taskForm = document.getElementById('task-form');
+        let currentFilePath = null;
+
+        function configurarModais() {
+            // Fechar ao clicar no X ou no botão de cancelar
+            document.querySelectorAll('.close-btn, .btn-secondary[data-modal-id]').forEach(btn => {
+                btn.addEventListener('click', () => fecharModal(btn.dataset.modalId));
+            });
+
+            // Lógica do Modal de Tarefas
+            taskForm.addEventListener('submit', salvarTarefa);
+            document.getElementById('delete-task-btn').addEventListener('click', deletarTarefa);
+
+            // Lógica do Modal de Canais
+            document.getElementById('add-channel-btn').addEventListener('click', adicionarCanal);
+            document.getElementById('channels-list-container').addEventListener('click', (e) => {
+                const btn = e.target.closest('.delete-channel-btn');
+                if (btn) deletarCanal(btn.dataset.id);
+            });
+        }
+        
+        function abrirModal(modalId) {
+            if (modals[modalId]) {
+                if(modalId === 'channels') carregarCanaisNoModal();
+                modals[modalId].classList.add('visible');
+            }
+        }
+        
+        function fecharModal(modalId) {
+            if (modals[modalId]) modals[modalId].classList.remove('visible');
+        }
+
+        async function abrirModalTarefa(taskId = null) {
+            taskForm.reset();
+            document.getElementById('file-info').innerHTML = '';
+            document.getElementById('delete-task-btn').style.display = 'none';
+            currentFilePath = null;
+            
+            const channelSelect = document.getElementById('task-channel');
+            channelSelect.innerHTML = state.channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+            if (taskId) {
+                document.getElementById('modal-title').textContent = 'Editar Tarefa';
+                const task = state.tasks.find(t => t.id == taskId);
+                if (task) {
+                    document.getElementById('task-id').value = task.id;
+                    document.getElementById('task-title').value = task.title;
+                    document.getElementById('task-description').value = task.description || '';
+                    channelSelect.value = task.channel_id;
+                    document.getElementById('task-assignee').value = task.assignee || '';
+                    document.getElementById('task-due-date').value = task.due_date;
+                    if(task.file_path) {
+                        currentFilePath = task.file_path;
+                        const { data } = supabaseClient.storage.from('mkt_files').getPublicUrl(task.file_path);
+                        document.getElementById('file-info').innerHTML = `Ficheiro: <a href="${data.publicUrl}" target="_blank">Ver anexo</a>`;
+                    }
+                    document.getElementById('delete-task-btn').style.display = 'block';
+                }
+            } else {
+                document.getElementById('modal-title').textContent = 'Nova Tarefa';
+            }
+            abrirModal('task');
+        }
+
+        async function salvarTarefa(e) {
+            e.preventDefault();
+            const saveBtn = document.getElementById('save-task-btn');
+            toggleButtonLoading(saveBtn, true);
+
+            const id = document.getElementById('task-id').value;
+            const file = document.getElementById('task-file').files[0];
+            let filePath = currentFilePath;
+            
+            if (file) {
+                const { data, error } = await supabaseClient.storage.from('mkt_files').upload(`${Date.now()}-${file.name}`, file);
+                if (error) {
+                    toggleButtonLoading(saveBtn, false);
+                    return handleSupabaseError(error, 'upload de ficheiro');
+                }
+                filePath = data.path;
+            }
+
+            const taskData = {
+                title: document.getElementById('task-title').value,
+                description: document.getElementById('task-description').value,
+                channel_id: document.getElementById('task-channel').value,
+                assignee: document.getElementById('task-assignee').value,
+                due_date: document.getElementById('task-due-date').value || null,
+                file_path: filePath
+            };
+
+            let error;
+            if (id) {
+                const { error: updateError } = await supabaseClient.from('mkt_tasks').update(taskData).eq('id', id);
+                error = updateError;
+            } else {
+                taskData.status_id = state.status[0].id; // Status inicial
+                const { error: insertError } = await supabaseClient.from('mkt_tasks').insert([taskData]);
+                error = insertError;
+            }
+
+            if (error) handleSupabaseError(error, 'salvar tarefa');
+            else {
+                fecharModal('task');
+                // Recarregar dados da página atual
+                await state.pagesLoaded[state.currentPage].loader();
+            }
+            toggleButtonLoading(saveBtn, false);
+        }
+
+        async function deletarTarefa() {
+            const id = document.getElementById('task-id').value;
+            if (!id || !confirm('Tem certeza de que deseja excluir esta tarefa?')) return;
+            
+            if (currentFilePath) {
+                await supabaseClient.storage.from('mkt_files').remove([currentFilePath]);
+            }
+            const { error } = await supabaseClient.from('mkt_tasks').delete().eq('id', id);
+            
+            if (error) handleSupabaseError(error, 'excluir tarefa');
+            else {
+                fecharModal('task');
+                await state.pagesLoaded[state.currentPage].loader();
+            }
+        }
+        
+        async function carregarCanaisNoModal() {
+            const container = document.getElementById('channels-list-container');
+            container.innerHTML = state.channels.map(c => `
+                <div class="channel-item">
+                    <span>${c.name}</span>
+                    <button class="delete-channel-btn" data-id="${c.id}"><i class="ph ph-trash"></i></button>
+                </div>
+            `).join('');
+        }
+        
+        async function adicionarCanal() {
+            const input = document.getElementById('new-channel-name');
+            const name = input.value.trim();
+            if (!name) return;
+            
+            const { data, error } = await supabaseClient.from('mkt_channels').insert([{ name }]).select();
+            if (error) handleSupabaseError(error, 'adicionar canal');
+            else {
+                state.channels.push(data[0]);
+                input.value = '';
+                carregarCanaisNoModal();
+            }
+        }
+        
+        async function deletarCanal(id) {
+            if (!confirm('Excluir um canal irá desassociá-lo de todas as tarefas. Continuar?')) return;
+
+            await supabaseClient.from('mkt_tasks').update({ channel_id: null }).eq('channel_id', id);
+            const { error } = await supabaseClient.from('mkt_channels').delete().eq('id', id);
+            
+            if (error) handleSupabaseError(error, 'excluir canal');
+            else {
+                state.channels = state.channels.filter(c => c.id != id);
+                carregarCanaisNoModal();
+            }
+        }
+
+    </script>
 </body>
 </html>
 
