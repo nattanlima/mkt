@@ -1,29 +1,27 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Portal de Marketing</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
-<body>
-    <div class="app-layout">
+<body class="bg-slate-50">
+    <div class="app-container">
+        <!-- Barra Lateral de Navegação -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <i class="ph ph-squares-four"></i>
-                <h2>Portal MKT</h2>
+                <i class="ph ph-rocket-launch logo-icon"></i>
+                <h1 class="logo-text">Marketing Hub</h1>
             </div>
             <nav class="sidebar-nav">
                 <a href="index.html" class="nav-item active">
-                    <i class="ph ph-gauge"></i>
+                    <i class="ph ph-layout"></i>
                     <span>Dashboard</span>
                 </a>
                 <a href="kanban.html" class="nav-item">
-                    <i class="ph ph-trello-logo"></i>
+                    <i class="ph ph-columns"></i>
                     <span>Kanban</span>
                 </a>
                 <a href="calendario.html" class="nav-item">
@@ -33,62 +31,45 @@
             </nav>
         </aside>
 
+        <!-- Conteúdo Principal -->
         <main class="main-content">
             <header class="main-header">
-                <h1>Dashboard</h1>
+                <h2>Dashboard</h2>
             </header>
-
-            <div class="content-body">
-                <div class="dashboard-grid">
-                    <div class="dashboard-card pulse-animation" id="total-tasks-card">
-                        <div class="card-icon" style="background-color: #e0e7ff;">
-                            <i class="ph ph-stack" style="color: #4f46e5;"></i>
-                        </div>
-                        <div class="card-content">
-                            <span class="card-value" id="total-tasks-value">--</span>
-                            <p class="card-title">Total de Tarefas</p>
-                        </div>
+            
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-icon-wrapper bg-blue-100 text-blue-600">
+                        <i class="ph ph-stack-simple"></i>
                     </div>
-                    <div class="dashboard-card" id="progress-tasks-card">
-                        <div class="card-icon" style="background-color: #d1fae5;">
-                            <i class="ph ph-arrows-clockwise" style="color: #059669;"></i>
-                        </div>
-                        <div class="card-content">
-                            <span class="card-value" id="progress-tasks-value">--</span>
-                            <p class="card-title">Tarefas em Progresso</p>
-                        </div>
-                    </div>
-                    <div class="dashboard-card" id="due-tasks-card">
-                        <div class="card-icon" style="background-color: #fee2e2;">
-                            <i class="ph ph-clock-countdown" style="color: #dc2626;"></i>
-                        </div>
-                        <div class="card-content">
-                            <span class="card-value" id="due-tasks-value">--</span>
-                            <p class="card-title">Vencendo Hoje/Atrasadas</p>
-                        </div>
-                    </div>
-                    <div class="dashboard-card" id="completed-tasks-card">
-                        <div class="card-icon" style="background-color: #cffafe;">
-                            <i class="ph ph-check-circle" style="color: #0891b2;"></i>
-                        </div>
-                        <div class="card-content">
-                            <span class="card-value" id="completed-tasks-value">--</span>
-                            <p class="card-title">Tarefas Concluídas (Mês)</p>
-                        </div>
+                    <div>
+                        <p class="stat-label">Total de Tarefas</p>
+                        <p id="total-tasks-value" class="stat-value">0</p>
                     </div>
                 </div>
-
-                 <div class="dashboard-section">
-                    <h2>Atividades Recentes</h2>
-                    <div id="recent-activity-container" class="recent-activity-container">
-                        <!-- Atividades serão inseridas aqui pelo script.js -->
-                        <p>Carregando atividades...</p>
+                <div class="stat-card">
+                    <div class="stat-icon-wrapper bg-green-100 text-green-600">
+                        <i class="ph ph-check-circle"></i>
+                    </div>
+                    <div>
+                        <p class="stat-label">Tarefas Concluídas</p>
+                        <p id="completed-tasks-value" class="stat-value">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon-wrapper bg-yellow-100 text-yellow-600">
+                        <i class="ph ph-clock-countdown"></i>
+                    </div>
+                    <div>
+                        <p class="stat-label">Próximos Vencimentos (7d)</p>
+                        <p id="upcoming-tasks-value" class="stat-value">0</p>
                     </div>
                 </div>
             </div>
         </main>
     </div>
-    
+
+    <!-- CORREÇÃO CRÍTICA: Adicionado 'defer' a ambos os scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
 </body>
