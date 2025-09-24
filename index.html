@@ -5,99 +5,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Portal de Marketing</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Ícones (Phosphor Icons) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <!-- Biblioteca Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-
-    <div class="portal-container">
-        <!-- Barra Lateral de Navegação -->
+    <div class="app-layout">
         <aside class="sidebar">
             <div class="sidebar-header">
-                <i class="ph ph-rocket-launch"></i>
-                <h3>Marketing Hub</h3>
+                <i class="ph ph-squares-four"></i>
+                <h2>Portal MKT</h2>
             </div>
             <nav class="sidebar-nav">
                 <a href="index.html" class="nav-item active">
-                    <i class="ph ph-layout"></i>
+                    <i class="ph ph-gauge"></i>
                     <span>Dashboard</span>
                 </a>
                 <a href="kanban.html" class="nav-item">
-                    <i class="ph ph-columns"></i>
+                    <i class="ph ph-trello-logo"></i>
                     <span>Kanban</span>
                 </a>
-                <a href="#" class="nav-item disabled">
-                    <i class="ph ph-calendar-blank"></i>
-                    <span>Calendário (em breve)</span>
-                </a>
-                <a href="#" class="nav-item disabled">
-                    <i class="ph ph-chart-line-up"></i>
-                    <span>Relatórios (em breve)</span>
+                <a href="calendario.html" class="nav-item">
+                    <i class="ph ph-calendar"></i>
+                    <span>Calendário</span>
                 </a>
             </nav>
-            <div class="sidebar-footer">
-                <div class="user-profile">
-                    <i class="ph ph-user-circle"></i>
-                    <span>Meu Perfil</span>
-                </div>
-            </div>
         </aside>
 
-        <!-- Conteúdo Principal -->
         <main class="main-content">
             <header class="main-header">
                 <h1>Dashboard</h1>
-                <p>Visão geral das suas atividades e desempenho.</p>
             </header>
 
-            <section class="dashboard-grid">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="ph ph-clock-countdown"></i>
-                        <h3>Tarefas em Andamento</h3>
+            <div class="content-body">
+                <div class="dashboard-grid">
+                    <div class="dashboard-card pulse-animation" id="total-tasks-card">
+                        <div class="card-icon" style="background-color: #e0e7ff;">
+                            <i class="ph ph-stack" style="color: #4f46e5;"></i>
+                        </div>
+                        <div class="card-content">
+                            <span class="card-value" id="total-tasks-value">--</span>
+                            <p class="card-title">Total de Tarefas</p>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <span class="highlight-number">0</span>
-                        <p>tarefas sendo executadas</p>
+                    <div class="dashboard-card" id="progress-tasks-card">
+                        <div class="card-icon" style="background-color: #d1fae5;">
+                            <i class="ph ph-arrows-clockwise" style="color: #059669;"></i>
+                        </div>
+                        <div class="card-content">
+                            <span class="card-value" id="progress-tasks-value">--</span>
+                            <p class="card-title">Tarefas em Progresso</p>
+                        </div>
                     </div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <i class="ph ph-check-circle"></i>
-                        <h3>Tarefas Concluídas (Mês)</h3>
+                    <div class="dashboard-card" id="due-tasks-card">
+                        <div class="card-icon" style="background-color: #fee2e2;">
+                            <i class="ph ph-clock-countdown" style="color: #dc2626;"></i>
+                        </div>
+                        <div class="card-content">
+                            <span class="card-value" id="due-tasks-value">--</span>
+                            <p class="card-title">Vencendo Hoje/Atrasadas</p>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <span class="highlight-number">0</span>
-                        <p>tarefas finalizadas em Setembro</p>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <i class="ph ph-warning-circle"></i>
-                        <h3>Tarefas Atrasadas</h3>
-                    </div>
-                    <div class="card-body">
-                        <span class="highlight-number">0</span>
-                        <p>tarefas fora do prazo</p>
-                    </div>
-                </div>
-                <div class="card card-full-width">
-                     <div class="card-header">
-                        <i class="ph ph-broadcast"></i>
-                        <h3>Atividades por Canal</h3>
-                    </div>
-                    <div class="card-body" id="channels-overview">
-                        <!-- Conteúdo será carregado pelo JavaScript -->
-                        <p>Carregando canais...</p>
+                    <div class="dashboard-card" id="completed-tasks-card">
+                        <div class="card-icon" style="background-color: #cffafe;">
+                            <i class="ph ph-check-circle" style="color: #0891b2;"></i>
+                        </div>
+                        <div class="card-content">
+                            <span class="card-value" id="completed-tasks-value">--</span>
+                            <p class="card-title">Tarefas Concluídas (Mês)</p>
+                        </div>
                     </div>
                 </div>
-            </section>
+
+                 <div class="dashboard-section">
+                    <h2>Atividades Recentes</h2>
+                    <div id="recent-activity-container" class="recent-activity-container">
+                        <!-- Atividades serão inseridas aqui pelo script.js -->
+                        <p>Carregando atividades...</p>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
-
-    <!-- Nosso script principal -->
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
 </body>
 </html>
