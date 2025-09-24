@@ -211,9 +211,41 @@
         </div>
     </div>
     
-    <!-- Outros Modais -->
-    <div id="channels-modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-30"></div>
-    <div id="tags-modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-40"></div>
+    <!-- Modal de Canais -->
+    <div id="channels-modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-30">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col modal-enter">
+            <div class="p-5 border-b flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-800">Gerir Canais</h3>
+                <button class="btn-cancel text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="p-6 modal-content-body" id="channels-list-container"></div>
+            <div class="p-4 bg-slate-50/70 border-t">
+                <label class="font-semibold text-sm text-gray-700">Adicionar novo canal</label>
+                <div class="flex gap-3 mt-2">
+                    <input type="text" id="new-channel-name" class="w-full p-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" placeholder="Nome do canal">
+                    <button id="add-channel-btn" class="px-5 py-2 text-white bg-emerald-500 hover:bg-emerald-600 rounded-full font-semibold flex-shrink-0 transition-colors">Adicionar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal de Tags -->
+    <div id="tags-modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-40">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col modal-enter">
+            <div class="p-5 border-b flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-800">Gerir Tags</h3>
+                <button class="btn-cancel text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="p-6 modal-content-body" id="tags-list-container"></div>
+            <div class="p-4 bg-slate-50/70 border-t">
+                <label class="font-semibold text-sm text-gray-700">Adicionar nova tag</label>
+                <div class="flex gap-3 mt-2">
+                    <input type="text" id="new-tag-name" class="w-full p-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" placeholder="Nome da tag">
+                    <input type="color" id="new-tag-color" class="p-1 h-10 w-10 border border-slate-300 rounded-lg" value="#e0e7ff">
+                    <button id="add-tag-btn" class="px-5 py-2 text-white bg-emerald-500 hover:bg-emerald-600 rounded-full font-semibold flex-shrink-0 transition-colors">Adicionar</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white py-3 px-5 rounded-lg shadow-lg opacity-0 transform translate-y-2 transition-all duration-300 z-50 font-semibold"></div>
 
     <!-- SCRIPT PRINCIPAL -->
@@ -269,6 +301,14 @@
         function formatLogDate(dateString) {
             const date = new Date(dateString);
             return `${date.toLocaleDateString('pt-BR')} às ${date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
+        }
+
+        function getContrastColor(hexcolor){
+            if(!hexcolor) return '#020617';
+            if (hexcolor.slice(0, 1) === '#') { hexcolor = hexcolor.slice(1); }
+            const r = parseInt(hexcolor.substr(0,2),16), g = parseInt(hexcolor.substr(2,2),16), b = parseInt(hexcolor.substr(4,2),16);
+            const yiq = ((r*299)+(g*587)+(b*114))/1000;
+            return (yiq >= 128) ? '#020617' : 'white';
         }
         
         // =================================================================================
@@ -612,13 +652,43 @@
             'channels-modal': document.getElementById('channels-modal')
         };
         
+        function showModal(modalId) { 
+            const modal = modals[modalId];
+            if (!modal) return;
+            modal.classList.remove('hidden'); 
+            const modalBox = modal.querySelector('.modal-enter');
+            if (modalBox) {
+                setTimeout(() => modalBox.classList.add('modal-enter-active'), 10); 
+            }
+        }
+
+        function hideModal(modalId) { 
+            const modal = modals[modalId];
+            if (!modal) return;
+            const modalBox = modal.querySelector('.modal-enter');
+            if (modalBox) {
+                modalBox.classList.remove('modal-enter-active');
+            }
+            setTimeout(() => modal.classList.add('hidden'), 300); 
+        }
+
         function configurarModais() {
             Object.values(modals).forEach(modal => {
-                modal.addEventListener('click', e => { if (e.target === modal || e.target.closest('.btn-cancel')) { hideModal(modal.id); } });
+                if (modal) {
+                    modal.addEventListener('click', e => { if (e.target === modal || e.target.closest('.btn-cancel')) { hideModal(modal.id); } });
+                }
             });
             document.getElementById('task-form').addEventListener('submit', salvarTarefa);
+            document.getElementById('delete-task-btn').addEventListener('click', deletarTarefa);
             document.getElementById('manage-tags-btn').addEventListener('click', abrirModalTags);
             
+            const addTagBtn = document.getElementById('add-tag-btn');
+            if(addTagBtn) addTagBtn.addEventListener('click', adicionarTag);
+            
+            const addChannelBtn = document.getElementById('add-channel-btn');
+            if(addChannelBtn) addChannelBtn.addEventListener('click', adicionarCanal);
+
+
             quillEditor = new Quill('#quill-editor', { theme: 'snow' });
 
             const dropZone = document.getElementById('drop-zone');
@@ -681,7 +751,7 @@
         }
 
         async function abrirModalTarefa(taskId = null) {
-            await fetchGlobalData(); // Garante que temos os dados mais recentes
+            await fetchGlobalData();
             const form = document.getElementById('task-form');
             form.reset();
             
@@ -848,8 +918,144 @@
             }
         }
         
-        // ... (resto do código, incluindo modais de tags, canais, etc.) ...
+        async function criarLog(taskId, description) {
+            await supabaseClient.from('mkt_logs').insert([{ task_id: taskId, user_id: state.currentUser.id, description }]);
+        }
+        
+        async function salvarTaskTags(taskId) {
+            const selectedTagIds = Array.from(document.querySelectorAll('#task-tags-container .tag-pill.selected')).map(el => parseInt(el.dataset.tagId));
+            const existingTagIds = state.taskTags.filter(tt => tt.task_id === taskId).map(tt => tt.tag_id);
 
+            const tagsToAdd = selectedTagIds.filter(id => !existingTagIds.includes(id));
+            const tagsToRemove = existingTagIds.filter(id => !selectedTagIds.includes(id));
+
+            if (tagsToRemove.length > 0) {
+                await supabaseClient.from('mkt_task_tags').delete().eq('task_id', taskId).in('tag_id', tagsToRemove);
+            }
+            if (tagsToAdd.length > 0) {
+                const newRelations = tagsToAdd.map(tag_id => ({ task_id: taskId, tag_id }));
+                await supabaseClient.from('mkt_task_tags').insert(newRelations);
+            }
+            await fetchTaskTags();
+        }
+
+        async function fetchTaskTags() {
+            const { data } = await supabaseClient.from('mkt_task_tags').select('*');
+            state.taskTags = data || [];
+        }
+
+        // =================================================================================
+        // MODAIS DE CANAIS E TAGS
+        // =================================================================================
+        async function abrirModalTags() {
+            await carregarTagsNoModal();
+            showModal('tags-modal');
+        }
+
+        async function carregarTagsNoModal() {
+            const container = document.getElementById('tags-list-container');
+            container.innerHTML = state.tags.map(tag => `
+                <div class="flex justify-between items-center p-3 hover:bg-slate-100 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <span class="w-4 h-4 rounded-full" style="background-color: ${tag.color};"></span>
+                        <span class="font-medium text-gray-700">${tag.name}</span>
+                    </div>
+                    <button class="delete-tag-btn text-gray-400 hover:text-red-500" data-id="${tag.id}"><i class="fas fa-trash-alt"></i></button>
+                </div>`).join('');
+            
+            document.querySelectorAll('.delete-tag-btn').forEach(btn => btn.addEventListener('click', (e) => deletarTag(e.currentTarget.dataset.id)));
+        }
+        
+        async function adicionarTag() {
+            const nameInput = document.getElementById('new-tag-name');
+            const colorInput = document.getElementById('new-tag-color');
+            const name = nameInput.value.trim();
+            if (!name) return;
+
+            const { data, error } = await supabaseClient.from('mkt_tags').insert([{ name, color: colorInput.value }]).select().single();
+            if (error) handleSupabaseError(error, 'adicionar tag');
+            else {
+                state.tags.push(data);
+                nameInput.value = '';
+                await carregarTagsNoModal();
+            }
+        }
+        
+        async function deletarTag(id) {
+            if (!confirm('Tem certeza? Excluir uma tag irá removê-la de todas as tarefas.')) return;
+            const tagId = parseInt(id);
+            await supabaseClient.from('mkt_task_tags').delete().eq('tag_id', tagId);
+            const { error } = await supabaseClient.from('mkt_tags').delete().eq('id', tagId);
+            if (error) handleSupabaseError(error, 'excluir tag');
+            else {
+                state.tags = state.tags.filter(t => t.id !== tagId);
+                await carregarTagsNoModal();
+            }
+        }
+
+        function renderTaskTags(taskId) {
+            const container = document.getElementById('task-tags-container');
+            const taskTagIds = taskId ? state.taskTags.filter(tt => tt.task_id === taskId).map(tt => tt.tag_id) : [];
+
+            container.innerHTML = state.tags.map(tag => {
+                const isSelected = taskTagIds.includes(tag.id);
+                return `<span class="tag-pill text-xs font-semibold px-3 py-1 rounded-full ${isSelected ? 'selected' : ''}" style="background-color:${isSelected ? '' : tag.color}; color: ${getContrastColor(tag.color)}" data-tag-id="${tag.id}">${tag.name}</span>`;
+            }).join('');
+
+            container.addEventListener('click', e => {
+                if (e.target.classList.contains('tag-pill')) {
+                    e.target.classList.toggle('selected');
+                    const pill = e.target;
+                    if(pill.classList.contains('selected')) {
+                        pill.style.backgroundColor = '';
+                        pill.style.color = '';
+                    } else {
+                        const tag = state.tags.find(t => t.id == pill.dataset.tagId);
+                        pill.style.backgroundColor = tag.color;
+                        pill.style.color = getContrastColor(tag.color);
+                    }
+                }
+            });
+        }
+        
+        async function abrirModalCanais() {
+            await carregarCanaisNoModal();
+            showModal('channels-modal');
+        }
+
+        async function carregarCanaisNoModal() {
+            const container = document.getElementById('channels-list-container');
+            container.innerHTML = `<div class="space-y-2">${state.channels.map(c => `
+                <div class="flex justify-between items-center p-3 hover:bg-slate-100 rounded-lg">
+                    <span class="font-medium text-gray-700">${c.name}</span>
+                    <button class="delete-channel-btn text-gray-400 hover:text-red-500" data-id="${c.id}"><i class="fas fa-trash-alt"></i></button>
+                </div>`).join('')}</div>`;
+             document.querySelectorAll('.delete-channel-btn').forEach(btn => btn.addEventListener('click', e => deletarCanal(e.currentTarget.dataset.id)));
+        }
+
+        async function adicionarCanal() {
+            const input = document.getElementById('new-channel-name');
+            const name = input.value.trim();
+            if (!name) return;
+            const { data, error } = await supabaseClient.from('mkt_channels').insert([{ name }]).select().single();
+            if (error) handleSupabaseError(error, 'adicionar canal');
+            else { 
+                state.channels.push(data); 
+                input.value = ''; 
+                await carregarCanaisNoModal(); 
+            }
+        }
+
+        async function deletarCanal(id) {
+            if (!confirm('Excluir este canal irá desassociá-lo das tarefas. Continuar?')) return;
+            await supabaseClient.from('mkt_tasks').update({ channel_id: null }).eq('channel_id', id);
+            const { error } = await supabaseClient.from('mkt_channels').delete().eq('id', id);
+            if (error) handleSupabaseError(error, 'excluir canal');
+            else { 
+                state.channels = state.channels.filter(c => c.id != id); 
+                await carregarCanaisNoModal();
+            }
+        }
     </script>
 </body>
 </html>
