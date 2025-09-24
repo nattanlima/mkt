@@ -1,7 +1,8 @@
 // Configuração do Cliente Supabase
 const SUPABASE_URL = 'https://ccenxfyqwtfpexltuwrn.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZW54Znlxd3RmcGV4bHR1d3JuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNzE1MTMsImV4cCI6MjA2ODg0NzUxM30.6un31sODuCyd5Dz_pR_kn656k74jjh5CNAfF0YteT7I';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// CORREÇÃO: A variável do cliente foi renomeada para 'supabaseClient' para evitar conflito.
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Função para tratar erros de forma consistente
 const handleSupabaseError = (error, context) => {
@@ -34,7 +35,7 @@ async function carregarDadosDashboard() {
     const upcomingTasksElement = document.getElementById('upcoming-tasks-value');
 
     // Carregar total de tarefas
-    const { count: totalCount, error: totalError } = await supabase
+    const { count: totalCount, error: totalError } = await supabaseClient
         .from('mkt_tasks')
         .select('*', { count: 'exact', head: true });
 
@@ -42,7 +43,7 @@ async function carregarDadosDashboard() {
     else totalTasksElement.textContent = totalCount || 0;
 
     // Carregar tarefas concluídas (assumindo que o último status é 'Concluído')
-    const { data: statusData, error: statusError } = await supabase
+    const { data: statusData, error: statusError } = await supabaseClient
         .from('mkt_status')
         .select('id')
         .order('order', { ascending: false })
@@ -52,7 +53,7 @@ async function carregarDadosDashboard() {
         handleSupabaseError(statusError, 'Busca de status concluído');
     } else if (statusData.length > 0) {
         const completedStatusId = statusData[0].id;
-        const { count: completedCount, error: completedError } = await supabase
+        const { count: completedCount, error: completedError } = await supabaseClient
             .from('mkt_tasks')
             .select('*', { count: 'exact', head: true })
             .eq('status_id', completedStatusId);
@@ -66,7 +67,7 @@ async function carregarDadosDashboard() {
     const nextWeek = new Date(today);
     nextWeek.setDate(today.getDate() + 7);
 
-    const { count: upcomingCount, error: upcomingError } = await supabase
+    const { count: upcomingCount, error: upcomingError } = await supabaseClient
         .from('mkt_tasks')
         .select('*', { count: 'exact', head: true })
         .gte('due_date', today.toISOString().split('T')[0])
@@ -93,7 +94,7 @@ async function carregarDadosKanban() {
     kanbanBoard.innerHTML = '<p>Carregando quadro...</p>';
 
     // 1. Buscar Status (Colunas)
-    const { data: status, error: statusError } = await supabase
+    const { data: status, error: statusError } = await supabaseClient
         .from('mkt_status')
         .select('*')
         .order('order', { ascending: true });
@@ -101,13 +102,13 @@ async function carregarDadosKanban() {
     if (statusError) return handleSupabaseError(statusError, 'carregar status');
 
     // 2. Buscar Canais
-    const { data: channels, error: channelsError } = await supabase
+    const { data: channels, error: channelsError } = await supabaseClient
         .from('mkt_channels')
         .select('*');
     if (channelsError) return handleSupabaseError(channelsError, 'carregar canais');
     
     // 3. Buscar Tarefas
-    const { data: tasks, error: tasksError } = await supabase
+    const { data: tasks, error: tasksError } = await supabaseClient
         .from('mkt_tasks')
         .select('*, mkt_channels(name)'); // Join com canais para pegar o nome
     if (tasksError) return handleSupabaseError(tasksError, 'carregar tarefas');
@@ -213,7 +214,7 @@ function configurarDragAndDrop() {
                 column.appendChild(draggedItem);
                 
                 // Atualizar status no Supabase
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('mkt_tasks')
                     .update({ status_id: newStatusId })
                     .eq('id', taskId);
@@ -247,7 +248,7 @@ let currentFilePath = null;
 
 async function preencherSelectCanais() {
     const channelSelect = document.getElementById('task-channel');
-    const { data, error } = await supabase.from('mkt_channels').select('*');
+    const { data, error } = await supabaseClient.from('mkt_channels').select('*');
     if (error) {
         handleSupabaseError(error, 'carregar canais para o select');
         channelSelect.innerHTML = '<option value="">Erro ao carregar</option>';
@@ -271,7 +272,7 @@ async function abrirModalTarefa(taskId = null) {
     
     if (taskId) {
         modalTitle.textContent = 'Editar Tarefa';
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('mkt_tasks')
             .select('*')
             .eq('id', taskId)
@@ -289,7 +290,7 @@ async function abrirModalTarefa(taskId = null) {
         if (data.file_path) {
             currentFilePath = data.file_path;
             const fileName = data.file_path.split('/').pop();
-            const { data: fileURL } = supabase.storage.from('mkt_files').getPublicUrl(data.file_path);
+            const { data: fileURL } = supabaseClient.storage.from('mkt_files').getPublicUrl(data.file_path);
             fileInfo.innerHTML = `Arquivo atual: <a href="${fileURL.publicUrl}" target="_blank">${fileName}</a>`;
         }
         
@@ -322,7 +323,7 @@ async function salvarTarefa(e) {
     if (file) {
         // Faz o upload do novo arquivo
         const newFileName = `${Date.now()}-${file.name}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { data: uploadData, error: uploadError } = await supabaseClient.storage
             .from('mkt_files')
             .upload(newFileName, file);
 
@@ -341,14 +342,14 @@ async function salvarTarefa(e) {
 
     let error;
     if (id) { // Editar
-        const { error: updateError } = await supabase
+        const { error: updateError } = await supabaseClient
             .from('mkt_tasks')
             .update(taskData)
             .eq('id', id);
         error = updateError;
     } else { // Criar
         // Pega o primeiro status_id para ser o padrão
-        const { data: firstStatus, error: statusError } = await supabase
+        const { data: firstStatus, error: statusError } = await supabaseClient
             .from('mkt_status')
             .select('id')
             .order('order', { ascending: true })
@@ -357,7 +358,7 @@ async function salvarTarefa(e) {
         
         taskData.status_id = firstStatus[0].id;
         
-        const { error: insertError } = await supabase
+        const { error: insertError } = await supabaseClient
             .from('mkt_tasks')
             .insert([taskData]);
         error = insertError;
@@ -378,14 +379,14 @@ async function deletarTarefa() {
 
     // Primeiro, deleta o arquivo do storage se existir
     if (currentFilePath) {
-        const { error: fileError } = await supabase.storage
+        const { error: fileError } = await supabaseClient.storage
             .from('mkt_files')
             .remove([currentFilePath]);
-        if (fileError) handleSupabaseError(fileError, 'deletar arquivo do storage');
+        if (fileError) console.error('Erro ao deletar arquivo do storage:', fileError); // Não para o processo se o arquivo não puder ser deletado
     }
 
     // Depois, deleta a tarefa
-    const { error } = await supabase
+    const { error } = await supabaseClient
         .from('mkt_tasks')
         .delete()
         .eq('id', id);
@@ -414,8 +415,9 @@ const newChannelInput = document.getElementById('new-channel-name');
 const channelsListContainer = document.getElementById('channels-list-container');
 
 async function carregarCanais() {
+    if(!channelsListContainer) return;
     channelsListContainer.innerHTML = '<p>Carregando...</p>';
-    const { data, error } = await supabase.from('mkt_channels').select('*');
+    const { data, error } = await supabaseClient.from('mkt_channels').select('*');
     if (error) {
         handleSupabaseError(error, 'carregar lista de canais');
         channelsListContainer.innerHTML = '<p>Erro ao carregar canais.</p>';
@@ -435,11 +437,13 @@ async function carregarCanais() {
 }
 
 async function abrirModalCanais() {
+    if(!channelsModal) return;
     await carregarCanais();
     channelsModal.classList.remove('hidden');
 }
 
 function fecharModalCanais() {
+    if(!channelsModal) return;
     channelsModal.classList.add('hidden');
 }
 
@@ -447,7 +451,7 @@ async function adicionarCanal() {
     const name = newChannelInput.value.trim();
     if (!name) return;
 
-    const { error } = await supabase.from('mkt_channels').insert([{ name }]);
+    const { error } = await supabaseClient.from('mkt_channels').insert([{ name }]);
     if (error) handleSupabaseError(error, 'adicionar canal');
     else {
         newChannelInput.value = '';
@@ -459,7 +463,7 @@ async function deletarCanal(id) {
      if (!confirm('Excluir um canal também removerá a associação de todas as tarefas a ele. Deseja continuar?')) return;
     
     // Antes de deletar o canal, é preciso desassociar as tarefas.
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseClient
       .from('mkt_tasks')
       .update({ channel_id: null })
       .eq('channel_id', id);
@@ -467,7 +471,7 @@ async function deletarCanal(id) {
     if (updateError) return handleSupabaseError(updateError, 'desassociar tarefas do canal');
     
     // Agora pode deletar o canal
-    const { error: deleteError } = await supabase.from('mkt_channels').delete().eq('id', id);
+    const { error: deleteError } = await supabaseClient.from('mkt_channels').delete().eq('id', id);
     if (deleteError) handleSupabaseError(deleteError, 'deletar canal');
     else await carregarCanais();
 }
@@ -500,7 +504,7 @@ async function renderizarCalendario() {
     if (!calendarGrid) return;
 
     // Buscar todas as tarefas que têm data de entrega
-    const { data, error } = await supabase.from('mkt_tasks').select('*').not('due_date', 'is', null);
+    const { data, error } = await supabaseClient.from('mkt_tasks').select('*').not('due_date', 'is', null);
     if (error) return handleSupabaseError(error, 'buscar tarefas para o calendário');
     tasksDoCalendario = data;
     
