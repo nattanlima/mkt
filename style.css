@@ -1,159 +1,164 @@
 /* ==========================================================================
-   Configurações Globais e Variáveis
+   Configuração Global e Variáveis
    ========================================================================== */
 :root {
-    --color-primary: #16a34a; /* Verde Principal */
-    --color-primary-light: #22c55e;
-    --color-primary-dark: #15803d;
-    --color-danger: #dc2626;
-    --color-danger-dark: #b91c1c;
-
-    --bg-page: #f8fafc; /* slate-50 */
-    --bg-sidebar: #1f2937; /* gray-800 */
-    --bg-content: #ffffff;
-    --bg-column: #f1f5f9; /* slate-100 */
-    --bg-card: #ffffff;
-    --bg-modal-overlay: rgba(0, 0, 0, 0.5);
-
-    --text-light: #f9fafb; /* gray-50 */
-    --text-dark: #111827; /* gray-900 */
+    --primary-color: #16a34a; /* green-600 */
+    --primary-color-dark: #15803d; /* green-700 */
+    --sidebar-bg: #1f2937; /* gray-800 */
+    --sidebar-text: #d1d5db; /* gray-300 */
+    --sidebar-active-bg: #374151; /* gray-700 */
+    --main-bg: #f3f4f6; /* gray-100 */
+    --card-bg: #ffffff;
+    --text-color: #111827; /* gray-900 */
     --text-muted: #6b7280; /* gray-500 */
     --border-color: #e5e7eb; /* gray-200 */
-
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --font-family: 'Inter', sans-serif;
 }
 
-* {
+*, *::before, *::after {
     box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
     margin: 0;
     padding: 0;
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background-color: var(--bg-page);
-    color: var(--text-dark);
+    font-family: var(--font-family);
+    background-color: var(--main-bg);
+    color: var(--text-color);
     display: flex;
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
+    overflow: hidden; /* Evita scroll na página inteira */
 }
 
 /* ==========================================================================
-   Layout Principal (Sidebar + Conteúdo)
+   Layout Principal (Sidebar + Main Content)
    ========================================================================== */
 .sidebar {
-    width: 260px;
-    background-color: var(--bg-sidebar);
-    color: var(--text-light);
-    padding: 24px;
+    width: 250px;
+    background-color: var(--sidebar-bg);
+    color: var(--sidebar-text);
     display: flex;
     flex-direction: column;
+    padding: 1.5rem 1rem;
     flex-shrink: 0;
 }
 
 .sidebar-header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 40px;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    padding: 0 0.5rem;
 }
 
 .sidebar-header .logo {
-    font-size: 24px;
-    color: var(--color-primary-light);
+    font-size: 2rem;
+    color: var(--primary-color);
 }
 
 .sidebar-header h1 {
-    font-size: 22px;
+    font-size: 1.25rem;
     font-weight: 600;
+    margin: 0;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .sidebar-nav a {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    border-radius: 8px;
-    color: var(--text-light);
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
     text-decoration: none;
+    color: var(--sidebar-text);
     font-weight: 500;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, color 0.2s;
 }
 
 .sidebar-nav a:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--sidebar-active-bg);
 }
 
 .sidebar-nav a.active {
-    background-color: var(--color-primary);
-    font-weight: 600;
+    background-color: var(--primary-color);
+    color: white;
 }
 
 .sidebar-nav a i {
-    font-size: 20px;
+    font-size: 1.25rem;
 }
 
 .main-content {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    height: 100vh; /* Ocupa a altura total da janela */
 }
 
 .page-header {
-    padding: 24px 32px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 1.5rem 2rem;
+    background-color: var(--card-bg);
     border-bottom: 1px solid var(--border-color);
     flex-shrink: 0;
 }
 
 .page-header h2 {
-    font-size: 24px;
-    font-weight: 600;
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
 }
 
 .header-actions {
     display: flex;
-    gap: 12px;
+    gap: 1rem;
 }
 
 .content-body {
     flex-grow: 1;
-    padding: 32px;
-    overflow: auto;
+    overflow-y: auto; /* Apenas esta área terá scroll */
+    padding: 2rem;
 }
 
 /* ==========================================================================
-   Botões
+   Componentes (Botões, Inputs, Modais, etc.)
    ========================================================================== */
 .btn {
-    padding: 8px 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
     border: none;
     border-radius: 6px;
     font-weight: 600;
     cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s;
+    transition: background-color 0.2s, box-shadow 0.2s;
 }
 
 .btn-primary {
-    background-color: var(--color-primary);
+    background-color: var(--primary-color);
     color: white;
 }
 
 .btn-primary:hover {
-    background-color: var(--color-primary-dark);
+    background-color: var(--primary-color-dark);
 }
 
 .btn-secondary {
-    background-color: var(--bg-content);
-    color: var(--text-dark);
+    background-color: var(--card-bg);
+    color: var(--text-color);
     border: 1px solid var(--border-color);
 }
 
@@ -161,184 +166,71 @@ body {
     background-color: #f9fafb; /* gray-50 */
 }
 
-.btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+.btn i {
+    font-size: 1.1rem;
 }
 
-
-/* ==========================================================================
-   Quadro Kanban
-   ========================================================================== */
-.kanban-board-container {
-    display: flex;
-    height: 100%;
-}
-
-#kanban-board {
-    display: flex;
-    gap: 24px;
-    padding-bottom: 16px; /* Espaço para a scrollbar */
-    flex-grow: 1;
-}
-
-.kanban-column {
-    width: 320px;
-    flex-shrink: 0;
-    background-color: var(--bg-column);
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    max-height: 100%;
-}
-
-.column-header {
-    padding: 16px;
-    font-weight: 600;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid var(--border-color);
-}
-
-.task-count {
-    background-color: #e4e4e7; /* zinc-200 */
-    color: var(--text-muted);
-    font-size: 12px;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 12px;
-}
-
-.kanban-cards {
-    padding: 16px;
-    flex-grow: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-/* Custom Scrollbar */
-.kanban-cards::-webkit-scrollbar { width: 8px; }
-.kanban-cards::-webkit-scrollbar-track { background: transparent; }
-.kanban-cards::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-
-.kanban-card {
-    background-color: var(--bg-card);
-    border-radius: 8px;
-    padding: 16px;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--border-color);
-    cursor: grab;
-    transition: box-shadow 0.2s, transform 0.2s;
-    user-select: none;
-}
-
-.kanban-card:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
-}
-
-.kanban-card.dragging {
-    opacity: 0.5;
-    transform: rotate(3deg);
-}
-
-.kanban-card h4 {
-    margin-bottom: 12px;
-    font-weight: 600;
-}
-
-.card-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 12px;
-}
-
-.card-channel-tag {
-    background-color: #dbeafe; /* blue-100 */
-    color: #1e40af; /* blue-800 */
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-weight: 500;
-}
-
-.card-due-date {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    color: var(--text-muted);
-}
-
-.card-due-date.overdue {
-    color: var(--color-danger);
-    font-weight: 600;
-}
-
-
-/* ==========================================================================
-   Modais
-   ========================================================================== */
 .modal {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: var(--bg-modal-overlay);
+    background-color: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
 }
 
+.modal.hidden {
+    display: none;
+}
+
 .modal-content {
-    background-color: var(--bg-content);
-    padding: 32px;
-    border-radius: 12px;
-    width: 100%;
-    max-width: 600px;
-    box-shadow: var(--shadow-lg);
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
+    background-color: var(--card-bg);
+    padding: 2rem;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 1.5rem;
 }
 
 .modal-header h3 {
-    font-size: 20px;
-    font-weight: 600;
+    margin: 0;
+    font-size: 1.25rem;
 }
 
 .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    margin-bottom: 1rem;
 }
 
 .form-group label {
+    display: block;
     font-weight: 500;
+    margin-bottom: 0.5rem;
 }
 
-.form-input, .form-select, .form-textarea {
+.form-input, .form-textarea, .form-select {
     width: 100%;
-    padding: 10px 12px;
-    border-radius: 6px;
+    padding: 0.75rem;
     border: 1px solid var(--border-color);
-    background-color: #f9fafb; /* gray-50 */
-    font-size: 14px;
+    border-radius: 6px;
+    background-color: #f9fafb;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.form-input:focus, .form-select:focus, .form-textarea:focus {
-    outline: 2px solid var(--color-primary-light);
-    border-color: var(--color-primary);
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
 }
 
 .form-textarea {
@@ -350,184 +242,218 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 16px;
+    margin-top: 2rem;
 }
 
 .modal-footer .actions {
     display: flex;
-    gap: 12px;
-}
-
-#delete-task-btn {
-    background-color: var(--color-danger);
-    color: white;
-}
-#delete-task-btn:hover {
-    background-color: var(--color-danger-dark);
-}
-
-/* Estilo para info de ficheiro */
-#file-info {
-    font-size: 12px;
-    color: var(--text-muted);
-}
-#file-info a {
-    color: var(--color-primary-dark);
-    text-decoration: none;
-}
-#file-info a:hover {
-    text-decoration: underline;
-}
-
-.hidden {
-    display: none !important;
+    gap: 1rem;
 }
 
 /* ==========================================================================
-   Página de Canais (dentro do modal)
+   Estilos Específicos das Páginas
    ========================================================================== */
-#channels-list-container {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    max-height: 250px;
-    overflow-y: auto;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 8px;
-}
 
-.channel-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    background-color: #f9fafb;
-    border-radius: 4px;
-}
-
-.delete-channel-btn {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    padding: 4px;
-}
-.delete-channel-btn:hover {
-    color: var(--color-danger);
-}
-
-.add-channel-form {
-    display: flex;
-    gap: 8px;
-}
-.add-channel-form input {
-    flex-grow: 1;
-}
-
-/* ==========================================================================
-   Dashboard
-   ========================================================================== */
+/* Dashboard */
 .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 24px;
+    gap: 1.5rem;
 }
 
 .stat-card {
-    background-color: var(--bg-content);
-    padding: 24px;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-sm);
+    background-color: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
 }
 
 .stat-card-title {
-    font-weight: 500;
     color: var(--text-muted);
-    margin-bottom: 8px;
+    font-weight: 500;
 }
 
 .stat-card-value {
-    font-size: 36px;
+    font-size: 2.5rem;
     font-weight: 700;
-    color: var(--text-dark);
+    margin-top: 0.5rem;
 }
 
-/* ==========================================================================
-   Calendário
-   ========================================================================== */
-#calendar-container {
-    background-color: var(--bg-content);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: var(--shadow-sm);
+/* Kanban */
+.kanban-board-container {
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: auto;
+    padding-bottom: 1rem; /* Espaço para a barra de scroll */
+    height: 100%;
 }
 
-#calendar-header {
+.kanban-column {
+    width: 300px;
+    flex-shrink: 0;
+    background-color: #f9fafb; /* gray-50 */
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+.column-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
-}
-#current-month-year {
-    font-size: 20px;
-    font-weight: 600;
-}
-#calendar-nav button {
-    background: none;
-    border: 1px solid var(--border-color);
-    padding: 8px;
-    border-radius: 6px;
-    cursor: pointer;
+    padding: 1rem;
+    border-bottom: 2px solid var(--border-color);
 }
 
-#calendar-grid {
+.column-header span:first-child {
+    font-weight: 600;
+}
+
+.task-count {
+    background-color: var(--border-color);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.kanban-cards {
+    flex-grow: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.kanban-card {
+    background-color: var(--card-bg);
+    padding: 1rem;
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+    cursor: grab;
+    user-select: none;
+}
+
+.kanban-card.dragging {
+    opacity: 0.5;
+    transform: rotate(3deg);
+}
+
+.kanban-card h4 {
+    margin: 0 0 1rem 0;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+}
+
+.card-channel-tag {
+    background-color: #dbeafe; /* blue-100 */
+    color: #1e40af; /* blue-800 */
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.card-due-date {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--text-muted);
+}
+
+.card-due-date.overdue {
+    color: #dc2626; /* red-600 */
+}
+
+/* Calendário */
+.calendar-navigation {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.calendar-navigation span {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.calendar-container {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.calendar-weekdays, .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
 }
-.calendar-day-header {
+
+.calendar-weekdays div {
     text-align: center;
     font-weight: 600;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-color);
     color: var(--text-muted);
-    padding-bottom: 8px;
-    font-size: 14px;
 }
+
+.calendar-grid {
+    flex-grow: 1;
+}
+
 .calendar-day {
-    border: 1px solid var(--border-color);
-    min-height: 120px;
-    padding: 8px;
-    font-size: 12px;
+    border-bottom: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    padding: 0.5rem;
 }
+
+.calendar-day:nth-child(7n) {
+    border-right: none;
+}
+
+.day-number {
+    font-weight: 500;
+}
+
 .calendar-day.not-in-month {
     background-color: #f9fafb;
     color: #d1d5db;
 }
+
 .calendar-day.today .day-number {
-    background-color: var(--color-primary);
+    background-color: var(--primary-color);
     color: white;
     border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: inline-flex;
+    width: 28px;
+    height: 28px;
+    display: flex;
     justify-content: center;
     align-items: center;
 }
+
+.calendar-tasks {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
 .calendar-task-item {
     background-color: #dbeafe;
     color: #1e40af;
-    padding: 4px 8px;
+    padding: 2px 6px;
     border-radius: 4px;
-    margin-top: 4px;
-    font-size: 12px;
+    font-size: 0.75rem;
     cursor: pointer;
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.calendar-task-item:hover {
-    background-color: #bfdbfe;
 }
 
