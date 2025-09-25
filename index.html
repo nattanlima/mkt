@@ -1,0 +1,161 @@
+ (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
+diff --git a/index.html b/index.html
+index bb2a7b95090771dee0d435fc01ce5a4e89712f6a..bafa06c2e61a167c197bf1aa6203059905b02c09 100644
+--- a/index.html
++++ b/index.html
+@@ -239,51 +239,51 @@
+                              <div id="task-logs-container" class="space-y-3 max-h-48 overflow-y-auto bg-slate-50 p-3 rounded-lg border"></div>
+                         </div>
+                     </div>
+                 </div>
+                 <div class="p-4 bg-slate-50/70 flex justify-between items-center border-t">
+                     <button type="button" id="delete-task-btn" class="text-red-600 hover:bg-red-100 font-semibold hidden px-4 py-2 rounded-full transition-colors"><i class="fas fa-trash-alt mr-2"></i>Excluir</button>
+                     <div class="flex gap-3">
+                         <button type="button" class="btn-cancel px-6 py-2.5 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-full font-semibold transition-colors">Fechar</button>
+                         <button type="submit" id="save-task-btn" class="px-6 py-2.5 text-white bg-emerald-500 hover:bg-emerald-600 rounded-full font-semibold transition-colors">Salvar Alterações</button>
+                     </div>
+                 </div>
+             </form>
+         </div>
+     </div>
+     <div id="tags-modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-40">
+         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col modal-enter">
+             <div class="p-5 border-b flex justify-between items-center">
+                 <h3 class="text-xl font-bold text-gray-800">Gerir Tags</h3>
+                 <button class="btn-cancel text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+             </div>
+             <div class="p-6 modal-content-body" id="tags-list-container"></div>
+             <div class="p-4 bg-slate-50/70 border-t">
+                 <label class="font-semibold text-sm text-gray-700">Adicionar nova tag</label>
+                 <div class="flex gap-3 mt-2">
+                     <input type="text" id="new-tag-name" class="w-full p-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" placeholder="Nome da tag">
+-                    <button id="add-new-tag-btn" class="px-5 py-2 text-white bg-emerald-500 hover:bg-emerald-600 rounded-full font-semibold flex-shrink-0 transition-colors">Adicionar</button>
++                    <button id="add-new-tag-btn" type="button" class="px-5 py-2 text-white bg-emerald-500 hover:bg-emerald-600 rounded-full font-semibold flex-shrink-0 transition-colors">Adicionar</button>
+                 </div>
+             </div>
+         </div>
+     </div>
+     <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white py-3 px-5 rounded-lg shadow-lg opacity-0 transform translate-y-2 transition-all duration-300 z-50 font-semibold"></div>
+ 
+     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+     <script>
+         // =================================================================================
+         // CONFIGURAÇÃO E ESTADO GLOBAL
+         // =================================================================================
+         const SUPABASE_URL = 'https://ccenxfyqwtfpexltuwrn.supabase.co';
+         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZW54Znlxd3RmcGV4bHR1d3JuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNzE1MTMsImV4cCI6MjA2ODg0NzUxM30.6un31sODuCyd5Dz_pR_kn656k74jjh5CNAfF0YteT7I';
+         
+         const { createClient } = supabase;
+         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+ 
+         const state = {
+             currentUser: null, channels: [], status: [], tasks: [], users: [], tags: [], taskTags: [],
+             taskFiles: [],
+             currentPage: 'dashboard',
+             pagesLoaded: { dashboard: false, kanban: false, calendar: false },
+             filters: { userId: 'all', channelId: 'all', tagId: 'all' },
+             calendarView: 'month',
+             currentDate: new Date()
+diff --git a/index.html b/index.html
+index bb2a7b95090771dee0d435fc01ce5a4e89712f6a..bafa06c2e61a167c197bf1aa6203059905b02c09 100644
+--- a/index.html
++++ b/index.html
+@@ -1171,59 +1171,90 @@
+         // =================================================================================
+         // MODAIS DE TAGS
+         // =================================================================================
+         async function abrirModalTags() {
+             await fetchGlobalData();
+             await carregarTagsNoModal();
+             showModal('tags-modal');
+         }
+ 
+         async function carregarTagsNoModal() {
+             const container = document.getElementById('tags-list-container');
+             container.innerHTML = state.tags.map(tag => `
+                 <div class="flex justify-between items-center p-3 hover:bg-slate-100 rounded-lg">
+                     <div class="flex items-center gap-3">
+                         <span class="w-4 h-4 rounded-full" style="background-color: ${tag.color || generatePastelColor(tag.name)};"></span>
+                         <span class="font-medium text-gray-700">${tag.name}</span>
+                     </div>
+                     <button class="delete-tag-btn text-gray-400 hover:text-red-500" data-id="${tag.id}"><i class="fas fa-trash-alt"></i></button>
+                 </div>`).join('');
+             
+             document.querySelectorAll('.delete-tag-btn').forEach(btn => btn.addEventListener('click', (e) => deletarTag(e.currentTarget.dataset.id)));
+         }
+         
+         async function adicionarTag() {
+             const nameInput = document.getElementById('new-tag-name');
++            const addBtn = document.getElementById('add-new-tag-btn');
++
++            if (!nameInput) {
++                console.error('Campo de nome da tag não encontrado.');
++                return;
++            }
+             const name = nameInput.value.trim();
+-            if (!name) return;
+ 
+-            const { data, error } = await supabaseClient.from('mkt_tags').insert([{ name }]).select().single();
+-            if (error) handleSupabaseError(error, 'adicionar tag');
+-            else {
+-                state.tags.push(data);
++            if (!name) {
++                showToast('Informe um nome para a tag.');
++                nameInput.focus();
++                return;
++            }
++
++            toggleButtonLoading(addBtn, true);
++
++            try {
++                const { data, error } = await supabaseClient
++                    .from('mkt_tags')
++                    .insert([{ name }])
++                    .select()
++                    .single();
++
++                if (error) throw error;
++
++                if (!state.tags.some(tag => tag.id === data.id)) {
++                    state.tags = [...state.tags, data];
++                } else {
++                    state.tags = state.tags.map(tag => (tag.id === data.id ? data : tag));
++                }
++
+                 nameInput.value = '';
+                 await carregarTagsNoModal();
++                populateFilters();
++                showToast('Tag criada com sucesso!');
++            } catch (error) {
++                handleSupabaseError(error, 'adicionar tag');
++            } finally {
++                toggleButtonLoading(addBtn, false);
++                nameInput.focus();
+             }
+         }
+         
+         async function deletarTag(id) {
+             if (!confirm('Tem certeza? Excluir uma tag irá removê-la de todas as tarefas.')) return;
+             const tagId = parseInt(id);
+             await supabaseClient.from('mkt_task_tags').delete().eq('tag_id', tagId);
+             const { error } = await supabaseClient.from('mkt_tags').delete().eq('id', tagId);
+             if (error) handleSupabaseError(error, 'excluir tag');
+             else {
+                 state.tags = state.tags.filter(t => t.id !== tagId);
+                 await carregarTagsNoModal();
+             }
+         }
+ 
+         function renderTaskTags(taskId) {
+             const container = document.getElementById('task-tags-container');
+             const dropdown = document.getElementById('tag-select-dropdown');
+             const addTagBtn = document.getElementById('add-tag-btn');
+ 
+             const taskTagIds = state.taskTags.filter(tt => tt.task_id === taskId).map(tt => tt.tag_id);
+             const assignedTags = state.tags.filter(t => taskTagIds.includes(t.id));
+             const availableTags = state.tags.filter(t => !taskTagIds.includes(t.id));
+ 
+             container.innerHTML = assignedTags.map(tag => {
+ 
+EOF
+)
