@@ -35,7 +35,13 @@
         }
         #main-content-area {
             flex-grow: 1;
-            overflow: hidden; 
+            overflow: hidden;
+            /* CORREÇÃO: Usar Grid para evitar sobreposição de layout */
+            display: grid;
+        }
+        /* CORREÇÃO: Forçar todas as páginas a ocuparem a mesma célula do grid */
+        .page-content {
+            grid-area: 1 / 1;
         }
         #kanban-page, #ideas-page {
             height: 100%;
@@ -89,11 +95,11 @@
             <form id="login-form" class="space-y-6">
                 <div>
                     <label for="email" class="text-sm font-bold text-gray-700">Seu E-mail</label>
-                    <input id="email" type="email" required class="w-full mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition" placeholder="seu@email.com">
+                    <input id="email" type="email" autocomplete="email" required class="w-full mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition" placeholder="seu@email.com">
                 </div>
                 <div>
                     <label for="password" class="text-sm font-bold text-gray-700">Sua senha</label>
-                    <input id="password" type="password" required class="w-full mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition" placeholder="••••••••">
+                    <input id="password" type="password" autocomplete="current-password" required class="w-full mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition" placeholder="••••••••">
                 </div>
                 <div>
                     <button type="submit" class="w-full px-4 py-3 text-lg font-semibold text-white bg-emerald-500 rounded-full hover:bg-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-300 transition-all duration-300 transform hover:scale-105">
@@ -161,11 +167,11 @@
             </div>
         </div>
         
-        <main id="main-content-area" class="flex">
-            <div id="dashboard-page" class="page-content p-4 sm:p-8 w-full"></div>
+        <main id="main-content-area">
+            <div id="dashboard-page" class="page-content p-4 sm:p-8 w-full h-full overflow-y-auto"></div>
             <div id="ideas-page" class="page-content hidden w-full h-full"></div>
             <div id="kanban-page" class="page-content hidden w-full h-full"><div id="kanban-board" class="kanban-board-container flex space-x-6 p-4 sm:p-8"></div></div>
-            <div id="calendar-page" class="page-content hidden p-4 sm:p-8 w-full"></div>
+            <div id="calendar-page" class="page-content hidden p-4 sm:p-8 w-full h-full overflow-y-auto"></div>
         </main>
     </div>
 
@@ -1507,6 +1513,4 @@
     </script>
 </body>
 </html>
-
-
 
