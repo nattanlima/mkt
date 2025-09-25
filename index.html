@@ -297,8 +297,9 @@
         // FUNÇÕES UTILITÁRIAS
         // =================================================================================
         const handleSupabaseError = (error, context) => {
-            console.error(`Erro em ${context}:`, error);
-            showToast(`Ocorreu um erro: ${error.message}.`);
+            const normalizedError = error?.message ? error : new Error('Erro inesperado ao comunicar com o servidor.');
+            console.error(`Erro em ${context}:`, normalizedError);
+            showToast(`Ocorreu um erro em ${context}: ${normalizedError.message}`);
         };
         
         const toggleButtonLoading = (button, isLoading) => {
@@ -540,20 +541,36 @@
         }
         
         async function fetchGlobalData() {
-            const [channelsRes, statusRes, usersRes, tagsRes, taskTagsRes, taskFilesRes] = await Promise.all([
-                supabaseClient.from('mkt_channels').select('*'),
-                supabaseClient.from('mkt_status').select('*').order('order', { ascending: true }),
-                supabaseClient.from('mkt_users').select('id, name, photo_url'),
-                supabaseClient.from('mkt_tags').select('*'),
-                supabaseClient.from('mkt_task_tags').select('*'),
-                supabaseClient.from('mkt_task_files').select('*')
-            ]);
-            state.channels = channelsRes.data || [];
-            state.status = statusRes.data || [];
-            state.users = usersRes.data || [];
-            state.tags = tagsRes.data || [];
-            state.taskTags = taskTagsRes.data || [];
-            state.taskFiles = taskFilesRes.data || [];
+            try {
+                const [channelsRes, statusRes, usersRes, tagsRes, taskTagsRes, taskFilesRes] = await Promise.all([
+                    supabaseClient.from('mkt_channels').select('*'),
+                    supabaseClient.from('mkt_status').select('*').order('order', { ascending: true }),
+                    supabaseClient.from('mkt_users').select('id, name, photo_url'),
+                    supabaseClient.from('mkt_tags').select('*'),
+                    supabaseClient.from('mkt_task_tags').select('*'),
+                    supabaseClient.from('mkt_task_files').select('*')
+                ]);
+
+                const assignments = [
+                    { res: channelsRes, key: 'channels', context: 'carregar canais' },
+                    { res: statusRes, key: 'status', context: 'carregar status' },
+                    { res: usersRes, key: 'users', context: 'carregar utilizadores' },
+                    { res: tagsRes, key: 'tags', context: 'carregar tags' },
+                    { res: taskTagsRes, key: 'taskTags', context: 'carregar relações de tags' },
+                    { res: taskFilesRes, key: 'taskFiles', context: 'carregar anexos' }
+                ];
+
+                assignments.forEach(({ res, key, context }) => {
+                    if (res.error) {
+                        handleSupabaseError(res.error, context);
+                        state[key] = state[key] || [];
+                    } else {
+                        state[key] = res.data || [];
+                    }
+                });
+            } catch (err) {
+                handleSupabaseError(err, 'carregar dados globais');
+            }
         }
 
         function populateFilters() {
@@ -1179,32 +1196,64 @@
 
         async function carregarTagsNoModal() {
             const container = document.getElementById('tags-list-container');
-            container.innerHTML = state.tags.map(tag => `
-                <div class="flex justify-between items-center p-3 hover:bg-slate-100 rounded-lg">
-                    <div class="flex items-center gap-3">
-                        <span class="w-4 h-4 rounded-full" style="background-color: ${tag.color || generatePastelColor(tag.name)};"></span>
-                        <span class="font-medium text-gray-700">${tag.name}</span>
-                    </div>
-                    <button class="delete-tag-btn text-gray-400 hover:text-red-500" data-id="${tag.id}"><i class="fas fa-trash-alt"></i></button>
-                </div>`).join('');
-            
-            document.querySelectorAll('.delete-tag-btn').forEach(btn => btn.addEventListener('click', (e) => deletarTag(e.currentTarget.dataset.id)));
+
+            if (!Array.isArray(state.tags) || state.tags.length === 0) {
+                container.innerHTML = '<p class="text-sm text-slate-500">Nenhuma tag cadastrada no momento.</p>';
+                return;
+            }
+
+            container.innerHTML = state.tags
+                .map(tag => `
+                    <div class="flex justify-between items-center p-3 hover:bg-slate-100 rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <span class="w-4 h-4 rounded-full" style="background-color: ${tag.color || generatePastelColor(tag.name)};"></span>
+                            <span class="font-medium text-gray-700">${tag.name}</span>
+                        </div>
+                        <button class="delete-tag-btn text-gray-400 hover:text-red-500" data-id="${tag.id}"><i class="fas fa-trash-alt"></i></button>
+                    </div>`)
+                .join('');
+
+            document
+                .querySelectorAll('.delete-tag-btn')
+                .forEach(btn => btn.addEventListener('click', (e) => deletarTag(e.currentTarget.dataset.id)));
         }
-        
+
         async function adicionarTag() {
             const nameInput = document.getElementById('new-tag-name');
             const name = nameInput.value.trim();
-            if (!name) return;
+            if (!name) {
+                showToast('Insira um nome para a nova tag.');
+                return;
+            }
 
-            const { data, error } = await supabaseClient.from('mkt_tags').insert([{ name }]).select().single();
-            if (error) handleSupabaseError(error, 'adicionar tag');
-            else {
-                state.tags.push(data);
+            const addButton = document.getElementById('add-new-tag-btn');
+            toggleButtonLoading(addButton, true);
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('mkt_tags')
+                    .insert([{ name }])
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                const newTags = state.tags.filter(tag => tag.id !== data.id);
+                newTags.push(data);
+                state.tags = newTags.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+
                 nameInput.value = '';
+
                 await carregarTagsNoModal();
+                populateFilters();
+                showToast('Tag criada com sucesso.');
+            } catch (err) {
+                handleSupabaseError(err, 'adicionar tag');
+            } finally {
+                toggleButtonLoading(addButton, false);
             }
         }
-        
+
         async function deletarTag(id) {
             if (!confirm('Tem certeza? Excluir uma tag irá removê-la de todas as tarefas.')) return;
             const tagId = parseInt(id);
@@ -1214,6 +1263,8 @@
             else {
                 state.tags = state.tags.filter(t => t.id !== tagId);
                 await carregarTagsNoModal();
+                populateFilters();
+                showToast('Tag excluída com sucesso.');
             }
         }
 
