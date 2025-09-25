@@ -30,25 +30,23 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
-        /* ===== CORREÇÃO DA BARRA DE ROLAGEM ===== */
         #app-container {
             height: 100vh;
         }
         #main-content-area {
             flex-grow: 1;
-            overflow: hidden; /* O overflow é gerenciado pelos filhos */
+            overflow: hidden; 
         }
-        #kanban-page {
+        #kanban-page, #ideas-page {
             height: 100%;
             display: flex;
             flex-direction: column;
         }
         .kanban-board-container {
-            flex-grow: 1; /* Faz o quadro crescer para preencher o espaço */
+            flex-grow: 1; 
             overflow-x: auto;
             overflow-y: hidden;
         }
-        /* ========================================= */
         .kanban-column { height: 100%; display: flex; flex-direction: column; }
         .kanban-cards { flex-grow: 1; overflow-y: auto; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -59,21 +57,22 @@
         .ql-toolbar { border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; border-color: #e2e8f0 !important; }
         .ql-container { border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem; min-height: 250px; font-size: 1rem; border-color: #e2e8f0 !important;}
         .ql-editor { font-family: 'Inter', sans-serif; }
+        
+        /* Estilos para a página de Ideias */
+        #idea-editor-container .ql-container { border: none !important; height: 100%; }
+        #idea-editor-container .ql-toolbar { border: none !important; border-bottom: 1px solid #e2e8f0 !important; background: #fff; }
+        #idea-editor-container { flex-grow: 1; display: flex; flex-direction: column; }
+        #idea-editor-quill { height: 100%; }
+
         .editor-tab { padding: 0.75rem 1.25rem; cursor: pointer; border-bottom: 3px solid transparent; color: #475569; font-weight: 600; transition: all 0.2s ease-in-out; }
         .editor-tab:hover { background-color: #f8fafc; color: #10b981; }
         .editor-tab.active { color: #10b981; border-color: #10b981; }
         .modal-enter { transform: scale(0.95) translateY(10px); opacity: 0; }
         .modal-enter-active { transform: scale(1) translateY(0); opacity: 1; transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1); }
-        .drag-over {
-            border-color: #10b981 !important;
-            background-color: #f0fdf4 !important;
-            transform: scale(1.02);
-        }
+        .drag-over { border-color: #10b981 !important; background-color: #f0fdf4 !important; transform: scale(1.02); }
         .file-item:hover .delete-file-btn { opacity: 1; }
-        .tag-select-dropdown {
-            max-height: 160px;
-            overflow-y: auto;
-        }
+        .tag-select-dropdown { max-height: 160px; overflow-y: auto; }
+        .sidebar-item.active { background-color: #eef2ff; color: #4f46e5; }
     </style>
 </head>
 <body class="h-full">
@@ -113,6 +112,7 @@
                 <h1 class="text-xl md:text-2xl font-bold text-gray-800">Marketing Hub</h1>
                 <nav id="view-toggle-buttons" class="hidden md:flex items-center border border-gray-200 rounded-full p-1 bg-slate-100 ml-4">
                     <button data-page="dashboard" class="nav-btn px-4 py-1.5 rounded-full text-sm font-semibold bg-white shadow-sm text-emerald-600"><i class="fas fa-chart-pie mr-2 opacity-80"></i>Dashboard</button>
+                    <button data-page="ideas" class="nav-btn px-4 py-1.5 rounded-full text-sm font-semibold text-gray-500 hover:text-gray-800"><i class="fas fa-lightbulb mr-2 opacity-80"></i>Ideias</button>
                     <button data-page="kanban" class="nav-btn px-4 py-1.5 rounded-full text-sm font-semibold text-gray-500 hover:text-gray-800"><i class="fas fa-grip-vertical mr-2 opacity-80"></i>Kanban</button>
                     <button data-page="calendar" class="nav-btn px-4 py-1.5 rounded-full text-sm font-semibold text-gray-500 hover:text-gray-800"><i class="fas fa-calendar-alt mr-2 opacity-80"></i>Calendário</button>
                 </nav>
@@ -161,10 +161,11 @@
             </div>
         </div>
         
-        <main id="main-content-area">
-            <div id="dashboard-page" class="page-content p-4 sm:p-8"></div>
-            <div id="kanban-page" class="page-content hidden"><div id="kanban-board" class="kanban-board-container flex space-x-6 p-4 sm:p-8"></div></div>
-            <div id="calendar-page" class="page-content hidden p-4 sm:p-8"></div>
+        <main id="main-content-area" class="flex">
+            <div id="dashboard-page" class="page-content p-4 sm:p-8 w-full"></div>
+            <div id="ideas-page" class="page-content hidden w-full h-full"></div>
+            <div id="kanban-page" class="page-content hidden w-full h-full"><div id="kanban-board" class="kanban-board-container flex space-x-6 p-4 sm:p-8"></div></div>
+            <div id="calendar-page" class="page-content hidden p-4 sm:p-8 w-full"></div>
         </main>
     </div>
 
@@ -280,16 +281,18 @@
 
         const state = {
             currentUser: null, channels: [], status: [], tasks: [], users: [], tags: [], taskTags: [],
-            taskFiles: [],
+            taskFiles: [], ideas: [],
             currentPage: 'dashboard',
-            pagesLoaded: { dashboard: false, kanban: false, calendar: false },
+            pagesLoaded: { dashboard: false, kanban: false, calendar: false, ideas: false },
             filters: { userId: 'all', channelId: 'all', tagId: 'all' },
             calendarView: 'month',
             currentDate: new Date(),
+            activeIdeaId: null,
             userMenuInitialized: false
         };
 
         let quillEditor;
+        let ideaQuillEditor;
         let currentEditorTab = 'ideia';
         let editorContents = { ideia: null, roteiro: null, script: null, inspiracoes: null };
 
@@ -313,9 +316,15 @@
             }
         };
 
-        function showToast(message) {
+        function showToast(message, type = 'normal') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
+            toast.className = 'fixed bottom-5 right-5 text-white py-3 px-5 rounded-lg shadow-lg transition-all duration-300 z-50 font-semibold';
+            if(type === 'success') {
+                toast.classList.add('bg-emerald-500');
+            } else {
+                toast.classList.add('bg-gray-900');
+            }
             toast.classList.remove('opacity-0', 'translate-y-2');
             setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-2'); }, 3000);
         }
@@ -416,7 +425,6 @@
                 }
             });
 
-            // CORREÇÃO: Adicionando listener para tasks no calendário
             document.getElementById('calendar-page').addEventListener('click', (e) => {
                 const taskItem = e.target.closest('.calendar-task-item');
                 if (taskItem && taskItem.dataset.taskId) {
@@ -439,9 +447,8 @@
             }
             document.getElementById('popup-user-name').textContent = user.name;
             document.getElementById('popup-user-role').textContent = user.role;
-            if (state.userMenuInitialized) {
-                return;
-            }
+            
+            if (state.userMenuInitialized) return;
             
             userMenuBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -467,6 +474,7 @@
         // =================================================================================
         const pageConfigs = {
             dashboard: { loader: carregarDadosDashboard, actions: '' },
+            ideas: { loader: inicializarPaginaIdeias, actions: '' },
             kanban: { 
                 loader: inicializarPaginaKanban,
                 actions: `
@@ -507,6 +515,7 @@
             document.getElementById('header-actions').innerHTML = pageConfigs[pageId].actions;
             
             const filterBar = document.getElementById('filter-bar');
+            
             if (!state.pagesLoaded[pageId]) {
                 await fetchGlobalData();
             }
@@ -604,11 +613,13 @@
         }
         
         async function refreshCurrentView() {
-            await fetchKanbanTasks();
-            if (state.currentPage === 'kanban') {
-                renderizarQuadroKanban();
-            } else if (state.currentPage === 'calendar') {
-                renderizarCalendario();
+            if (state.currentPage === 'kanban' || state.currentPage === 'calendar') {
+                await fetchKanbanTasks();
+                if (state.currentPage === 'kanban') {
+                    renderizarQuadroKanban();
+                } else if (state.currentPage === 'calendar') {
+                    renderizarCalendario();
+                }
             }
         }
         
@@ -637,6 +648,187 @@
                 </div>`;
             document.getElementById('dashboard-page').innerHTML = dashboardContent;
         }
+
+        // =================================================================================
+        // LÓGICA DA PÁGINA DE IDEIAS
+        // =================================================================================
+        async function inicializarPaginaIdeias() {
+            const pageContainer = document.getElementById('ideas-page');
+            pageContainer.innerHTML = `
+                <div class="flex h-full bg-white border-t border-slate-200">
+                    <!-- Sidebar -->
+                    <aside id="ideas-sidebar" class="w-80 h-full bg-slate-50 border-r border-slate-200 flex flex-col flex-shrink-0">
+                        <div class="p-4 border-b border-slate-200">
+                            <button id="add-new-idea-btn" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center transition-colors">
+                                <i class="fas fa-plus mr-2"></i> Nova Ideia
+                            </button>
+                        </div>
+                        <div id="ideas-list" class="flex-grow overflow-y-auto p-2 space-y-1"></div>
+                    </aside>
+                    <!-- Main Content -->
+                    <main id="idea-content-area" class="h-full flex flex-col flex-grow">
+                        <!-- Placeholder -->
+                        <div id="idea-placeholder" class="flex-grow flex flex-col items-center justify-center text-center text-slate-500">
+                             <i class="fas fa-lightbulb text-6xl text-slate-300 mb-4"></i>
+                             <h2 class="text-2xl font-bold">Selecione ou crie uma ideia</h2>
+                             <p>Use este espaço para suas anotações e brainstorming.</p>
+                        </div>
+                        <!-- Editor -->
+                        <div id="idea-editor-wrapper" class="hidden h-full flex-col">
+                            <div class="p-4 border-b border-slate-200 flex items-center justify-between gap-4">
+                                <input type="text" id="idea-title-input" class="text-2xl font-bold text-slate-800 w-full focus:outline-none bg-transparent" placeholder="Título da Ideia...">
+                                <div class="flex items-center gap-2">
+                                    <button id="save-idea-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center transition-colors">
+                                        <i class="fas fa-save mr-2"></i> Salvar
+                                    </button>
+                                    <button id="delete-idea-btn" class="text-slate-400 hover:text-red-500 p-2 rounded-full"><i class="fas fa-trash-alt"></i></button>
+                                </div>
+                            </div>
+                            <div id="idea-editor-container" class="flex-grow h-full">
+                                <div id="idea-editor-quill"></div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            `;
+
+            if (!ideaQuillEditor) {
+                ideaQuillEditor = new Quill('#idea-editor-quill', { theme: 'snow', placeholder: 'Comece a escrever...' });
+            }
+
+            await fetchIdeas();
+            renderIdeiasSidebar();
+            renderIdeiaConteudo();
+
+            // Event Listeners
+            document.getElementById('add-new-idea-btn').addEventListener('click', criarNovaIdeia);
+            document.getElementById('ideas-list').addEventListener('click', (e) => {
+                const item = e.target.closest('.sidebar-item');
+                if (item) {
+                    selecionarIdeia(Number(item.dataset.ideaId));
+                }
+            });
+            document.getElementById('save-idea-btn').addEventListener('click', salvarIdeiaAtiva);
+            document.getElementById('delete-idea-btn').addEventListener('click', () => deletarIdeia(state.activeIdeaId));
+        }
+        
+        async function fetchIdeas() {
+            const { data, error } = await supabaseClient.from('mkt_ideas').select('*').order('created_at', { ascending: false });
+            if (error) {
+                handleSupabaseError(error, 'buscar ideias');
+            } else {
+                state.ideas = data;
+            }
+        }
+
+        function renderIdeiasSidebar() {
+            const listContainer = document.getElementById('ideas-list');
+            if(!listContainer) return;
+            if (state.ideas.length === 0) {
+                listContainer.innerHTML = `<p class="text-center text-slate-500 p-4 text-sm">Nenhuma ideia criada ainda.</p>`;
+                return;
+            }
+            listContainer.innerHTML = state.ideas.map(idea => `
+                <div class="sidebar-item p-3 rounded-lg cursor-pointer hover:bg-slate-200 ${idea.id === state.activeIdeaId ? 'active' : ''}" data-idea-id="${idea.id}">
+                    <p class="font-semibold text-slate-700 truncate">${idea.title || 'Ideia sem título'}</p>
+                </div>
+            `).join('');
+        }
+
+        function renderIdeiaConteudo() {
+            const placeholder = document.getElementById('idea-placeholder');
+            const editorWrapper = document.getElementById('idea-editor-wrapper');
+            if (!placeholder || !editorWrapper) return;
+            
+            if (state.activeIdeaId && ideaQuillEditor) {
+                const activeIdea = state.ideas.find(i => i.id === state.activeIdeaId);
+                if (activeIdea) {
+                    placeholder.classList.add('hidden');
+                    editorWrapper.classList.remove('hidden');
+                    editorWrapper.classList.add('flex');
+                    
+                    document.getElementById('idea-title-input').value = activeIdea.title || '';
+                    ideaQuillEditor.setContents(activeIdea.content || '', 'silent');
+                }
+            } else {
+                placeholder.classList.remove('hidden');
+                editorWrapper.classList.add('hidden');
+                editorWrapper.classList.remove('flex');
+            }
+        }
+
+        function selecionarIdeia(ideaId) {
+            state.activeIdeaId = ideaId;
+            renderIdeiasSidebar();
+            renderIdeiaConteudo();
+        }
+
+        async function criarNovaIdeia() {
+            const { data, error } = await supabaseClient
+                .from('mkt_ideas')
+                .insert({ title: 'Nova Ideia', content: '' })
+                .select()
+                .single();
+            
+            if (error) {
+                handleSupabaseError(error, 'criar nova ideia');
+            } else {
+                state.ideas.unshift(data);
+                selecionarIdeia(data.id);
+            }
+        }
+
+        async function salvarIdeiaAtiva() {
+            if (!state.activeIdeaId) return;
+
+            const saveBtn = document.getElementById('save-idea-btn');
+            toggleButtonLoading(saveBtn, true);
+
+            try {
+                const title = document.getElementById('idea-title-input').value;
+                const content = ideaQuillEditor.getContents();
+                
+                const { error } = await supabaseClient
+                    .from('mkt_ideas')
+                    .update({ title, content })
+                    .eq('id', state.activeIdeaId);
+                
+                if (error) {
+                    handleSupabaseError(error, 'salvar ideia');
+                } else {
+                    showToast('Ideia salva com sucesso!', 'success');
+                    const ideaInState = state.ideas.find(i => i.id === state.activeIdeaId);
+                    if (ideaInState) {
+                        ideaInState.title = title;
+                        ideaInState.content = content;
+                        renderIdeiasSidebar();
+                    }
+                }
+            } catch (err) {
+                handleSupabaseError(err, 'salvar ideia');
+            } finally {
+                toggleButtonLoading(saveBtn, false);
+            }
+        }
+        
+        async function deletarIdeia(ideaId) {
+            if (!ideaId || !confirm('Tem certeza que deseja excluir esta ideia?')) return;
+            
+            const { error } = await supabaseClient.from('mkt_ideas').delete().eq('id', ideaId);
+            
+            if (error) {
+                handleSupabaseError(error, 'deletar ideia');
+            } else {
+                state.ideas = state.ideas.filter(i => i.id !== ideaId);
+                if (state.activeIdeaId === ideaId) {
+                    state.activeIdeaId = null;
+                }
+                renderIdeiasSidebar();
+                renderIdeiaConteudo();
+                showToast('Ideia excluída com sucesso.');
+            }
+        }
+
 
         // =================================================================================
         // LÓGICA DO KANBAN
@@ -902,13 +1094,10 @@
             editorTabs.forEach(tab => {
                 tab.addEventListener('click', () => {
                     if (!quillEditor) return;
-                    // Salva conteúdo do separador atual
                     editorContents[currentEditorTab] = quillEditor.getContents();
-                    // Atualiza separador ativo
                     editorTabs.forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
                     currentEditorTab = tab.dataset.tab;
-                    // Carrega conteúdo do novo separador
                     const nextContent = editorContents[currentEditorTab] || '';
                     quillEditor.setContents(nextContent);
                 });
@@ -1148,7 +1337,6 @@
                 state.taskFiles = state.taskFiles.filter(f => f.task_id != id);
             }
 
-            // Remove relações de tags desta tarefa
             await supabaseClient.from('mkt_task_tags').delete().eq('task_id', id);
             state.taskTags = state.taskTags.filter(tt => tt.task_id != id);
 
@@ -1191,7 +1379,7 @@
         }
 
         // =================================================================================
-        // MODAIS DE TAGS - CORRIGIDO
+        // MODAIS DE TAGS
         // =================================================================================
         async function abrirModalTags() {
             await fetchGlobalData();
@@ -1231,7 +1419,7 @@
                     .select();
 
                 if (error) {
-                    if (error.code === '23505') { // Código de violação de chave única do PostgreSQL
+                    if (error.code === '23505') { 
                          handleSupabaseError({ message: `A tag "${name}" já existe.` }, 'adicionar tag');
                     } else {
                          handleSupabaseError(error, 'adicionar tag');
