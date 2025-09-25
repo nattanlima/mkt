@@ -96,6 +96,27 @@
         .tag-select-dropdown { max-height: 160px; overflow-y: auto; }
         .sidebar-item.active { background-color: #eef2ff; color: #4f46e5; }
         
+        .has-tooltip { position: relative; }
+        .tooltip {
+            visibility: hidden; opacity: 0;
+            width: max-content; max-width: 250px;
+            background-color: #1f2937; 
+            color: #fff; text-align: left;
+            border-radius: 6px; padding: 8px 12px;
+            position: absolute; z-index: 10;
+            bottom: 125%; left: 50%;
+            transform: translateX(-50%);
+            transition: opacity 0.2s;
+            font-size: 0.75rem; line-height: 1.25;
+            pointer-events: none;
+        }
+        .has-tooltip:hover .tooltip { visibility: visible; opacity: 1; }
+        .tooltip::after { 
+            content: ""; position: absolute;
+            top: 100%; left: 50%;
+            margin-left: -5px; border-width: 5px;
+            border-style: solid; border-color: #1f2937 transparent transparent transparent;
+        }
     </style>
 </head>
 <body class="h-full">
@@ -558,7 +579,7 @@
             }
 
             await pageConfigs[pageId].loader();
-            state.pagesLoaded[pageId] = true;
+            //state.pagesLoaded[pageId] = true; // This can cause issues with re-initialization
 
             attachHeaderEventListeners(pageId);
         }
@@ -579,13 +600,14 @@
         }
         
         async function fetchGlobalData() {
-            const [channelsRes, statusRes, usersRes, tagsRes, taskTagsRes, taskFilesRes] = await Promise.all([
+            const [channelsRes, statusRes, usersRes, tagsRes, taskTagsRes, taskFilesRes, ideasRes] = await Promise.all([
                 supabaseClient.from('mkt_channels').select('*'),
                 supabaseClient.from('mkt_status').select('*').order('order', { ascending: true }),
                 supabaseClient.from('mkt_users').select('id, name, photo_url'),
                 supabaseClient.from('mkt_tags').select('*'),
                 supabaseClient.from('mkt_task_tags').select('*'),
-                supabaseClient.from('mkt_task_files').select('*')
+                supabaseClient.from('mkt_task_files').select('*'),
+                supabaseClient.from('mkt_ideas').select('*')
             ]);
             state.channels = channelsRes.data || [];
             state.status = statusRes.data || [];
@@ -593,6 +615,7 @@
             state.tags = tagsRes.data || [];
             state.taskTags = taskTagsRes.data || [];
             state.taskFiles = taskFilesRes.data || [];
+            state.ideas = ideasRes.data || [];
         }
 
         function populateFilters() {
@@ -657,24 +680,91 @@
         // LÓGICA DO DASHBOARD
         // =================================================================================
         async function carregarDadosDashboard() {
-            const { data, error } = await supabaseClient.from('mkt_tasks').select('status_id, due_date');
-            if (error) return handleSupabaseError(error, 'carregar dados do dashboard');
-            const completedStatusId = state.status.length > 0 ? state.status[state.status.length - 1].id : null;
-            const upcomingCount = data.filter(t => {
-                if(!t.due_date) return false;
-                const dueDate = new Date(t.due_date + "T00:00:00");
-                const today = new Date();
-                const nextWeek = new Date();
-                nextWeek.setDate(today.getDate() + 7);
-                today.setHours(0, 0, 0, 0);
-                return dueDate >= today && dueDate <= nextWeek;
-            }).length;
+            const { data: tasksData, error: tasksError } = await supabaseClient.from('mkt_tasks').select('status_id, due_date, assignee_id');
+            if (tasksError) return handleSupabaseError(tasksError, 'carregar dados do dashboard');
+
+            // --- Gamificação: Top Criadores de Ideias ---
+            const ideaCounts = state.ideas.reduce((acc, idea) => {
+                acc[idea.user_id] = (acc[idea.user_id] || 0) + 1;
+                return acc;
+            }, {});
+
+            const rankedUsers = Object.keys(ideaCounts)
+                .map(userId => {
+                    const user = state.users.find(u => u.id == userId);
+                    return user ? { ...user, ideaCount: ideaCounts[userId] } : null;
+                })
+                .filter(Boolean) 
+                .sort((a, b) => b.ideaCount - a.ideaCount)
+                .slice(0, 3);
+            
+            const podiumColors = ['bg-amber-400', 'bg-slate-400', 'bg-amber-600'];
+            const topCreatorsHtml = rankedUsers.length > 0 ? rankedUsers.map((user, index) => `
+                <li class="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50">
+                    <div class="flex items-center gap-4">
+                        <span class="font-bold text-lg w-8 text-center text-slate-500">${index + 1}</span>
+                        <img src="${user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}" class="w-10 h-10 rounded-full object-cover">
+                        <span class="font-bold text-slate-700">${user.name}</span>
+                    </div>
+                    <div class="flex items-center gap-2 font-bold text-indigo-600">
+                        <i class="fas fa-lightbulb"></i>
+                        <span>${user.ideaCount} ${user.ideaCount > 1 ? 'ideias' : 'ideia'}</span>
+                    </div>
+                </li>
+            `).join('') : '<p class="text-center text-slate-500 p-4">Nenhuma ideia criada ainda.</p>';
+
+
+            // --- Gráficos ---
+            const tasksByStatus = state.status.map(s => {
+                const count = tasksData.filter(t => t.status_id === s.id).length;
+                return { name: s.name, count };
+            });
+
+            const tasksByAssignee = state.users.map(u => {
+                 const count = tasksData.filter(t => t.assignee_id === u.id).length;
+                return { name: u.name, count };
+            });
 
             const dashboardContent = `
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border"><h3 class="text-gray-500 font-semibold">Total de Tarefas</h3><p class="text-4xl font-bold text-gray-800 mt-2">${data.length}</p></div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border"><h3 class="text-gray-500 font-semibold">Tarefas Concluídas</h3><p class="text-4xl font-bold text-gray-800 mt-2">${completedStatusId ? data.filter(t => t.status_id === completedStatusId).length : 0}</p></div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border"><h3 class="text-gray-500 font-semibold">Próximos Prazos (7 dias)</h3><p class="text-4xl font-bold text-gray-800 mt-2">${upcomingCount}</p></div>
+                <div class="space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border">
+                            <h3 class="font-semibold text-gray-800 mb-4">Funil de Produtividade</h3>
+                            <div class="space-y-3">
+                                ${tasksByStatus.map(status => `
+                                    <div class="w-full">
+                                        <div class="flex justify-between text-sm font-medium text-slate-600 mb-1">
+                                            <span>${status.name}</span>
+                                            <span>${status.count}</span>
+                                        </div>
+                                        <div class="w-full bg-slate-200 rounded-full h-2.5">
+                                            <div class="bg-emerald-500 h-2.5 rounded-full" style="width: ${tasksData.length > 0 ? (status.count / tasksData.length) * 100 : 0}%"></div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                         <div class="bg-white p-6 rounded-xl shadow-sm border">
+                            <h3 class="font-semibold text-gray-800 mb-4">Carga de Trabalho da Equipa</h3>
+                            <div class="space-y-3">
+                                ${tasksByAssignee.map(user => `
+                                     <div class="w-full">
+                                        <div class="flex justify-between text-sm font-medium text-slate-600 mb-1">
+                                            <span>${user.name}</span>
+                                            <span>${user.count} ${user.count !== 1 ? 'tarefas' : 'tarefa'}</span>
+                                        </div>
+                                        <div class="w-full bg-slate-200 rounded-full h-2.5">
+                                            <div class="bg-indigo-500 h-2.5 rounded-full" style="width: ${tasksData.length > 0 ? (user.count / tasksData.length) * 100 : 0}%"></div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border">
+                        <h3 class="font-semibold text-gray-800 mb-4">🏆 Pódio de Ideias</h3>
+                        <ul class="space-y-2">${topCreatorsHtml}</ul>
+                    </div>
                 </div>`;
             document.getElementById('dashboard-page').innerHTML = dashboardContent;
         }
@@ -793,7 +883,7 @@
         async function criarNovaIdeia() {
             const { data, error } = await supabaseClient
                 .from('mkt_ideas')
-                .insert({ title: 'Nova Ideia', content: '' })
+                .insert({ title: 'Nova Ideia', content: '', user_id: state.currentUser.id })
                 .select()
                 .single();
             
@@ -965,7 +1055,6 @@
         async function inicializarPaginaCalendario() {
             await fetchKanbanTasks();
             renderizarCalendario();
-            // CORREÇÃO: Mover os event listeners para cá
             const prevBtn = document.getElementById('prev-btn');
             const nextBtn = document.getElementById('next-btn');
             if(prevBtn) prevBtn.addEventListener('click', () => navigateCalendar(-1));
