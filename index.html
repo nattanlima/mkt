@@ -533,11 +533,12 @@
             });
             
             document.querySelectorAll('.page-content').forEach(p => {
-                if (!p.classList.contains('hidden')) {
-                     p.classList.add('hidden');
+                if (p.id !== `${pageId}-page`) {
+                    p.classList.add('hidden');
                 }
             });
             document.getElementById(`${pageId}-page`).classList.remove('hidden');
+
             document.getElementById('header-actions').innerHTML = pageConfigs[pageId].actions;
             
             const filterBar = document.getElementById('filter-bar');
@@ -718,14 +719,12 @@
                 </div>
             `;
 
-            // CORREÇÃO: Re-inicializa o editor do Quill sempre que a página de ideias é carregada
             ideaQuillEditor = new Quill('#idea-editor-quill', { theme: 'snow', placeholder: 'Comece a escrever...' });
 
             await fetchIdeas();
             renderIdeiasSidebar();
             renderIdeiaConteudo();
 
-            // Event Listeners
             document.getElementById('add-new-idea-btn').addEventListener('click', criarNovaIdeia);
             document.getElementById('ideas-list').addEventListener('click', (e) => {
                 const item = e.target.closest('.sidebar-item');
@@ -763,9 +762,9 @@
         function renderIdeiaConteudo() {
             const placeholder = document.getElementById('idea-placeholder');
             const editorWrapper = document.getElementById('idea-editor-wrapper');
-            if (!placeholder || !editorWrapper) return;
+            if (!placeholder || !editorWrapper || !ideaQuillEditor) return;
             
-            if (state.activeIdeaId && ideaQuillEditor) {
+            if (state.activeIdeaId) {
                 const activeIdea = state.ideas.find(i => i.id === state.activeIdeaId);
                 if (activeIdea) {
                     placeholder.classList.add('hidden');
