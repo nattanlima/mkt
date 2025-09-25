@@ -1,139 +1,1192 @@
-// Substitua a seção de "LÓGICA DE LOGIN E AUTENTICAÇÃO" por esta versão corrigida:
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketing Hub | CX Redesign</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-// =================================================================================
-// LÓGICA DE LOGIN E AUTENTICAÇÃO
-// =================================================================================
+    <!-- Fontes e Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Biblioteca Drag-and-Drop -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
-// Configura o evento de login imediatamente quando o script carrega
-let loginConfigured = false;
-
-function setupLoginForm() {
-    if (loginConfigured) return;
+    <!-- Editor de Texto Avançado (Quill.js) -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     
-    const loginForm = document.getElementById('login-form');
-    const loginButton = document.querySelector('#login-form button[type="submit"]');
-    
-    if (!loginForm) {
-        // Se o formulário não existe ainda, tenta novamente em 100ms
-        setTimeout(setupLoginForm, 100);
-        return;
-    }
-    
-    // Remove qualquer listener anterior para evitar duplicatas
-    loginForm.removeEventListener('submit', handleLogin);
-    
-    // Adiciona o listener de submit
-    loginForm.addEventListener('submit', handleLogin);
-    
-    // Adiciona listener para Enter nos campos de input
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    
-    [emailInput, passwordInput].forEach(input => {
-        if (input) {
-            input.removeEventListener('keydown', handleLoginKeydown);
-            input.addEventListener('keydown', handleLoginKeydown);
+    <style>
+        html, body { 
+            height: 100%; 
+            overflow: hidden; 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f7f9fc;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
-    });
-    
-    loginConfigured = true;
-}
-
-function handleLoginKeydown(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        const form = e.target.closest('form');
-        if (form) {
-            handleLogin({ preventDefault: () => {}, target: form });
+        #main-content-area { height: calc(100vh - 128px); overflow-y: auto; } /* Ajustado para a barra de filtros */
+        .kanban-board-container { height: 100%; overflow-x: auto; overflow-y: hidden; }
+        .kanban-column { height: 100%; display: flex; flex-direction: column; }
+        .kanban-cards { flex-grow: 1; overflow-y: auto; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #eef2f7; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8b8d0; }
+        .modal-content-body { max-height: 70vh; overflow-y: auto; }
+        .ql-toolbar { border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; border-color: #e2e8f0 !important; }
+        .ql-container { border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem; min-height: 250px; font-size: 1rem; border-color: #e2e8f0 !important;}
+        .ql-editor { font-family: 'Inter', sans-serif; }
+        .editor-tab { padding: 0.75rem 1.25rem; cursor: pointer; border-bottom: 3px solid transparent; color: #475569; font-weight: 600; transition: all 0.2s ease-in-out; }
+        .editor-tab:hover { background-color: #f8fafc; color: #10b981; }
+        .editor-tab.active { color: #10b981; border-color: #10b981; }
+        .modal-enter { transform: scale(0.95) translateY(10px); opacity: 0; }
+        .modal-enter-active { transform: scale(1) translateY(0); opacity: 1; transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1); }
+        .drag-over {
+            border-color: #10b981 !important;
+            background-color: #f0fdf4 !important;
+            transform: scale(1.02);
         }
-    }
-}
+        .file-item:hover .delete-file-btn { opacity: 1; }
+        .tag-select-dropdown {
+            max-height: 160px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="h-full">
 
-async function handleLogin(e) {
-    e.preventDefault();
-    
-    const loginButton = document.querySelector('#login-form button[type="submit"]');
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const errorDiv = document.getElementById('login-error');
-    
-    // Validação básica
-    if (!emailInput || !passwordInput) {
-        console.error('Campos de login não encontrados');
-        return;
-    }
-    
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
-    
-    if (!email || !password) {
-        errorDiv.textContent = 'Por favor, preencha todos os campos.';
-        errorDiv.classList.remove('hidden');
-        return;
-    }
-    
-    // Mostra loading no botão
-    toggleButtonLoading(loginButton, true);
-    
-    // Esconde erro anterior
-    errorDiv.classList.add('hidden');
-    
-    try {
-        const { error } = await supabaseClient.auth.signInWithPassword({ 
-            email, 
-            password 
+    <!-- ECRÃ DE LOGIN ATUALIZADO -->
+    <div id="login-screen" class="flex items-center justify-center h-screen bg-gradient-to-br from-slate-50 to-slate-200 p-4">
+        <div class="w-full max-w-sm p-8 space-y-8 bg-white rounded-2xl shadow-xl">
+            <div class="text-center">
+                <img src="https://crm.prismeapp.com.br/web/binary/company_logo" alt="Logo da Empresa" class="mx-auto h-12 w-auto">
+                <h2 class="mt-6 text-3xl font-extrabold text-gray-900 tracking-tight">Marketing Hub</h2>
+                <p class="mt-2 text-gray-500">Bem-vindo(a) de volta!</p>
+            </div>
+            <div id="login-error" class="hidden p-3 text-sm font-medium text-red-800 bg-red-100 rounded-lg"></div>
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label for="email" class="text-sm font-bold text-gray-700">Seu E-mail</label>
+                    <input id="email" type="email" required class="w-full mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition" placeholder="seu@email.com">
+                </div>
+                <div>
+                    <label for="password" class="text-sm font-bold text-gray-700">Sua senha</label>
+                    <input id="password" type="password" required class="w-full mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition" placeholder="••••••••">
+                </div>
+                <div>
+                    <button type="submit" class="w-full px-4 py-3 text-lg font-semibold text-white bg-emerald-500 rounded-full hover:bg-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-300 transition-all duration-300 transform hover:scale-105">
+                        Entrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- APLICAÇÃO PRINCIPAL ATUALIZADA -->
+    <div id="app-container" class="hidden h-full flex flex-col">
+        <header class="bg-white/80 backdrop-blur-sm p-4 flex justify-between items-center border-b border-slate-200 flex-shrink-0">
+            <div class="flex items-center space-x-4">
+                <img src="https://crm.prismeapp.com.br/web/binary/company_logo" alt="Logo" class="h-8 w-auto">
+                <h1 class="text-xl md:text-2xl font-bold text-gray-800">Marketing Hub</h1>
+                <nav id="view-toggle-buttons" class="hidden md:flex items-center border border-gray-200 rounded-full p-1 bg-slate-100 ml-4">
+                    <button data-page="dashboard" class="nav-btn px-4 py-1.5 rounded-full text-sm font-semibold bg-white shadow-sm text-emerald-600"><i class="fas fa-chart-pie mr-2 opacity-80"></i>Dashboard</button>
+                    <button data-page="kanban" class="nav-btn px-4 py-1.5 rounded-full text-sm font-semibold text-gray-500 hover:text-gray-800"><i class="fas fa-grip-vertical mr-2 opacity-80"></i>Kanban</button>
+                    <button data-page="calendar" class="nav-btn px-4 py-1.5 rounded-full text-sm font-semibold text-gray-500 hover:text-gray-800"><i class="fas fa-calendar-alt mr-2 opacity-80"></i>Calendário</button>
+                </nav>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="header-actions" class="flex items-center space-x-2 sm:space-x-4"></div>
+                <div class="relative">
+                     <button id="user-menu-btn" class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 overflow-hidden"></button>
+                     <div id="logout-popup" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border py-2 z-10">
+                         <div class="px-4 py-2 border-b">
+                             <p id="popup-user-name" class="font-bold text-gray-800 truncate"></p>
+                             <p class="text-sm text-gray-500 truncate" id="popup-user-role"></p>
+                         </div>
+                         <a href="#" id="logout-btn" class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-slate-100 hover:text-red-600 transition-colors"><i class="fas fa-sign-out-alt w-4 text-center"></i>Sair da Conta</a>
+                     </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- BARRA DE FILTROS DINÂMICOS -->
+        <div id="filter-bar" class="bg-white p-3 border-b border-slate-200 flex-shrink-0 hidden">
+            <div class="flex items-center gap-4">
+                <span class="font-semibold text-sm text-slate-600">Filtar por:</span>
+                <select id="user-filter" class="filter-select bg-slate-100 border-slate-200 rounded-full text-sm py-1.5 pl-3 pr-8 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="all">Todos os Usuários</option>
+                </select>
+                <select id="channel-filter" class="filter-select bg-slate-100 border-slate-200 rounded-full text-sm py-1.5 pl-3 pr-8 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="all">Todos os Canais</option>
+                </select>
+                <select id="tag-filter" class="filter-select bg-slate-100 border-slate-200 rounded-full text-sm py-1.5 pl-3 pr-8 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="all">Todas as Tags</option>
+                </select>
+                <button id="clear-filters-btn" class="text-sm font-semibold text-emerald-600 hover:text-emerald-800">Limpar Filtros</button>
+            </div>
+        </div>
+        
+        <main id="main-content-area">
+            <div id="dashboard-page" class="page-content p-4 sm:p-8"></div>
+            <div id="kanban-page" class="page-content hidden"><div id="kanban-board" class="kanban-board-container flex space-x-6 p-4 sm:p-8"></div></div>
+            <div id="calendar-page" class="page-content hidden p-4 sm:p-8"></div>
+        </main>
+    </div>
+
+    <!-- MODAIS -->
+    <div id="task-modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-20">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl flex flex-col modal-enter">
+            <form id="task-form">
+                <div class="p-5 border-b flex justify-between items-start">
+                    <div>
+                        <h3 id="modal-title" class="text-xl font-bold text-gray-800 truncate pr-5">Nova Tarefa</h3>
+                    </div>
+                    <button type="button" class="btn-cancel text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+                </div>
+                <div class="p-6 modal-content-body grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2 space-y-6">
+                        <input type="hidden" id="task-id">
+                        <div>
+                            <label class="font-semibold text-sm text-gray-700">Título da Tarefa</label>
+                            <input type="text" id="task-title" class="w-full mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" required>
+                        </div>
+                        
+                        <div>
+                            <label class="font-semibold text-sm text-gray-700 mb-2 block">Conteúdo</label>
+                            <div class="border border-slate-200 rounded-lg bg-white overflow-hidden">
+                                <div id="editor-tabs" class="flex border-b border-slate-200 bg-slate-50/70">
+                                    <button type="button" class="editor-tab active" data-tab="ideia">IDEIA</button>
+                                    <button type="button" class="editor-tab" data-tab="roteiro">ROTEIRO</button>
+                                    <button type="button" class="editor-tab" data-tab="script">SCRIPT</button>
+                                    <button type="button" class="editor-tab" data-tab="inspiracoes">INSPIRAÇÕES</button>
+                                </div>
+                                <div id="quill-editor"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="p-4 bg-slate-50 rounded-lg border">
+                           <h4 class="font-semibold text-sm mb-3 text-gray-600">Detalhes</h4>
+                           <div class="space-y-4">
+                                <div><label class="font-medium text-xs text-gray-500">Canal</label><select id="task-channel" class="w-full mt-1 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400" required></select></div>
+                                <div><label class="font-medium text-xs text-gray-500">Responsável</label><select id="task-assignee" class="w-full mt-1 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400"></select></div>
+                                <div><label class="font-medium text-xs text-gray-500">Data de Entrega</label><input type="date" id="task-due-date" class="w-full mt-1 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400"></div>
+                           </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="font-semibold text-sm text-gray-700">Tags</label>
+                                <div id="add-tag-wrapper" class="relative">
+                                    <button type="button" id="add-tag-btn" class="text-xs font-semibold text-emerald-600 hover:text-emerald-800">+ Adicionar Tag</button>
+                                    <div id="tag-select-dropdown" class="tag-select-dropdown hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-10">
+                                        <!-- Tags disponíveis serão inseridas aqui -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="task-tags-container" class="p-2 border rounded-lg bg-slate-50 flex flex-wrap gap-2 min-h-[40px]"></div>
+                        </div>
+                         <div>
+                            <label class="font-semibold text-sm text-gray-700">Anexos</label>
+                            <div id="file-list-container" class="mt-2 space-y-2"></div>
+                            <div class="mt-2">
+                                <label id="drop-zone" for="task-file-input" class="w-full flex items-center justify-center px-4 py-3 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 transition-all duration-300">
+                                    <div id="drop-zone-content" class="text-center">
+                                        <i class="fas fa-cloud-upload-alt text-2xl text-slate-400"></i>
+                                        <p class="mt-1 text-sm text-slate-600">Arraste ou clique para enviar</p>
+                                    </div>
+                                    <input type="file" id="task-file-input" class="hidden" multiple>
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                             <h4 class="font-semibold text-sm text-gray-700 mb-2">Histórico</h4>
+                             <div id="task-logs-container" class="space-y-3 max-h-48 overflow-y-auto bg-slate-50 p-3 rounded-lg border"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-50/70 flex justify-between items-center border-t">
+                    <button type="button" id="delete-task-btn" class="text-red-600 hover:bg-red-100 font-semibold hidden px-4 py-2 rounded-full transition-colors"><i class="fas fa-trash-alt mr-2"></i>Excluir</button>
+                    <div class="flex gap-3">
+                        <button type="button" class="btn-cancel px-6 py-2.5 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-full font-semibold transition-colors">Fechar</button>
+                        <button type="submit" id="save-task-btn" class="px-6 py-2.5 text-white bg-emerald-500 hover:bg-emerald-600 rounded-full font-semibold transition-colors">Salvar Alterações</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="tags-modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-40">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col modal-enter">
+            <div class="p-5 border-b flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-800">Gerir Tags</h3>
+                <button class="btn-cancel text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="p-6 modal-content-body" id="tags-list-container"></div>
+            <div class="p-4 bg-slate-50/70 border-t">
+                <label class="font-semibold text-sm text-gray-700">Adicionar nova tag</label>
+                <div class="flex gap-3 mt-2">
+                    <input type="text" id="new-tag-name" class="w-full p-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" placeholder="Nome da tag">
+                    <button id="add-new-tag-btn" class="px-5 py-2 text-white bg-emerald-500 hover:bg-emerald-600 rounded-full font-semibold flex-shrink-0 transition-colors">Adicionar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white py-3 px-5 rounded-lg shadow-lg opacity-0 transform translate-y-2 transition-all duration-300 z-50 font-semibold"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // =================================================================================
+        // CONFIGURAÇÃO E ESTADO GLOBAL
+        // =================================================================================
+        const SUPABASE_URL = 'https://ccenxfyqwtfpexltuwrn.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZW54Znlxd3RmcGV4bHR1d3JuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNzE1MTMsImV4cCI6MjA2ODg0NzUxM30.6un31sODuCyd5Dz_pR_kn656k74jjh5CNAfF0YteT7I';
+        
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const state = {
+            currentUser: null, channels: [], status: [], tasks: [], users: [], tags: [], taskTags: [],
+            taskFiles: [],
+            currentPage: 'dashboard',
+            pagesLoaded: { dashboard: false, kanban: false, calendar: false },
+            filters: { userId: 'all', channelId: 'all', tagId: 'all' },
+            calendarView: 'month',
+            currentDate: new Date()
+        };
+
+        let quillEditor;
+        let currentEditorTab = 'ideia';
+        let editorContents = { ideia: null, roteiro: null, script: null, inspiracoes: null };
+
+        // =================================================================================
+        // FUNÇÕES UTILITÁRIAS
+        // =================================================================================
+        const handleSupabaseError = (error, context) => {
+            console.error(`Erro em ${context}:`, error);
+            showToast(`Ocorreu um erro: ${error.message}.`);
+        };
+        
+        const toggleButtonLoading = (button, isLoading) => {
+            if (!button) return;
+            if (isLoading) {
+                button.disabled = true;
+                button.dataset.originalText = button.innerHTML;
+                button.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+            } else {
+                button.disabled = false;
+                if (button.dataset.originalText) button.innerHTML = button.dataset.originalText;
+            }
+        };
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.remove('opacity-0', 'translate-y-2');
+            setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-2'); }, 3000);
+        }
+
+        function formatLogDate(dateString) {
+            const date = new Date(dateString);
+            return `${date.toLocaleDateString('pt-BR')} às ${date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
+        }
+
+        function getContrastColor(hexcolor){
+            if(!hexcolor) return '#020617';
+            if (hexcolor.slice(0, 1) === '#') { hexcolor = hexcolor.slice(1); }
+            const r = parseInt(hexcolor.substr(0,2),16), g = parseInt(hexcolor.substr(2,2),16), b = parseInt(hexcolor.substr(4,2),16);
+            const yiq = ((r*299)+(g*587)+(b*114))/1000;
+            return (yiq >= 128) ? '#020617' : 'white';
+        }
+
+        function generatePastelColor(seed) {
+            let hash = 0;
+            for (let i = 0; i < seed.length; i++) {
+                hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const h = hash % 360;
+            return `hsl(${h}, 70%, 85%)`;
+        }
+        
+        // =================================================================================
+        // LÓGICA DE LOGIN E AUTENTICAÇÃO
+        // =================================================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
         });
         
-        if (error) {
-            throw error;
-        }
-        
-        // Login bem-sucedido - o onAuthStateChange cuidará do redirecionamento
-        
-    } catch (error) {
-        console.error('Erro no login:', error);
-        errorDiv.textContent = error.message === 'Invalid login credentials' 
-            ? 'E-mail ou senha inválidos.' 
-            : `Erro ao fazer login: ${error.message}`;
-        errorDiv.classList.remove('hidden');
-    } finally {
-        toggleButtonLoading(loginButton, false);
-    }
-}
-
-// Configura o login assim que o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', setupLoginForm);
-
-// Backup: configura novamente quando a janela carregar completamente
-window.addEventListener('load', setupLoginForm);
-
-supabaseClient.auth.onAuthStateChange(async (event, session) => {
-    if (session && session.user) {
-        const { data: profileData } = await supabaseClient
-            .from('mkt_users').select('*').eq('email', session.user.email).single();
-        
-        if (profileData) {
-            state.currentUser = profileData;
-            if (document.getElementById('app-container').classList.contains('hidden')) {
-                initializeApp();
+        supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            if (session && session.user) {
+                const { data: profileData } = await supabaseClient
+                    .from('mkt_users').select('*').eq('email', session.user.email).single();
+                
+                if (profileData) {
+                    state.currentUser = profileData;
+                    if (document.getElementById('app-container').classList.contains('hidden')) initializeApp();
+                    else setupUserMenu();
+                } else {
+                    console.error("Utilizador autenticado mas não foi encontrado perfil.");
+                    await handleLogout();
+                }
             } else {
-                setupUserMenu();
+                state.currentUser = null;
+                document.getElementById('app-container').classList.add('hidden');
+                document.getElementById('login-screen').classList.remove('hidden');
             }
-        } else {
-            console.error("Utilizador autenticado mas não foi encontrado perfil.");
-            await handleLogout();
-        }
-    } else {
-        state.currentUser = null;
-        document.getElementById('app-container').classList.add('hidden');
-        document.getElementById('login-screen').classList.remove('hidden');
-        
-        // Reconfigura o formulário de login quando voltar à tela de login
-        setTimeout(setupLoginForm, 100);
-    }
-});
+        });
 
-async function handleLogout() {
-    const { error } = await supabaseClient.auth.signOut();
-    if (error) handleSupabaseError(error, 'logout');
-}
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('login-error');
+            errorDiv.classList.add('hidden');
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) {
+                errorDiv.textContent = 'E-mail ou senha inválidos.';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        async function handleLogout() {
+            const { error } = await supabaseClient.auth.signOut();
+            if (error) handleSupabaseError(error, 'logout');
+        }
+
+        // =================================================================================
+        // INICIALIZAÇÃO DA APLICAÇÃO
+        // =================================================================================
+        async function initializeApp() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
+            setupUserMenu();
+            document.getElementById('view-toggle-buttons').addEventListener('click', (e) => {
+                const btn = e.target.closest('.nav-btn');
+                if (btn) showPage(btn.dataset.page);
+            });
+            
+            configurarModais();
+
+            document.getElementById('kanban-page').addEventListener('click', (e) => {
+                const card = e.target.closest('.kanban-card');
+                if (card && card.dataset.taskId) {
+                    abrirModalTarefa(Number(card.dataset.taskId));
+                }
+            });
+
+            await showPage('dashboard');
+        }
+
+        function setupUserMenu() {
+            const user = state.currentUser;
+            const userMenuBtn = document.getElementById('user-menu-btn');
+            const logoutPopup = document.getElementById('logout-popup');
+
+            if(user.photo_url) {
+                userMenuBtn.innerHTML = `<img src="${user.photo_url}" class="w-full h-full object-cover">`;
+            } else {
+                userMenuBtn.textContent = user.name.charAt(0).toUpperCase();
+            }
+            document.getElementById('popup-user-name').textContent = user.name;
+            document.getElementById('popup-user-role').textContent = user.role;
+
+            userMenuBtn.addEventListener('click', () => logoutPopup.classList.toggle('hidden'));
+            document.getElementById('logout-btn').addEventListener('click', handleLogout);
+        }
+
+        // =================================================================================
+        // LÓGICA DE FILTROS E PÁGINAS
+        // =================================================================================
+        const pageConfigs = {
+            dashboard: { loader: carregarDadosDashboard, actions: '' },
+            kanban: { 
+                loader: inicializarPaginaKanban,
+                actions: `
+                    <button id="add-task-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded-full flex items-center transition-colors">
+                        <i class="fas fa-plus mr-2"></i> Nova Tarefa
+                    </button>`
+            },
+            calendar: { 
+                loader: inicializarPaginaCalendario,
+                actions: `
+                    <div class="flex items-center border border-gray-200 rounded-full p-1 bg-slate-100">
+                        <button data-view="month" class="calendar-view-btn px-3 py-1 rounded-full text-sm font-semibold bg-white shadow-sm text-emerald-600">Mês</button>
+                        <button data-view="week" class="calendar-view-btn px-3 py-1 rounded-full text-sm font-semibold text-gray-500">Semana</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="prev-btn" class="w-10 h-10 flex items-center justify-center border rounded-full bg-white text-gray-700 hover:bg-gray-100"><i class="fas fa-chevron-left"></i></button>
+                        <span id="current-date-display" class="font-bold text-lg text-gray-700 w-48 text-center"></span>
+                        <button id="next-btn" class="w-10 h-10 flex items-center justify-center border rounded-full bg-white text-gray-700 hover:bg-gray-100"><i class="fas fa-chevron-right"></i></button>
+                    </div>`
+            }
+        };
+        
+        async function showPage(pageId) {
+            if (!pageConfigs[pageId]) return;
+            state.currentPage = pageId;
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                const isActive = btn.dataset.page === pageId;
+                btn.classList.toggle('bg-white', isActive); 
+                btn.classList.toggle('shadow-sm', isActive);
+                btn.classList.toggle('text-emerald-600', isActive);
+                btn.classList.toggle('text-gray-500', !isActive);
+                btn.classList.toggle('hover:text-gray-800', !isActive);
+            });
+            
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`${pageId}-page`).classList.remove('hidden');
+            document.getElementById('header-actions').innerHTML = pageConfigs[pageId].actions;
+            
+            const filterBar = document.getElementById('filter-bar');
+            if (pageId === 'kanban' || pageId === 'calendar') {
+                populateFilters();
+                filterBar.classList.remove('hidden');
+            } else {
+                filterBar.classList.add('hidden');
+            }
+
+            if (!state.pagesLoaded[pageId] || ['dashboard', 'kanban', 'calendar'].includes(pageId)) {
+                await fetchGlobalData();
+                await pageConfigs[pageId].loader();
+                state.pagesLoaded[pageId] = true;
+            }
+
+            attachHeaderEventListeners(pageId);
+        }
+
+        function attachHeaderEventListeners(pageId) {
+             if (pageId === 'kanban') {
+                document.getElementById('add-task-btn').addEventListener('click', criarNovaTarefa);
+            } else if (pageId === 'calendar') {
+                document.getElementById('prev-btn').addEventListener('click', () => navigateCalendar(-1));
+                document.getElementById('next-btn').addEventListener('click', () => navigateCalendar(1));
+                document.querySelectorAll('.calendar-view-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => setCalendarView(e.currentTarget.dataset.view));
+                });
+            }
+        }
+        
+        async function fetchGlobalData() {
+            const [channelsRes, statusRes, usersRes, tagsRes, taskTagsRes, taskFilesRes] = await Promise.all([
+                supabaseClient.from('mkt_channels').select('*'),
+                supabaseClient.from('mkt_status').select('*').order('order', { ascending: true }),
+                supabaseClient.from('mkt_users').select('id, name, photo_url'),
+                supabaseClient.from('mkt_tags').select('*'),
+                supabaseClient.from('mkt_task_tags').select('*'),
+                supabaseClient.from('mkt_task_files').select('*')
+            ]);
+            state.channels = channelsRes.data || [];
+            state.status = statusRes.data || [];
+            state.users = usersRes.data || [];
+            state.tags = tagsRes.data || [];
+            state.taskTags = taskTagsRes.data || [];
+            state.taskFiles = taskFilesRes.data || [];
+        }
+
+        function populateFilters() {
+            const userFilter = document.getElementById('user-filter');
+            const channelFilter = document.getElementById('channel-filter');
+            const tagFilter = document.getElementById('tag-filter');
+
+            userFilter.innerHTML = '<option value="all">Todos os Usuários</option>' + state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+            channelFilter.innerHTML = '<option value="all">Todos os Canais</option>' + state.channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            tagFilter.innerHTML = '<option value="all">Todas as Tags</option>' + state.tags.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+
+            userFilter.value = state.filters.userId;
+            channelFilter.value = state.filters.channelId;
+            tagFilter.value = state.filters.tagId;
+        }
+
+        document.getElementById('user-filter').addEventListener('change', (e) => applyFilter('userId', e.target.value));
+        document.getElementById('channel-filter').addEventListener('change', (e) => applyFilter('channelId', e.target.value));
+        document.getElementById('tag-filter').addEventListener('change', (e) => applyFilter('tagId', e.target.value));
+        document.getElementById('clear-filters-btn').addEventListener('click', clearFilters);
+
+        function applyFilter(key, value) {
+            state.filters[key] = value;
+            refreshCurrentView();
+        }
+
+        function clearFilters() {
+            state.filters = { userId: 'all', channelId: 'all', tagId: 'all' };
+            populateFilters();
+            refreshCurrentView();
+        }
+
+        function getFilteredTasks() {
+            const { userId, channelId, tagId } = state.filters;
+            let filtered = [...state.tasks];
+
+            if (userId !== 'all') {
+                filtered = filtered.filter(task => task.assignee_id == userId);
+            }
+            if (channelId !== 'all') {
+                filtered = filtered.filter(task => task.channel_id == channelId);
+            }
+            if (tagId !== 'all') {
+                const tasksWithTag = state.taskTags.filter(tt => tt.tag_id == tagId).map(tt => tt.task_id);
+                filtered = filtered.filter(task => tasksWithTag.includes(task.id));
+            }
+            return filtered;
+        }
+        
+        function refreshCurrentView() {
+            if (state.currentPage === 'kanban') {
+                renderizarQuadroKanban();
+            } else if (state.currentPage === 'calendar') {
+                renderizarCalendario();
+            }
+        }
+        
+        // =================================================================================
+        // LÓGICA DO DASHBOARD
+        // =================================================================================
+        async function carregarDadosDashboard() {
+            const { data, error } = await supabaseClient.from('mkt_tasks').select('status_id, due_date');
+            if (error) return handleSupabaseError(error, 'carregar dados do dashboard');
+            const completedStatusId = state.status.length > 0 ? state.status[state.status.length - 1].id : null;
+            const upcomingCount = data.filter(t => {
+                if(!t.due_date) return false;
+                const dueDate = new Date(t.due_date + "T00:00:00");
+                const today = new Date();
+                const nextWeek = new Date();
+                nextWeek.setDate(today.getDate() + 7);
+                today.setHours(0, 0, 0, 0);
+                return dueDate >= today && dueDate <= nextWeek;
+            }).length;
+
+            const dashboardContent = `
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border"><h3 class="text-gray-500 font-semibold">Total de Tarefas</h3><p class="text-4xl font-bold text-gray-800 mt-2">${data.length}</p></div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border"><h3 class="text-gray-500 font-semibold">Tarefas Concluídas</h3><p class="text-4xl font-bold text-gray-800 mt-2">${completedStatusId ? data.filter(t => t.status_id === completedStatusId).length : 0}</p></div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border"><h3 class="text-gray-500 font-semibold">Próximos Prazos (7 dias)</h3><p class="text-4xl font-bold text-gray-800 mt-2">${upcomingCount}</p></div>
+                </div>`;
+            document.getElementById('dashboard-page').innerHTML = dashboardContent;
+        }
+
+        // =================================================================================
+        // LÓGICA DO KANBAN
+        // =================================================================================
+        async function inicializarPaginaKanban() {
+            await fetchKanbanTasks();
+            renderizarQuadroKanban();
+        }
+        
+        async function fetchKanbanTasks() {
+            const { data, error } = await supabaseClient.from('mkt_tasks').select('*');
+            if (error) handleSupabaseError(error, 'buscar tarefas'); else state.tasks = data;
+        }
+        
+        function renderizarQuadroKanban() {
+            const kanbanBoard = document.getElementById('kanban-board');
+            const filteredTasks = getFilteredTasks();
+            kanbanBoard.innerHTML = '';
+            state.status.forEach(stat => {
+                const column = document.createElement('div');
+                column.className = 'kanban-column bg-slate-100 rounded-xl p-4 w-80 md:w-96 flex-shrink-0';
+                column.dataset.statusId = stat.id;
+                const tasksInColumn = filteredTasks.filter(task => task.status_id === stat.id);
+                column.innerHTML = `<div class="flex justify-between items-center mb-4"><h2 class="font-bold text-lg text-gray-700">${stat.name}</h2><span class="bg-slate-200 text-slate-600 text-sm font-semibold rounded-full px-2.5 py-0.5">${tasksInColumn.length}</span></div><div class="kanban-cards min-h-[100px] -mr-2 pr-2" data-column-id="${stat.id}">${tasksInColumn.map(task => criarCardTarefa(task)).join('')}</div>`;
+                kanbanBoard.appendChild(column);
+            });
+            initializeDragAndDrop();
+        }
+        
+        function criarCardTarefa(task) {
+            const assignee = state.users.find(u => u.id === task.assignee_id);
+            const dueDate = task.due_date ? new Date(task.due_date + 'T00:00:00') : null;
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            
+            let dateClass = 'text-gray-500';
+            let dateText = dueDate ? dueDate.toLocaleDateString('pt-BR', {day: '2-digit', month: 'short'}) : '';
+            if (dueDate) {
+                if (dueDate < today) { dateClass = 'text-red-600 font-semibold'; }
+                else if (dueDate.getTime() === today.getTime()) { dateClass = 'text-amber-600 font-semibold'; dateText += " (Hoje)";}
+            }
+            
+            const assigneeHtml = assignee 
+                ? `<img src="${assignee.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(assignee.name)}&background=random`}" title="${assignee.name}" class="w-8 h-8 rounded-full object-cover border-2 border-white">`
+                : '';
+                
+            const taskTagRelations = state.taskTags.filter(tt => tt.task_id === task.id);
+            const taskTags = taskTagRelations.map(tt => state.tags.find(t => t.id === tt.tag_id)).filter(Boolean);
+
+            const filesForTask = state.taskFiles.filter(f => f.task_id === task.id);
+            const firstImageFile = filesForTask.find(f => /\.(jpe?g|png|gif|webp)$/i.test(f.file_name));
+
+            let fileThumbnailHtml = '';
+            if (firstImageFile) {
+                const { data } = supabaseClient.storage.from('mk_files').getPublicUrl(firstImageFile.file_path);
+                fileThumbnailHtml = `<img src="${data.publicUrl}" class="w-full h-32 object-cover rounded-lg mb-3">`;
+            }
+
+            return `
+                <div class="kanban-card bg-white rounded-xl p-4 mb-4 border border-slate-200 shadow-sm hover:border-emerald-500 hover:shadow-md cursor-pointer transition-all duration-200" data-task-id="${task.id}">
+                    ${fileThumbnailHtml}
+                    <div class="flex flex-wrap gap-2 mb-2">
+                        ${taskTags.map(tag => {
+                            const color = generatePastelColor(tag.name);
+                            return `<span class="text-xs font-semibold px-2 py-0.5 rounded" style="background-color:${color}; color: ${getContrastColor(color)}">${tag.name}</span>`
+                        }).join('')}
+                    </div>
+                    <h3 class="font-bold text-gray-800 text-base leading-tight mb-3">${task.title}</h3>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex justify-between items-center text-sm">
+                        <div class="flex items-center gap-2 ${dateClass}">
+                            ${dueDate ? `<i class="far fa-calendar-alt opacity-70"></i> <span>${dateText}</span>` : '<span>Sem prazo</span>'}
+                        </div>
+                        <div class="flex items-center">
+                            ${assigneeHtml}
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        function initializeDragAndDrop() {
+            document.querySelectorAll('.kanban-cards').forEach(column => {
+                new Sortable(column, {
+                    group: 'kanban', animation: 150,
+                    onEnd: async (evt) => {
+                        const { item, to } = evt;
+                        const taskId = item.dataset.taskId;
+                        const newStatusId = to.dataset.columnId;
+                        const task = state.tasks.find(t => t.id == taskId);
+                        if(task && task.status_id != newStatusId) {
+                            const oldStatus = state.status.find(s => s.id === task.status_id).name;
+                            const newStatus = state.status.find(s => s.id == newStatusId).name;
+                            task.status_id = parseInt(newStatusId);
+                            await criarLog(taskId, `Status alterado de "${oldStatus}" para "${newStatus}".`);
+                            const { error } = await supabaseClient.from('mkt_tasks').update({ status_id: newStatusId }).eq('id', taskId);
+                            if (error) { handleSupabaseError(error, 'atualizar status da tarefa'); fetchKanbanTasks().then(renderizarQuadroKanban); }
+                        }
+                    }
+                });
+            });
+        }
+
+        // =================================================================================
+        // LÓGICA DO CALENDÁRIO
+        // =================================================================================
+        async function inicializarPaginaCalendario() {
+            renderizarCalendario();
+        }
+        
+        function navigateCalendar(direction) {
+            if (state.calendarView === 'month') {
+                state.currentDate.setMonth(state.currentDate.getMonth() + direction);
+            } else {
+                state.currentDate.setDate(state.currentDate.getDate() + (7 * direction));
+            }
+            renderizarCalendario();
+        }
+
+        function setCalendarView(view) {
+            state.calendarView = view;
+            document.querySelectorAll('.calendar-view-btn').forEach(btn => {
+                const isActive = btn.dataset.view === view;
+                btn.classList.toggle('bg-white', isActive);
+                btn.classList.toggle('shadow-sm', isActive);
+                btn.classList.toggle('text-emerald-600', isActive);
+                btn.classList.toggle('text-gray-500', !isActive);
+            });
+            renderizarCalendario();
+        }
+
+        function renderizarCalendario() {
+            const calendarPage = document.getElementById('calendar-page');
+            const display = document.getElementById('current-date-display');
+            const filteredTasks = getFilteredTasks();
+            
+            if (state.calendarView === 'month') {
+                renderMonthView(calendarPage, display, filteredTasks);
+            } else {
+                renderWeekView(calendarPage, display, filteredTasks);
+            }
+        }
+        
+        function renderMonthView(container, display, tasks) {
+            const month = state.currentDate.getMonth();
+            const year = state.currentDate.getFullYear();
+            display.textContent = `${state.currentDate.toLocaleString('pt-BR', { month: 'long' })} ${year}`;
+            
+            container.innerHTML = `
+                <div class="bg-white rounded-xl shadow-sm border h-full flex flex-col">
+                    <div class="grid grid-cols-7 text-center font-semibold text-gray-500 border-b">
+                        ${['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => `<div class="p-4">${day}</div>`).join('')}
+                    </div>
+                    <div id="calendar-grid" class="grid grid-cols-7 grid-rows-5 flex-grow"></div>
+                </div>`;
+            
+            const calendarGrid = document.getElementById('calendar-grid');
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+            const startDayOfWeek = firstDayOfMonth.getDay();
+
+            for (let i = 0; i < startDayOfWeek; i++) {
+                calendarGrid.innerHTML += `<div class="border-b border-r bg-slate-50"></div>`;
+            }
+
+            for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'calendar-day border-b border-r p-2 relative';
+                const dayDate = new Date(year, month, day);
+                let tasksHtml = tasks.filter(t => t.due_date && new Date(t.due_date + 'T00:00:00').toDateString() === dayDate.toDateString()).map(task => `<div class="calendar-task-item bg-emerald-100 text-emerald-800 text-xs p-1 rounded mt-1 truncate cursor-pointer hover:bg-emerald-200" data-task-id="${task.id}">${task.title}</div>`).join('');
+                
+                let dayNumberClass = "font-semibold text-right";
+                if (dayDate.toDateString() === new Date().toDateString()) {
+                     dayNumberClass += " bg-emerald-500 text-white rounded-full w-7 h-7 flex items-center justify-center absolute top-2 right-2";
+                     dayDiv.innerHTML = `<div class="${dayNumberClass}">${day}</div><div class="mt-10 space-y-1">${tasksHtml}</div>`;
+                } else {
+                     dayDiv.innerHTML = `<div class="${dayNumberClass}">${day}</div><div class="space-y-1">${tasksHtml}</div>`;
+                }
+                calendarGrid.appendChild(dayDiv);
+            }
+        }
+
+        function renderWeekView(container, display, tasks) {
+            const startOfWeek = new Date(state.currentDate);
+            startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(endOfWeek.getDate() + 6);
+
+            display.textContent = `${startOfWeek.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})} - ${endOfWeek.toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric'})}`;
+
+            const days = Array.from({length: 7}, (_, i) => {
+                const date = new Date(startOfWeek);
+                date.setDate(date.getDate() + i);
+                return date;
+            });
+
+            container.innerHTML = `
+                <div class="bg-white rounded-xl shadow-sm border h-full flex flex-col">
+                    <div class="grid grid-cols-7 text-center font-semibold text-gray-500 border-b">
+                        ${days.map(d => `<div class="p-4">${d.toLocaleDateString('pt-BR', {weekday: 'short'})} <span class="font-bold">${d.getDate()}</span></div>`).join('')}
+                    </div>
+                    <div id="calendar-grid" class="grid grid-cols-7 flex-grow">
+                        ${days.map(day => `
+                            <div class="border-r p-2">
+                                ${tasks.filter(t => t.due_date && new Date(t.due_date + 'T00:00:00').toDateString() === day.toDateString())
+                                    .map(task => `<div class="calendar-task-item bg-emerald-100 text-emerald-800 text-xs p-1 rounded mt-1 truncate cursor-pointer hover:bg-emerald-200" data-task-id="${task.id}">${task.title}</div>`)
+                                    .join('')
+                                }
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`;
+        }
+
+        // =================================================================================
+        // LÓGICA DOS MODAIS
+        // =================================================================================
+        const modals = { 
+            'task-modal': document.getElementById('task-modal'), 
+            'tags-modal': document.getElementById('tags-modal')
+        };
+        
+        function showModal(modalId) { 
+            const modal = modals[modalId];
+            if (!modal) return;
+            modal.classList.remove('hidden'); 
+            const modalBox = modal.querySelector('.modal-enter');
+            if (modalBox) {
+                setTimeout(() => modalBox.classList.add('modal-enter-active'), 10); 
+            }
+        }
+
+        function hideModal(modalId) { 
+            const modal = modals[modalId];
+            if (!modal) return;
+            const modalBox = modal.querySelector('.modal-enter');
+            if (modalBox) {
+                modalBox.classList.remove('modal-enter-active');
+            }
+            setTimeout(() => modal.classList.add('hidden'), 300); 
+        }
+
+        function configurarModais() {
+            Object.values(modals).forEach(modal => {
+                if (modal) {
+                    modal.addEventListener('click', e => { if (e.target === modal || e.target.closest('.btn-cancel')) { hideModal(modal.id); } });
+                }
+            });
+            document.getElementById('task-form').addEventListener('submit', salvarTarefa);
+            document.getElementById('delete-task-btn').addEventListener('click', deletarTarefa);
+            document.getElementById('add-new-tag-btn').addEventListener('click', adicionarTag);
+            
+            document.getElementById('file-list-container').addEventListener('click', (e) => {
+                const deleteButton = e.target.closest('.delete-file-btn');
+                if (deleteButton) {
+                    const fileId = Number(deleteButton.dataset.fileId);
+                    const filePath = deleteButton.dataset.filePath;
+                    deletarArquivo(fileId, filePath);
+                }
+            });
+
+            quillEditor = new Quill('#quill-editor', { theme: 'snow' });
+
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('task-file-input');
+
+            fileInput.addEventListener('change', () => {
+                const taskId = document.getElementById('task-id').value;
+                if (taskId) handleFileUpload(fileInput.files, Number(taskId));
+            });
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => dropZone.addEventListener(eventName, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            }));
+            ['dragenter', 'dragover'].forEach(eventName => dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over')));
+            ['dragleave', 'drop'].forEach(eventName => dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over')));
+            
+            dropZone.addEventListener('drop', (e) => {
+                const taskId = document.getElementById('task-id').value;
+                if (taskId) handleFileUpload(e.dataTransfer.files, Number(taskId));
+            });
+        }
+        
+        async function handleFileUpload(files, taskId) {
+            const dropZone = document.getElementById('drop-zone');
+            const dropZoneContent = document.getElementById('drop-zone-content');
+            const originalDropZoneContent = dropZoneContent.innerHTML;
+            
+            dropZone.classList.add('pointer-events-none');
+            dropZoneContent.innerHTML = `<i class="fas fa-spinner fa-spin text-2xl text-slate-400"></i><p class="mt-1 text-sm text-slate-600">Enviando ${files.length} arquivo(s)...</p>`;
+
+            const uploadPromises = Array.from(files).map(async (file) => {
+                const filePath = `${state.currentUser.id}/${taskId}/${Date.now()}-${file.name}`;
+                const { error: uploadError } = await supabaseClient.storage.from('mk_files').upload(filePath, file);
+
+                if (uploadError) {
+                    handleSupabaseError(uploadError, `upload de ${file.name}`);
+                    return null;
+                }
+
+                const { data: newFile, error: insertError } = await supabaseClient
+                    .from('mkt_task_files')
+                    .insert({ task_id: taskId, file_path: filePath, file_name: file.name })
+                    .select()
+                    .single();
+
+                if (insertError) {
+                    handleSupabaseError(insertError, `salvar anexo ${file.name}`);
+                    await supabaseClient.storage.from('mk_files').remove([filePath]);
+                    return null;
+                }
+                return newFile;
+            });
+
+            const newFiles = await Promise.all(uploadPromises);
+            const successfulUploads = newFiles.filter(Boolean);
+
+            if (successfulUploads.length > 0) {
+                state.taskFiles.push(...successfulUploads);
+            }
+            
+            renderTaskFiles(taskId);
+            renderizarQuadroKanban();
+            
+            dropZone.classList.remove('pointer-events-none');
+            dropZoneContent.innerHTML = originalDropZoneContent;
+            document.getElementById('task-file-input').value = '';
+        }
+
+        async function abrirModalTarefa(taskId = null) {
+            await fetchGlobalData();
+            const form = document.getElementById('task-form');
+            form.reset();
+            
+            editorContents = { ideia: null, roteiro: null, script: null, inspiracoes: null };
+            document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('.editor-tab[data-tab="ideia"]').classList.add('active');
+            currentEditorTab = 'ideia';
+            if (quillEditor) quillEditor.setContents('');
+
+            const channelSelect = document.getElementById('task-channel');
+            channelSelect.innerHTML = state.channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            const assigneeSelect = document.getElementById('task-assignee');
+            assigneeSelect.innerHTML = '<option value="">Ninguém</option>' + state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+
+            const logsContainer = document.getElementById('task-logs-container');
+            logsContainer.innerHTML = '';
+            
+            const modalTitle = document.getElementById('modal-title');
+            
+            const task = state.tasks.find(t => t.id == taskId);
+            if (!task) {
+                console.error("Tarefa não encontrada!");
+                return;
+            }
+
+            modalTitle.textContent = `Editar: ${task.title}`;
+            
+            document.getElementById('task-id').value = task.id;
+            document.getElementById('task-title').value = task.title;
+            channelSelect.value = task.channel_id;
+            assigneeSelect.value = task.assignee_id || '';
+            document.getElementById('task-due-date').value = task.due_date;
+            if (task.description_data && quillEditor) {
+                editorContents = { ...editorContents, ...task.description_data };
+                quillEditor.setContents(editorContents[currentEditorTab] || '');
+            }
+            document.getElementById('delete-task-btn').classList.remove('hidden');
+
+            renderTaskFiles(taskId);
+            renderTaskTags(taskId);
+            
+            const { data: logs } = await supabaseClient.from('mkt_logs').select('*, mkt_users(name)').eq('task_id', taskId).order('created_at', { ascending: false });
+            if (logs && logs.length > 0) {
+                 logsContainer.innerHTML = logs.map(log => `
+                    <div class="text-xs pb-2 border-b last:border-b-0">
+                        <p class="text-gray-700">${log.description}</p>
+                        <p class="text-gray-400 mt-1">${log.mkt_users.name} - ${formatLogDate(log.created_at)}</p>
+                    </div>
+                `).join('');
+            } else {
+                logsContainer.innerHTML = '<p class="text-sm text-gray-500">Nenhum histórico.</p>';
+            }
+            
+            showModal('task-modal');
+        }
+        
+        function renderTaskFiles(taskId) {
+            const container = document.getElementById('file-list-container');
+            const numericTaskId = Number(taskId);
+            const filesForTask = state.taskFiles.filter(f => f.task_id === numericTaskId);
+
+            if (filesForTask.length === 0) {
+                container.innerHTML = '<p class="text-xs text-center text-slate-400">Nenhum anexo nesta tarefa.</p>';
+                return;
+            }
+
+            container.innerHTML = filesForTask.map(file => {
+                const { data } = supabaseClient.storage.from('mk_files').getPublicUrl(file.file_path);
+                const isImage = /\.(jpe?g|png|gif|webp)$/i.test(file.file_name);
+                return `
+                    <div class="file-item flex items-center justify-between p-2 hover:bg-slate-100 rounded-md">
+                        <a href="${data.publicUrl}" target="_blank" class="flex items-center gap-3 truncate">
+                            ${isImage ? `<img src="${data.publicUrl}" class="w-8 h-8 object-cover rounded-sm">` : '<i class="fas fa-file-alt text-2xl text-slate-400"></i>'}
+                            <span class="text-sm font-medium text-slate-700 truncate">${file.file_name}</span>
+                        </a>
+                        <button type="button" class="delete-file-btn text-slate-400 hover:text-red-500 opacity-0 transition-opacity" data-file-id="${file.id}" data-file-path="${file.file_path}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>`;
+            }).join('');
+        }
+
+        async function deletarArquivo(fileId, filePath) {
+            const fileToDelete = state.taskFiles.find(f => f.id === fileId);
+            if (!fileToDelete) return;
+            const taskId = fileToDelete.task_id;
+
+            const { error: storageError } = await supabaseClient.storage.from('mk_files').remove([filePath]);
+            if (storageError) return handleSupabaseError(storageError, 'deletar do storage');
+
+            const { error: dbError } = await supabaseClient.from('mkt_task_files').delete().eq('id', fileId);
+            if (dbError) return handleSupabaseError(dbError, 'deletar do banco');
+            
+            state.taskFiles = state.taskFiles.filter(f => f.id !== fileId);
+            
+            renderTaskFiles(taskId);
+            renderizarQuadroKanban();
+            showToast('Anexo excluído com sucesso.');
+        }
+
+        async function criarNovaTarefa() {
+            const { data, error } = await supabaseClient
+                .from('mkt_tasks')
+                .insert({ title: 'Nova Tarefa (rascunho)', status_id: state.status[0].id })
+                .select()
+                .single();
+            
+            if (error) {
+                handleSupabaseError(error, 'criar rascunho de tarefa');
+                return;
+            }
+            state.tasks.push(data);
+            renderizarQuadroKanban();
+            abrirModalTarefa(data.id);
+        }
+
+        async function salvarTarefa(e) {
+            e.preventDefault();
+            const saveBtn = document.getElementById('save-task-btn');
+            toggleButtonLoading(saveBtn, true);
+
+            try {
+                const id = document.getElementById('task-id').value;
+                editorContents[currentEditorTab] = quillEditor.getContents();
+
+                const taskData = {
+                    title: document.getElementById('task-title').value,
+                    channel_id: document.getElementById('task-channel').value,
+                    assignee_id: document.getElementById('task-assignee').value || null,
+                    due_date: document.getElementById('task-due-date').value || null,
+                    description_data: editorContents
+                };
+
+                const { data: savedData, error } = await supabaseClient.from('mkt_tasks').update(taskData).eq('id', id).select().single();
+
+                if (error) {
+                    handleSupabaseError(error, 'salvar tarefa');
+                } else if (savedData) {
+                    await salvarTaskTags(savedData.id);
+                    const index = state.tasks.findIndex(t => t.id == id);
+                    if (index > -1) state.tasks[index] = savedData;
+
+                    renderizarQuadroKanban();
+                    hideModal('task-modal');
+                    showToast('Tarefa atualizada!');
+                }
+            } catch(err) {
+                handleSupabaseError(err, 'salvar tarefa');
+            } finally {
+                toggleButtonLoading(saveBtn, false);
+            }
+        }
+
+        async function deletarTarefa() {
+            const id = document.getElementById('task-id').value;
+            if (!id || !window.confirm('Tem a certeza que deseja excluir esta tarefa? Esta ação é irreversível.')) return;
+            
+            const filesToDelete = state.taskFiles.filter(f => f.task_id == id);
+            if (filesToDelete.length > 0) {
+                const filePaths = filesToDelete.map(f => f.file_path);
+                await supabaseClient.storage.from('mk_files').remove(filePaths);
+            }
+
+            const { error } = await supabaseClient.from('mkt_tasks').delete().eq('id', id);
+            
+            if (error) handleSupabaseError(error, 'excluir tarefa');
+            else {
+                state.tasks = state.tasks.filter(t => t.id != id);
+                renderizarQuadroKanban();
+                hideModal('task-modal');
+                showToast("Tarefa excluída com sucesso.");
+            }
+        }
+        
+        async function criarLog(taskId, description) {
+            await supabaseClient.from('mkt_logs').insert([{ task_id: taskId, user_id: state.currentUser.id, description }]);
+        }
+        
+        async function salvarTaskTags(taskId) {
+            const tagContainer = document.getElementById('task-tags-container');
+            const selectedTagIds = Array.from(tagContainer.querySelectorAll('.tag-pill-active')).map(el => parseInt(el.dataset.tagId));
+            const existingTagIds = state.taskTags.filter(tt => tt.task_id === taskId).map(tt => tt.tag_id);
+
+            const tagsToAdd = selectedTagIds.filter(id => !existingTagIds.includes(id));
+            const tagsToRemove = existingTagIds.filter(id => !selectedTagIds.includes(id));
+
+            if (tagsToRemove.length > 0) {
+                await supabaseClient.from('mkt_task_tags').delete().eq('task_id', taskId).in('tag_id', tagsToRemove);
+            }
+            if (tagsToAdd.length > 0) {
+                const newRelations = tagsToAdd.map(tag_id => ({ task_id: taskId, tag_id }));
+                await supabaseClient.from('mkt_task_tags').insert(newRelations);
+            }
+            await fetchTaskTags();
+        }
+
+        async function fetchTaskTags() {
+            const { data } = await supabaseClient.from('mkt_task_tags').select('*');
+            state.taskTags = data || [];
+        }
+
+        // =================================================================================
+        // MODAIS DE TAGS
+        // =================================================================================
+        async function abrirModalTags() {
+            await carregarTagsNoModal();
+            showModal('tags-modal');
+        }
+
+        async function carregarTagsNoModal() {
+            const container = document.getElementById('tags-list-container');
+            container.innerHTML = state.tags.map(tag => `
+                <div class="flex justify-between items-center p-3 hover:bg-slate-100 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <span class="w-4 h-4 rounded-full" style="background-color: ${generatePastelColor(tag.name)};"></span>
+                        <span class="font-medium text-gray-700">${tag.name}</span>
+                    </div>
+                    <button class="delete-tag-btn text-gray-400 hover:text-red-500" data-id="${tag.id}"><i class="fas fa-trash-alt"></i></button>
+                </div>`).join('');
+            
+            document.querySelectorAll('.delete-tag-btn').forEach(btn => btn.addEventListener('click', (e) => deletarTag(e.currentTarget.dataset.id)));
+        }
+        
+        async function adicionarTag() {
+            const nameInput = document.getElementById('new-tag-name');
+            const name = nameInput.value.trim();
+            if (!name) return;
+
+            const { data, error } = await supabaseClient.from('mkt_tags').insert([{ name }]).select().single();
+            if (error) handleSupabaseError(error, 'adicionar tag');
+            else {
+                state.tags.push(data);
+                nameInput.value = '';
+                await carregarTagsNoModal();
+            }
+        }
+        
+        async function deletarTag(id) {
+            if (!confirm('Tem certeza? Excluir uma tag irá removê-la de todas as tarefas.')) return;
+            const tagId = parseInt(id);
+            await supabaseClient.from('mkt_task_tags').delete().eq('tag_id', tagId);
+            const { error } = await supabaseClient.from('mkt_tags').delete().eq('id', tagId);
+            if (error) handleSupabaseError(error, 'excluir tag');
+            else {
+                state.tags = state.tags.filter(t => t.id !== tagId);
+                await carregarTagsNoModal();
+            }
+        }
+
+        function renderTaskTags(taskId) {
+            const container = document.getElementById('task-tags-container');
+            const dropdown = document.getElementById('tag-select-dropdown');
+            const addTagBtn = document.getElementById('add-tag-btn');
+
+            const taskTagIds = state.taskTags.filter(tt => tt.task_id === taskId).map(tt => tt.tag_id);
+            const assignedTags = state.tags.filter(t => taskTagIds.includes(t.id));
+            const availableTags = state.tags.filter(t => !taskTagIds.includes(t.id));
+
+            container.innerHTML = assignedTags.map(tag => {
+                const color = generatePastelColor(tag.name);
+                return `<div class="tag-pill-active flex items-center gap-2 text-xs font-semibold px-2 py-1 rounded" style="background-color:${color}; color: ${getContrastColor(color)}" data-tag-id="${tag.id}">
+                            <span>${tag.name}</span>
+                            <button type="button" class="remove-tag-btn text-current hover:opacity-75">&times;</button>
+                        </div>`;
+            }).join('');
+            
+            dropdown.innerHTML = availableTags.map(tag => `<a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-100" data-tag-id="${tag.id}">${tag.name}</a>`).join('');
+
+            addTagBtn.onclick = () => dropdown.classList.toggle('hidden');
+            
+            dropdown.onclick = async (e) => {
+                e.preventDefault();
+                const tagId = e.target.dataset.tagId;
+                if (tagId) {
+                    await supabaseClient.from('mkt_task_tags').insert({ task_id: taskId, tag_id: tagId });
+                    await fetchTaskTags();
+                    renderTaskTags(taskId);
+                }
+            };
+
+            container.onclick = async (e) => {
+                if (e.target.classList.contains('remove-tag-btn')) {
+                    const tagId = e.target.parentElement.dataset.tagId;
+                    await supabaseClient.from('mkt_task_tags').delete().match({ task_id: taskId, tag_id: tagId });
+                    await fetchTaskTags();
+                    renderTaskTags(taskId);
+                }
+            };
+        }
+    </script>
+</body>
+</html>
+
