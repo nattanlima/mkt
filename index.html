@@ -718,9 +718,8 @@
                 </div>
             `;
 
-            if (!ideaQuillEditor) {
-                ideaQuillEditor = new Quill('#idea-editor-quill', { theme: 'snow', placeholder: 'Comece a escrever...' });
-            }
+            // CORREÇÃO: Re-inicializa o editor do Quill sempre que a página de ideias é carregada
+            ideaQuillEditor = new Quill('#idea-editor-quill', { theme: 'snow', placeholder: 'Comece a escrever...' });
 
             await fetchIdeas();
             renderIdeiasSidebar();
