@@ -5,15 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Marketing Hub | CX Redesign</title>
     
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- Fontes e Ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
+    <!-- Biblioteca Drag-and-Drop -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
+    <!-- Editor de Texto Avançado (Quill.js) -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     
@@ -26,8 +30,25 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
-        #main-content-area { height: calc(100vh - 128px); overflow-y: auto; } /* Ajustado para a barra de filtros */
-        .kanban-board-container { height: 100%; overflow-x: auto; overflow-y: hidden; }
+        /* ===== CORREÇÃO DA BARRA DE ROLAGEM ===== */
+        #app-container {
+            height: 100vh;
+        }
+        #main-content-area {
+            flex-grow: 1;
+            overflow: hidden; /* O overflow é gerenciado pelos filhos */
+        }
+        #kanban-page {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .kanban-board-container {
+            flex-grow: 1; /* Faz o quadro crescer para preencher o espaço */
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+        /* ========================================= */
         .kanban-column { height: 100%; display: flex; flex-direction: column; }
         .kanban-cards { flex-grow: 1; overflow-y: auto; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -57,6 +78,7 @@
 </head>
 <body class="h-full">
 
+    <!-- ECRÃ DE LOGIN ATUALIZADO -->
     <div id="login-screen" class="flex items-center justify-center h-screen bg-gradient-to-br from-slate-50 to-slate-200 p-4">
         <div class="w-full max-w-sm p-8 space-y-8 bg-white rounded-2xl shadow-xl">
             <div class="text-center">
@@ -83,6 +105,7 @@
         </div>
     </div>
 
+    <!-- APLICAÇÃO PRINCIPAL ATUALIZADA -->
     <div id="app-container" class="hidden h-full flex flex-col">
         <header class="bg-white/80 backdrop-blur-sm p-4 flex justify-between items-center border-b border-slate-200 flex-shrink-0">
             <div class="flex items-center space-x-4">
@@ -98,22 +121,31 @@
                 <div id="header-actions" class="flex items-center space-x-2 sm:space-x-4"></div>
                 <div class="relative">
                     <button id="user-menu-btn" class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 overflow-hidden"></button>
-                    <div id="logout-popup" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border py-2 z-10">
+                    <div id="logout-popup" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border py-1 z-10">
                         <div class="px-4 py-2 border-b">
                             <p id="popup-user-name" class="font-bold text-gray-800 truncate"></p>
                             <p class="text-sm text-gray-500 truncate" id="popup-user-role"></p>
                         </div>
-                        <a href="#" id="settings-btn" class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-slate-100 transition-colors">
-                            <i class="fas fa-cog w-4 text-center"></i>Configurações
-                        </a>
-                        <a href="#" id="logout-btn" class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-slate-100 hover:text-red-600 transition-colors">
-                            <i class="fas fa-sign-out-alt w-4 text-center"></i>Sair da Conta
-                        </a>
+                        <div class="py-1">
+                            <!-- OPÇÃO DE CONFIGURAÇÕES CORRIGIDA -->
+                            <a href="#" id="settings-btn" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 transition-colors">
+                                <i class="fas fa-cog fa-fw w-4 text-center text-gray-400"></i>
+                                <span>Configurações</span>
+                            </a>
+                        </div>
+                        <div class="border-t border-slate-100"></div>
+                        <div class="py-1">
+                             <a href="#" id="logout-btn" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 hover:text-red-600 transition-colors">
+                                <i class="fas fa-sign-out-alt fa-fw w-4 text-center text-gray-400"></i>
+                                <span>Sair da Conta</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </header>
 
+        <!-- BARRA DE FILTROS DINÂMICOS -->
         <div id="filter-bar" class="bg-white p-3 border-b border-slate-200 flex-shrink-0 hidden">
             <div class="flex items-center gap-4">
                 <span class="font-semibold text-sm text-slate-600">Filtar por:</span>
@@ -137,6 +169,7 @@
         </main>
     </div>
 
+    <!-- MODAIS -->
     <div id="task-modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-20">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl flex flex-col modal-enter">
             <form id="task-form">
@@ -182,7 +215,8 @@
                                 <div id="add-tag-wrapper" class="relative">
                                     <button type="button" id="add-tag-btn" class="text-xs font-semibold text-emerald-600 hover:text-emerald-800">+ Adicionar Tag</button>
                                     <div id="tag-select-dropdown" class="tag-select-dropdown hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-10">
-                                        </div>
+                                        <!-- Tags disponíveis serão inseridas aqui -->
+                                    </div>
                                 </div>
                             </div>
                             <div id="task-tags-container" class="p-2 border rounded-lg bg-slate-50 flex flex-wrap gap-2 min-h-[40px]"></div>
@@ -290,13 +324,29 @@
             const date = new Date(dateString);
             return `${date.toLocaleDateString('pt-BR')} às ${date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
         }
+        
+        // ===== FUNÇÃO DE CORRIGIDA =====
+        function getContrastColor(colorString) {
+            if (!colorString) return '#020617';
 
-        function getContrastColor(hexcolor){
-            if(!hexcolor) return '#020617';
-            if (hexcolor.slice(0, 1) === '#') { hexcolor = hexcolor.slice(1); }
-            const r = parseInt(hexcolor.substr(0,2),16), g = parseInt(hexcolor.substr(2,2),16), b = parseInt(hexcolor.substr(4,2),16);
-            const yiq = ((r*299)+(g*587)+(b*114))/1000;
-            return (yiq >= 128) ? '#020617' : 'white';
+            // Se for uma cor HSL da nossa função, sabemos que é clara (Lightness = 85%),
+            // então retornamos texto escuro para garantir o contraste.
+            if (colorString.startsWith('hsl')) {
+                return '#020617';
+            }
+
+            // Caso contrário, processamos como um código hexadecimal.
+            let hex = colorString.slice(1);
+            if (hex.length === 3) {
+                hex = hex.split('').map(char => char + char).join('');
+            }
+
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            
+            const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+            return (yiq >= 128) ? '#020617' : '#FFFFFF';
         }
 
         function generatePastelColor(seed) {
@@ -389,15 +439,26 @@
             }
             document.getElementById('popup-user-name').textContent = user.name;
             document.getElementById('popup-user-role').textContent = user.role;
-
-            userMenuBtn.addEventListener('click', () => logoutPopup.classList.toggle('hidden'));
+            
+            // Listeners para o menu
+            userMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                logoutPopup.classList.toggle('hidden');
+            });
             document.getElementById('logout-btn').addEventListener('click', handleLogout);
 
-            // NOVO EVENT LISTENER PARA O BOTÃO DE CONFIGURAÇÕES
+            // EVENT LISTENER CORRIGIDO PARA O BOTÃO DE CONFIGURAÇÕES
             document.getElementById('settings-btn').addEventListener('click', (e) => {
                 e.preventDefault();
-                logoutPopup.classList.add('hidden'); // Esconde o menu de usuário
-                abrirModalTags(); // Abre o modal de gerenciamento de tags
+                logoutPopup.classList.add('hidden');
+                abrirModalTags();
+            });
+            
+            // Fechar o menu se clicar fora
+            document.addEventListener('click', (e) => {
+                if (!logoutPopup.classList.contains('hidden') && !userMenuBtn.contains(e.target)) {
+                    logoutPopup.classList.add('hidden');
+                }
             });
         }
 
@@ -447,6 +508,7 @@
             
             const filterBar = document.getElementById('filter-bar');
             if (pageId === 'kanban' || pageId === 'calendar') {
+                await fetchGlobalData();
                 populateFilters();
                 filterBar.classList.remove('hidden');
             } else {
@@ -464,10 +526,13 @@
 
         function attachHeaderEventListeners(pageId) {
              if (pageId === 'kanban') {
-                document.getElementById('add-task-btn').addEventListener('click', criarNovaTarefa);
+                const addTaskBtn = document.getElementById('add-task-btn');
+                if(addTaskBtn) addTaskBtn.addEventListener('click', criarNovaTarefa);
             } else if (pageId === 'calendar') {
-                document.getElementById('prev-btn').addEventListener('click', () => navigateCalendar(-1));
-                document.getElementById('next-btn').addEventListener('click', () => navigateCalendar(1));
+                const prevBtn = document.getElementById('prev-btn');
+                const nextBtn = document.getElementById('next-btn');
+                if (prevBtn) prevBtn.addEventListener('click', () => navigateCalendar(-1));
+                if (nextBtn) nextBtn.addEventListener('click', () => navigateCalendar(1));
                 document.querySelectorAll('.calendar-view-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => setCalendarView(e.currentTarget.dataset.view));
                 });
@@ -510,35 +575,36 @@
         document.getElementById('tag-filter').addEventListener('change', (e) => applyFilter('tagId', e.target.value));
         document.getElementById('clear-filters-btn').addEventListener('click', clearFilters);
 
-        function applyFilter(key, value) {
+        async function applyFilter(key, value) {
             state.filters[key] = value;
-            refreshCurrentView();
+            await refreshCurrentView();
         }
 
-        function clearFilters() {
+        async function clearFilters() {
             state.filters = { userId: 'all', channelId: 'all', tagId: 'all' };
             populateFilters();
-            refreshCurrentView();
+            await refreshCurrentView();
         }
 
         function getFilteredTasks() {
             const { userId, channelId, tagId } = state.filters;
             let filtered = [...state.tasks];
 
-            if (userId !== 'all') {
+            if (userId !== 'all' && userId) {
                 filtered = filtered.filter(task => task.assignee_id == userId);
             }
-            if (channelId !== 'all') {
+            if (channelId !== 'all' && channelId) {
                 filtered = filtered.filter(task => task.channel_id == channelId);
             }
-            if (tagId !== 'all') {
+            if (tagId !== 'all' && tagId) {
                 const tasksWithTag = state.taskTags.filter(tt => tt.tag_id == tagId).map(tt => tt.task_id);
                 filtered = filtered.filter(task => tasksWithTag.includes(task.id));
             }
             return filtered;
         }
         
-        function refreshCurrentView() {
+        async function refreshCurrentView() {
+            await fetchKanbanTasks();
             if (state.currentPage === 'kanban') {
                 renderizarQuadroKanban();
             } else if (state.currentPage === 'calendar') {
@@ -587,6 +653,7 @@
         
         function renderizarQuadroKanban() {
             const kanbanBoard = document.getElementById('kanban-board');
+            if(!kanbanBoard) return;
             const filteredTasks = getFilteredTasks();
             kanbanBoard.innerHTML = '';
             state.status.forEach(stat => {
@@ -633,7 +700,7 @@
                     ${fileThumbnailHtml}
                     <div class="flex flex-wrap gap-2 mb-2">
                         ${taskTags.map(tag => {
-                            const color = generatePastelColor(tag.name);
+                            const color = tag.color || generatePastelColor(tag.name);
                             return `<span class="text-xs font-semibold px-2 py-0.5 rounded" style="background-color:${color}; color: ${getContrastColor(color)}">${tag.name}</span>`
                         }).join('')}
                     </div>
@@ -714,7 +781,7 @@
         function renderMonthView(container, display, tasks) {
             const month = state.currentDate.getMonth();
             const year = state.currentDate.getFullYear();
-            display.textContent = `${state.currentDate.toLocaleString('pt-BR', { month: 'long' })} ${year}`;
+            if(display) display.textContent = `${state.currentDate.toLocaleString('pt-BR', { month: 'long' })} ${year}`;
             
             container.innerHTML = `
                 <div class="bg-white rounded-xl shadow-sm border h-full flex flex-col">
@@ -739,12 +806,12 @@
                 const dayDate = new Date(year, month, day);
                 let tasksHtml = tasks.filter(t => t.due_date && new Date(t.due_date + 'T00:00:00').toDateString() === dayDate.toDateString()).map(task => `<div class="calendar-task-item bg-emerald-100 text-emerald-800 text-xs p-1 rounded mt-1 truncate cursor-pointer hover:bg-emerald-200" data-task-id="${task.id}">${task.title}</div>`).join('');
                 
-                let dayNumberClass = "font-semibold text-right";
+                let dayNumberClass = "font-semibold";
                 if (dayDate.toDateString() === new Date().toDateString()) {
-                     dayNumberClass += " bg-emerald-500 text-white rounded-full w-7 h-7 flex items-center justify-center absolute top-2 right-2";
-                     dayDiv.innerHTML = `<div class="${dayNumberClass}">${day}</div><div class="mt-10 space-y-1">${tasksHtml}</div>`;
+                     dayNumberClass += " bg-emerald-500 text-white rounded-full w-7 h-7 flex items-center justify-center";
+                     dayDiv.innerHTML = `<div class="flex justify-end"><div class="${dayNumberClass}">${day}</div></div><div class="space-y-1">${tasksHtml}</div>`;
                 } else {
-                     dayDiv.innerHTML = `<div class="${dayNumberClass}">${day}</div><div class="space-y-1">${tasksHtml}</div>`;
+                     dayDiv.innerHTML = `<div class="text-right ${dayNumberClass}">${day}</div><div class="space-y-1">${tasksHtml}</div>`;
                 }
                 calendarGrid.appendChild(dayDiv);
             }
@@ -756,7 +823,7 @@
             const endOfWeek = new Date(startOfWeek);
             endOfWeek.setDate(endOfWeek.getDate() + 6);
 
-            display.textContent = `${startOfWeek.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})} - ${endOfWeek.toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric'})}`;
+            if(display) display.textContent = `${startOfWeek.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'})} - ${endOfWeek.toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric'})}`;
 
             const days = Array.from({length: 7}, (_, i) => {
                 const date = new Date(startOfWeek);
@@ -1055,7 +1122,7 @@
 
         async function deletarTarefa() {
             const id = document.getElementById('task-id').value;
-            if (!id || !window.confirm('Tem a certeza que deseja excluir esta tarefa? Esta ação é irreversível.')) return;
+            if (!id || !confirm('Tem a certeza que deseja excluir esta tarefa? Esta ação é irreversível.')) return;
             
             const filesToDelete = state.taskFiles.filter(f => f.task_id == id);
             if (filesToDelete.length > 0) {
@@ -1105,6 +1172,7 @@
         // MODAIS DE TAGS
         // =================================================================================
         async function abrirModalTags() {
+            await fetchGlobalData();
             await carregarTagsNoModal();
             showModal('tags-modal');
         }
@@ -1114,7 +1182,7 @@
             container.innerHTML = state.tags.map(tag => `
                 <div class="flex justify-between items-center p-3 hover:bg-slate-100 rounded-lg">
                     <div class="flex items-center gap-3">
-                        <span class="w-4 h-4 rounded-full" style="background-color: ${generatePastelColor(tag.name)};"></span>
+                        <span class="w-4 h-4 rounded-full" style="background-color: ${tag.color || generatePastelColor(tag.name)};"></span>
                         <span class="font-medium text-gray-700">${tag.name}</span>
                     </div>
                     <button class="delete-tag-btn text-gray-400 hover:text-red-500" data-id="${tag.id}"><i class="fas fa-trash-alt"></i></button>
@@ -1159,7 +1227,7 @@
             const availableTags = state.tags.filter(t => !taskTagIds.includes(t.id));
 
             container.innerHTML = assignedTags.map(tag => {
-                const color = generatePastelColor(tag.name);
+                const color = tag.color || generatePastelColor(tag.name);
                 return `<div class="tag-pill-active flex items-center gap-2 text-xs font-semibold px-2 py-1 rounded" style="background-color:${color}; color: ${getContrastColor(color)}" data-tag-id="${tag.id}">
                             <span>${tag.name}</span>
                             <button type="button" class="remove-tag-btn text-current hover:opacity-75">&times;</button>
