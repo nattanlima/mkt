@@ -127,7 +127,6 @@
                             <p class="text-sm text-gray-500 truncate" id="popup-user-role"></p>
                         </div>
                         <div class="py-1">
-                            <!-- OPÇÃO DE CONFIGURAÇÕES CORRIGIDA -->
                             <a href="#" id="settings-btn" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 transition-colors">
                                 <i class="fas fa-cog fa-fw w-4 text-center text-gray-400"></i>
                                 <span>Configurações</span>
@@ -325,26 +324,18 @@
             return `${date.toLocaleDateString('pt-BR')} às ${date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
         }
         
-        // ===== FUNÇÃO DE CORRIGIDA =====
         function getContrastColor(colorString) {
             if (!colorString) return '#020617';
-
-            // Se for uma cor HSL da nossa função, sabemos que é clara (Lightness = 85%),
-            // então retornamos texto escuro para garantir o contraste.
             if (colorString.startsWith('hsl')) {
-                return '#020617';
+                return '#020617'; // Cores HSL geradas são sempre claras
             }
-
-            // Caso contrário, processamos como um código hexadecimal.
             let hex = colorString.slice(1);
             if (hex.length === 3) {
                 hex = hex.split('').map(char => char + char).join('');
             }
-
             const r = parseInt(hex.substring(0, 2), 16);
             const g = parseInt(hex.substring(2, 4), 16);
             const b = parseInt(hex.substring(4, 6), 16);
-            
             const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
             return (yiq >= 128) ? '#020617' : '#FFFFFF';
         }
@@ -424,6 +415,14 @@
                 }
             });
 
+            // CORREÇÃO: Adicionando listener para tasks no calendário
+            document.getElementById('calendar-page').addEventListener('click', (e) => {
+                const taskItem = e.target.closest('.calendar-task-item');
+                if (taskItem && taskItem.dataset.taskId) {
+                    abrirModalTarefa(Number(taskItem.dataset.taskId));
+                }
+            });
+
             await showPage('dashboard');
         }
 
@@ -440,21 +439,17 @@
             document.getElementById('popup-user-name').textContent = user.name;
             document.getElementById('popup-user-role').textContent = user.role;
             
-            // Listeners para o menu
             userMenuBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 logoutPopup.classList.toggle('hidden');
             });
             document.getElementById('logout-btn').addEventListener('click', handleLogout);
-
-            // EVENT LISTENER CORRIGIDO PARA O BOTÃO DE CONFIGURAÇÕES
             document.getElementById('settings-btn').addEventListener('click', (e) => {
                 e.preventDefault();
                 logoutPopup.classList.add('hidden');
                 abrirModalTags();
             });
             
-            // Fechar o menu se clicar fora
             document.addEventListener('click', (e) => {
                 if (!logoutPopup.classList.contains('hidden') && !userMenuBtn.contains(e.target)) {
                     logoutPopup.classList.add('hidden');
@@ -1169,7 +1164,7 @@
         }
 
         // =================================================================================
-        // MODAIS DE TAGS
+        // MODAIS DE TAGS - CORRIGIDO
         // =================================================================================
         async function abrirModalTags() {
             await fetchGlobalData();
@@ -1192,28 +1187,63 @@
         }
         
         async function adicionarTag() {
+            const addBtn = document.getElementById('add-new-tag-btn');
             const nameInput = document.getElementById('new-tag-name');
             const name = nameInput.value.trim();
-            if (!name) return;
+            if (!name) {
+                showToast('Por favor, insira um nome para a tag.');
+                return;
+            }
 
-            const { data, error } = await supabaseClient.from('mkt_tags').insert([{ name }]).select().single();
-            if (error) handleSupabaseError(error, 'adicionar tag');
-            else {
-                state.tags.push(data);
-                nameInput.value = '';
-                await carregarTagsNoModal();
+            toggleButtonLoading(addBtn, true);
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('mkt_tags')
+                    .insert([{ name: name, color: generatePastelColor(name) }])
+                    .select();
+
+                if (error) {
+                    if (error.code === '23505') { // Código de violação de chave única do PostgreSQL
+                         handleSupabaseError({ message: `A tag "${name}" já existe.` }, 'adicionar tag');
+                    } else {
+                         handleSupabaseError(error, 'adicionar tag');
+                    }
+                } else if (data && data.length > 0) {
+                    state.tags.push(data[0]);
+                    nameInput.value = '';
+                    await carregarTagsNoModal();
+                    showToast('Tag adicionada com sucesso!');
+                }
+            } catch (err) {
+                 handleSupabaseError(err, 'adicionar tag');
+            } finally {
+                toggleButtonLoading(addBtn, false);
             }
         }
         
         async function deletarTag(id) {
             if (!confirm('Tem certeza? Excluir uma tag irá removê-la de todas as tarefas.')) return;
+            
             const tagId = parseInt(id);
-            await supabaseClient.from('mkt_task_tags').delete().eq('tag_id', tagId);
-            const { error } = await supabaseClient.from('mkt_tags').delete().eq('id', tagId);
-            if (error) handleSupabaseError(error, 'excluir tag');
-            else {
+            
+            const { error: relationError } = await supabaseClient.from('mkt_task_tags').delete().eq('tag_id', tagId);
+            if (relationError) {
+                handleSupabaseError(relationError, 'excluir relações da tag');
+                return;
+            }
+
+            const { error: tagError } = await supabaseClient.from('mkt_tags').delete().eq('id', tagId);
+            if (tagError) {
+                handleSupabaseError(tagError, 'excluir tag');
+            } else {
                 state.tags = state.tags.filter(t => t.id !== tagId);
+                state.taskTags = state.taskTags.filter(tt => tt.tag_id !== tagId);
                 await carregarTagsNoModal();
+                showToast('Tag removida com sucesso!');
+                if (state.currentPage === 'kanban' || state.currentPage === 'calendar') {
+                   refreshCurrentView();
+                }
             }
         }
 
@@ -1249,8 +1279,9 @@
             };
 
             container.onclick = async (e) => {
-                if (e.target.classList.contains('remove-tag-btn')) {
-                    const tagId = e.target.parentElement.dataset.tagId;
+                if (e.target.classList.contains('remove-tag-btn') || e.target.parentElement.classList.contains('remove-tag-btn')) {
+                    const pill = e.target.closest('.tag-pill-active');
+                    const tagId = pill.dataset.tagId;
                     await supabaseClient.from('mkt_task_tags').delete().match({ task_id: taskId, tag_id: tagId });
                     await fetchTaskTags();
                     renderTaskTags(taskId);
@@ -1260,3 +1291,4 @@
     </script>
 </body>
 </html>
+
