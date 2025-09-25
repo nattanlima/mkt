@@ -285,7 +285,8 @@
             pagesLoaded: { dashboard: false, kanban: false, calendar: false },
             filters: { userId: 'all', channelId: 'all', tagId: 'all' },
             calendarView: 'month',
-            currentDate: new Date()
+            currentDate: new Date(),
+            userMenuInitialized: false
         };
 
         let quillEditor;
@@ -438,6 +439,9 @@
             }
             document.getElementById('popup-user-name').textContent = user.name;
             document.getElementById('popup-user-role').textContent = user.role;
+            if (state.userMenuInitialized) {
+                return;
+            }
             
             userMenuBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -455,6 +459,7 @@
                     logoutPopup.classList.add('hidden');
                 }
             });
+            state.userMenuInitialized = true;
         }
 
         // =================================================================================
@@ -502,19 +507,19 @@
             document.getElementById('header-actions').innerHTML = pageConfigs[pageId].actions;
             
             const filterBar = document.getElementById('filter-bar');
-            if (pageId === 'kanban' || pageId === 'calendar') {
+            if (!state.pagesLoaded[pageId]) {
                 await fetchGlobalData();
+            }
+
+            if (pageId === 'kanban' || pageId === 'calendar') {
                 populateFilters();
                 filterBar.classList.remove('hidden');
             } else {
                 filterBar.classList.add('hidden');
             }
 
-            if (!state.pagesLoaded[pageId] || ['dashboard', 'kanban', 'calendar'].includes(pageId)) {
-                await fetchGlobalData();
-                await pageConfigs[pageId].loader();
-                state.pagesLoaded[pageId] = true;
-            }
+            await pageConfigs[pageId].loader();
+            state.pagesLoaded[pageId] = true;
 
             attachHeaderEventListeners(pageId);
         }
@@ -737,6 +742,7 @@
         // LÓGICA DO CALENDÁRIO
         // =================================================================================
         async function inicializarPaginaCalendario() {
+            await fetchKanbanTasks();
             renderizarCalendario();
         }
         
@@ -892,6 +898,21 @@
             });
 
             quillEditor = new Quill('#quill-editor', { theme: 'snow' });
+            const editorTabs = document.querySelectorAll('.editor-tab');
+            editorTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    if (!quillEditor) return;
+                    // Salva conteúdo do separador atual
+                    editorContents[currentEditorTab] = quillEditor.getContents();
+                    // Atualiza separador ativo
+                    editorTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentEditorTab = tab.dataset.tab;
+                    // Carrega conteúdo do novo separador
+                    const nextContent = editorContents[currentEditorTab] || '';
+                    quillEditor.setContents(nextContent);
+                });
+            });
 
             const dropZone = document.getElementById('drop-zone');
             const fileInput = document.getElementById('task-file-input');
@@ -1123,7 +1144,13 @@
             if (filesToDelete.length > 0) {
                 const filePaths = filesToDelete.map(f => f.file_path);
                 await supabaseClient.storage.from('mk_files').remove(filePaths);
+                await supabaseClient.from('mkt_task_files').delete().eq('task_id', id);
+                state.taskFiles = state.taskFiles.filter(f => f.task_id != id);
             }
+
+            // Remove relações de tags desta tarefa
+            await supabaseClient.from('mkt_task_tags').delete().eq('task_id', id);
+            state.taskTags = state.taskTags.filter(tt => tt.task_id != id);
 
             const { error } = await supabaseClient.from('mkt_tasks').delete().eq('id', id);
             
@@ -1270,19 +1297,20 @@
             
             dropdown.onclick = async (e) => {
                 e.preventDefault();
-                const tagId = e.target.dataset.tagId;
+                const tagId = e.target.dataset.tagId ? parseInt(e.target.dataset.tagId) : null;
                 if (tagId) {
-                    await supabaseClient.from('mkt_task_tags').insert({ task_id: taskId, tag_id: tagId });
+                    await supabaseClient.from('mkt_task_tags').insert({ task_id: Number(taskId), tag_id: tagId });
                     await fetchTaskTags();
                     renderTaskTags(taskId);
+                    dropdown.classList.add('hidden');
                 }
             };
 
             container.onclick = async (e) => {
                 if (e.target.classList.contains('remove-tag-btn') || e.target.parentElement.classList.contains('remove-tag-btn')) {
                     const pill = e.target.closest('.tag-pill-active');
-                    const tagId = pill.dataset.tagId;
-                    await supabaseClient.from('mkt_task_tags').delete().match({ task_id: taskId, tag_id: tagId });
+                    const tagId = parseInt(pill.dataset.tagId);
+                    await supabaseClient.from('mkt_task_tags').delete().match({ task_id: Number(taskId), tag_id: tagId });
                     await fetchTaskTags();
                     renderTaskTags(taskId);
                 }
