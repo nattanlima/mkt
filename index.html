@@ -33,18 +33,35 @@
         #app-container {
             height: 100vh;
         }
+        
+        /* ======================================= */
+        /* CORREÇÃO DEFINITIVA DE LAYOUT DE PÁGINA */
+        /* ======================================= */
         #main-content-area {
             flex-grow: 1;
             overflow: hidden;
-            /* CORREÇÃO: Usar Grid para evitar sobreposição de layout */
-            display: grid;
+            position: relative; /* 1. Cria o contexto de posicionamento */
         }
-        /* CORREÇÃO: Forçar todas as páginas a ocuparem a mesma célula do grid */
         .page-content {
-            grid-area: 1 / 1;
-        }
-        #kanban-page, #ideas-page {
+            position: absolute; /* 2. Empilha todas as páginas */
+            top: 0;
+            left: 0;
+            width: 100%;
             height: 100%;
+            background-color: #f7f9fc; /* 3. Adiciona um fundo opaco para cobrir o conteúdo por baixo */
+        }
+
+        /* 4. Garante que as páginas com scroll funcionem corretamente */
+        #dashboard-page, #calendar-page {
+            overflow-y: auto;
+        }
+        /* Oculta o elemento completamente, removendo-o do fluxo de renderização */
+        .page-content.hidden {
+            display: none !important; 
+        }
+        /* ======================================= */
+
+        #kanban-page, #ideas-page {
             display: flex;
             flex-direction: column;
         }
@@ -64,7 +81,6 @@
         .ql-container { border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem; min-height: 250px; font-size: 1rem; border-color: #e2e8f0 !important;}
         .ql-editor { font-family: 'Inter', sans-serif; }
         
-        /* Estilos para a página de Ideias */
         #idea-editor-container .ql-container { border: none !important; height: 100%; }
         #idea-editor-container .ql-toolbar { border: none !important; border-bottom: 1px solid #e2e8f0 !important; background: #fff; }
         #idea-editor-container { flex-grow: 1; display: flex; flex-direction: column; }
@@ -168,10 +184,10 @@
         </div>
         
         <main id="main-content-area">
-            <div id="dashboard-page" class="page-content p-4 sm:p-8 w-full h-full overflow-y-auto"></div>
-            <div id="ideas-page" class="page-content hidden w-full h-full"></div>
-            <div id="kanban-page" class="page-content hidden w-full h-full"><div id="kanban-board" class="kanban-board-container flex space-x-6 p-4 sm:p-8"></div></div>
-            <div id="calendar-page" class="page-content hidden p-4 sm:p-8 w-full h-full overflow-y-auto"></div>
+            <div id="dashboard-page" class="page-content p-4 sm:p-8"></div>
+            <div id="ideas-page" class="page-content hidden"></div>
+            <div id="kanban-page" class="page-content hidden"><div id="kanban-board" class="kanban-board-container flex space-x-6 p-4 sm:p-8"></div></div>
+            <div id="calendar-page" class="page-content hidden p-4 sm:p-8"></div>
         </main>
     </div>
 
@@ -516,7 +532,11 @@
                 btn.classList.toggle('hover:text-gray-800', !isActive);
             });
             
-            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.page-content').forEach(p => {
+                if (!p.classList.contains('hidden')) {
+                     p.classList.add('hidden');
+                }
+            });
             document.getElementById(`${pageId}-page`).classList.remove('hidden');
             document.getElementById('header-actions').innerHTML = pageConfigs[pageId].actions;
             
