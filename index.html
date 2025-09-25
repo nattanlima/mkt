@@ -34,32 +34,26 @@
             height: 100vh;
         }
         
-        /* ======================================= */
-        /* CORREÇÃO DEFINITIVA DE LAYOUT DE PÁGINA */
-        /* ======================================= */
         #main-content-area {
             flex-grow: 1;
             overflow: hidden;
-            position: relative; /* 1. Cria o contexto de posicionamento */
+            position: relative; 
         }
         .page-content {
-            position: absolute; /* 2. Empilha todas as páginas */
+            position: absolute; 
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #f7f9fc; /* 3. Adiciona um fundo opaco para cobrir o conteúdo por baixo */
+            background-color: #f7f9fc; 
         }
 
-        /* 4. Garante que as páginas com scroll funcionem corretamente */
         #dashboard-page, #calendar-page {
-            overflow-y: auto;
+            overflow-y: auto; 
         }
-        /* Oculta o elemento completamente, removendo-o do fluxo de renderização */
         .page-content.hidden {
             display: none !important; 
         }
-        /* ======================================= */
 
         #kanban-page, #ideas-page {
             display: flex;
@@ -86,15 +80,22 @@
         #idea-editor-container { flex-grow: 1; display: flex; flex-direction: column; }
         #idea-editor-quill { height: 100%; }
 
-        .editor-tab { padding: 0.75rem 1.25rem; cursor: pointer; border-bottom: 3px solid transparent; color: #475569; font-weight: 600; transition: all 0.2s ease-in-out; }
+        .editor-tab { padding: 0.75rem 1.25rem; cursor: pointer; border-bottom: 3px solid transparent; color: #475569; font-weight: 600; transition: all 0.2s ease-in-out; text-transform: capitalize; }
         .editor-tab:hover { background-color: #f8fafc; color: #10b981; }
         .editor-tab.active { color: #10b981; border-color: #10b981; }
+
+        #quill-editor-container .ql-container.bg-ideia { background-color: #f0fdf4; } 
+        #quill-editor-container .ql-container.bg-roteiro { background-color: #eff6ff; } 
+        #quill-editor-container .ql-container.bg-script { background-color: #fefce8; } 
+        #quill-editor-container .ql-container.bg-inspiracoes { background-color: #faf5ff; } 
+        
         .modal-enter { transform: scale(0.95) translateY(10px); opacity: 0; }
         .modal-enter-active { transform: scale(1) translateY(0); opacity: 1; transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1); }
         .drag-over { border-color: #10b981 !important; background-color: #f0fdf4 !important; transform: scale(1.02); }
         .file-item:hover .delete-file-btn { opacity: 1; }
         .tag-select-dropdown { max-height: 160px; overflow-y: auto; }
         .sidebar-item.active { background-color: #eef2ff; color: #4f46e5; }
+        
     </style>
 </head>
 <body class="h-full">
@@ -213,12 +214,14 @@
                             <label class="font-semibold text-sm text-gray-700 mb-2 block">Conteúdo</label>
                             <div class="border border-slate-200 rounded-lg bg-white overflow-hidden">
                                 <div id="editor-tabs" class="flex border-b border-slate-200 bg-slate-50/70">
-                                    <button type="button" class="editor-tab active" data-tab="ideia">IDEIA</button>
-                                    <button type="button" class="editor-tab" data-tab="roteiro">ROTEIRO</button>
-                                    <button type="button" class="editor-tab" data-tab="script">SCRIPT</button>
-                                    <button type="button" class="editor-tab" data-tab="inspiracoes">INSPIRAÇÕES</button>
+                                    <button type="button" class="editor-tab active" data-tab="ideia">ideia</button>
+                                    <button type="button" class="editor-tab" data-tab="roteiro">roteiro</button>
+                                    <button type="button" class="editor-tab" data-tab="script">script</button>
+                                    <button type="button" class="editor-tab" data-tab="inspiracoes">inspirações</button>
                                 </div>
-                                <div id="quill-editor"></div>
+                                <div id="quill-editor-container">
+                                    <div id="quill-editor"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -543,7 +546,7 @@
             
             const filterBar = document.getElementById('filter-bar');
             
-            if (!state.pagesLoaded[pageId]) {
+            if (!state.pagesLoaded[pageId] || ['dashboard', 'kanban', 'calendar', 'ideas'].includes(pageId)) { 
                 await fetchGlobalData();
             }
 
@@ -884,6 +887,7 @@
         }
         
         function criarCardTarefa(task) {
+            const channel = state.channels.find(c => c.id === task.channel_id);
             const assignee = state.users.find(u => u.id === task.assignee_id);
             const dueDate = task.due_date ? new Date(task.due_date + 'T00:00:00') : null;
             const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -925,7 +929,8 @@
                         <div class="flex items-center gap-2 ${dateClass}">
                             ${dueDate ? `<i class="far fa-calendar-alt opacity-70"></i> <span>${dateText}</span>` : '<span>Sem prazo</span>'}
                         </div>
-                        <div class="flex items-center">
+                        <div class="flex items-center gap-2">
+                            ${channel ? `<span class="text-xs font-semibold px-2 h-8 flex items-center bg-slate-200 text-slate-600 rounded-full">${channel.name}</span>` : ''}
                             ${assigneeHtml}
                         </div>
                     </div>
@@ -960,6 +965,14 @@
         async function inicializarPaginaCalendario() {
             await fetchKanbanTasks();
             renderizarCalendario();
+            // CORREÇÃO: Mover os event listeners para cá
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            if(prevBtn) prevBtn.addEventListener('click', () => navigateCalendar(-1));
+            if(nextBtn) nextBtn.addEventListener('click', () => navigateCalendar(1));
+            document.querySelectorAll('.calendar-view-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => setCalendarView(e.currentTarget.dataset.view));
+            });
         }
         
         function navigateCalendar(direction) {
@@ -994,6 +1007,25 @@
                 renderWeekView(calendarPage, display, filteredTasks);
             }
         }
+
+        function createCalendarTaskHTML(task) {
+            const channel = state.channels.find(c => c.id === task.channel_id);
+            const assignee = state.users.find(u => u.id === task.assignee_id);
+            
+            const assigneeHtml = assignee 
+                ? `<img src="${assignee.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(assignee.name)}&background=random`}" class="w-4 h-4 rounded-full">`
+                : '<div></div>';
+
+            return `
+                <div class="calendar-task-item bg-emerald-100 text-emerald-800 text-xs p-1.5 rounded mt-1 cursor-pointer hover:bg-emerald-200" data-task-id="${task.id}">
+                    <div class="font-semibold truncate">${task.title}</div>
+                    <div class="flex items-center justify-between mt-1">
+                        <span class="text-[10px] px-1.5 py-0.5 bg-slate-200 text-slate-600 rounded-full">${channel ? channel.name : 'N/A'}</span>
+                        ${assigneeHtml}
+                    </div>
+                </div>
+            `;
+        }
         
         function renderMonthView(container, display, tasks) {
             const month = state.currentDate.getMonth();
@@ -1021,7 +1053,9 @@
                 const dayDiv = document.createElement('div');
                 dayDiv.className = 'calendar-day border-b border-r p-2 relative';
                 const dayDate = new Date(year, month, day);
-                let tasksHtml = tasks.filter(t => t.due_date && new Date(t.due_date + 'T00:00:00').toDateString() === dayDate.toDateString()).map(task => `<div class="calendar-task-item bg-emerald-100 text-emerald-800 text-xs p-1 rounded mt-1 truncate cursor-pointer hover:bg-emerald-200" data-task-id="${task.id}">${task.title}</div>`).join('');
+                let tasksHtml = tasks
+                    .filter(t => t.due_date && new Date(t.due_date + 'T00:00:00').toDateString() === dayDate.toDateString())
+                    .map(task => createCalendarTaskHTML(task)).join('');
                 
                 let dayNumberClass = "font-semibold";
                 if (dayDate.toDateString() === new Date().toDateString()) {
@@ -1057,9 +1091,7 @@
                         ${days.map(day => `
                             <div class="border-r p-2">
                                 ${tasks.filter(t => t.due_date && new Date(t.due_date + 'T00:00:00').toDateString() === day.toDateString())
-                                    .map(task => `<div class="calendar-task-item bg-emerald-100 text-emerald-800 text-xs p-1 rounded mt-1 truncate cursor-pointer hover:bg-emerald-200" data-task-id="${task.id}">${task.title}</div>`)
-                                    .join('')
-                                }
+                                    .map(task => createCalendarTaskHTML(task)).join('')}
                             </div>
                         `).join('')}
                     </div>
@@ -1124,6 +1156,10 @@
                     currentEditorTab = tab.dataset.tab;
                     const nextContent = editorContents[currentEditorTab] || '';
                     quillEditor.setContents(nextContent);
+                    
+                    const quillContainer = document.querySelector('#quill-editor-container .ql-container');
+                    quillContainer.classList.remove('bg-ideia', 'bg-roteiro', 'bg-script', 'bg-inspiracoes');
+                    quillContainer.classList.add(`bg-${currentEditorTab}`);
                 });
             });
 
@@ -1201,8 +1237,14 @@
             
             editorContents = { ideia: null, roteiro: null, script: null, inspiracoes: null };
             document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
-            document.querySelector('.editor-tab[data-tab="ideia"]').classList.add('active');
+            const ideaTab = document.querySelector('.editor-tab[data-tab="ideia"]');
+            if (ideaTab) ideaTab.classList.add('active');
             currentEditorTab = 'ideia';
+
+            const quillContainer = document.querySelector('#quill-editor-container .ql-container');
+            quillContainer.classList.remove('bg-ideia', 'bg-roteiro', 'bg-script', 'bg-inspiracoes');
+            quillContainer.classList.add('bg-ideia');
+
             if (quillEditor) quillEditor.setContents('');
 
             const channelSelect = document.getElementById('task-channel');
