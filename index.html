@@ -470,7 +470,6 @@
             const app = document.getElementById('app-container');
             if (!app) return;
 
-            // Delegação de eventos para o contentor principal
             app.addEventListener('click', (e) => {
                 const navBtn = e.target.closest('.nav-btn');
                 if(navBtn) {
@@ -501,9 +500,6 @@
                 if(userMenuBtn) {
                     document.getElementById('logout-popup').classList.toggle('hidden');
                     return;
-                }
-                if (!e.target.closest('#logout-popup')) {
-                     document.getElementById('logout-popup').classList.add('hidden');
                 }
                 const settingsBtn = e.target.closest('#settings-btn');
                 if(settingsBtn) {
@@ -548,8 +544,15 @@
                     return;
                 }
             });
+
+            document.addEventListener('click', (e) => {
+                const logoutPopup = document.getElementById('logout-popup');
+                const userMenuBtn = document.getElementById('user-menu-btn');
+                if (logoutPopup && !logoutPopup.classList.contains('hidden') && !userMenuBtn.contains(e.target) && !logoutPopup.contains(e.target)) {
+                    logoutPopup.classList.add('hidden');
+                }
+            });
             
-            // Listeners para filtros
             document.getElementById('user-filter').addEventListener('change', (e) => applyFilter('userId', e.target.value));
             document.getElementById('channel-filter').addEventListener('change', (e) => applyFilter('channelId', e.target.value));
             document.getElementById('tag-filter').addEventListener('change', (e) => applyFilter('tagId', e.target.value));
@@ -1028,7 +1031,7 @@
                         <div class="flex items-center gap-2 ${dateClass}">
                             ${dueDate ? `<i class="far fa-calendar-alt opacity-70"></i> <span>${dateText}</span>` : '<span>Sem prazo</span>'}
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center -space-x-2">
                             ${channel ? `<span class="text-xs font-semibold px-2 h-8 flex items-center bg-slate-200 text-slate-600 rounded-full">${channel.name}</span>` : ''}
                             ${assigneeHtml}
                         </div>
