@@ -334,7 +334,7 @@
             calendarView: 'month',
             currentDate: new Date(),
             activeIdeaId: null,
-            userMenuInitialized: false
+            isAppInitialized: false, 
         };
 
         let quillEditor;
@@ -383,7 +383,7 @@
         function getContrastColor(colorString) {
             if (!colorString) return '#020617';
             if (colorString.startsWith('hsl')) {
-                return '#020617'; // Cores HSL geradas são sempre claras
+                return '#020617';
             }
             let hex = colorString.slice(1);
             if (hex.length === 3) {
@@ -419,14 +419,20 @@
                 
                 if (profileData) {
                     state.currentUser = profileData;
-                    if (document.getElementById('app-container').classList.contains('hidden')) initializeApp();
-                    else setupUserMenu();
+                    if (!state.isAppInitialized) {
+                        initializeApp();
+                    }
+                    setupUserMenu();
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('app-container').classList.remove('hidden');
+                    await showPage('dashboard');
                 } else {
                     console.error("Utilizador autenticado mas não foi encontrado perfil.");
                     await handleLogout();
                 }
             } else {
                 state.currentUser = null;
+                state.isAppInitialized = false;
                 document.getElementById('app-container').classList.add('hidden');
                 document.getElementById('login-screen').classList.remove('hidden');
             }
@@ -451,41 +457,107 @@
         }
 
         // =================================================================================
-        // INICIALIZAÇÃO DA APLICAÇÃO
+        // INICIALIZAÇÃO DA APLICAÇÃO E EVENTOS
         // =================================================================================
-        async function initializeApp() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('app-container').classList.remove('hidden');
-            setupUserMenu();
-            document.getElementById('view-toggle-buttons').addEventListener('click', (e) => {
-                const btn = e.target.closest('.nav-btn');
-                if (btn) showPage(btn.dataset.page);
+        function initializeApp() {
+            if (state.isAppInitialized) return;
+            attachEventListeners();
+            configurarModais();
+            state.isAppInitialized = true;
+        }
+
+        function attachEventListeners() {
+            const app = document.getElementById('app-container');
+            if (!app) return;
+
+            // Delegação de eventos para o contentor principal
+            app.addEventListener('click', (e) => {
+                const navBtn = e.target.closest('.nav-btn');
+                if(navBtn) {
+                    showPage(navBtn.dataset.page);
+                    return;
+                }
+                const addTaskBtn = e.target.closest('#add-task-btn');
+                if(addTaskBtn) {
+                    criarNovaTarefa();
+                    return;
+                }
+                const prevBtn = e.target.closest('#prev-btn');
+                if(prevBtn) {
+                    navigateCalendar(-1);
+                    return;
+                }
+                const nextBtn = e.target.closest('#next-btn');
+                if(nextBtn) {
+                    navigateCalendar(1);
+                    return;
+                }
+                const calendarViewBtn = e.target.closest('.calendar-view-btn');
+                if(calendarViewBtn) {
+                    setCalendarView(calendarViewBtn.dataset.view);
+                    return;
+                }
+                const userMenuBtn = e.target.closest('#user-menu-btn');
+                if(userMenuBtn) {
+                    document.getElementById('logout-popup').classList.toggle('hidden');
+                    return;
+                }
+                if (!e.target.closest('#logout-popup')) {
+                     document.getElementById('logout-popup').classList.add('hidden');
+                }
+                const settingsBtn = e.target.closest('#settings-btn');
+                if(settingsBtn) {
+                    e.preventDefault();
+                    document.getElementById('logout-popup').classList.add('hidden');
+                    abrirModalTags();
+                    return;
+                }
+                const logoutBtn = e.target.closest('#logout-btn');
+                if(logoutBtn) {
+                    handleLogout();
+                    return;
+                }
+                const card = e.target.closest('.kanban-card, .calendar-task-item');
+                if(card && card.dataset.taskId){
+                    abrirModalTarefa(Number(card.dataset.taskId));
+                    return;
+                }
+                const addNewIdeaBtn = e.target.closest('#add-new-idea-btn');
+                if(addNewIdeaBtn){
+                    criarNovaIdeia();
+                    return;
+                }
+                const ideaItem = e.target.closest('.sidebar-item');
+                if(ideaItem){
+                    selecionarIdeia(Number(ideaItem.dataset.ideaId));
+                    return;
+                }
+                const saveIdeaBtn = e.target.closest('#save-idea-btn');
+                if(saveIdeaBtn){
+                    salvarIdeiaAtiva();
+                    return;
+                }
+                const deleteIdeaBtn = e.target.closest('#delete-idea-btn');
+                if(deleteIdeaBtn){
+                    deletarIdeia(state.activeIdeaId);
+                    return;
+                }
+                 const clearFiltersBtn = e.target.closest('#clear-filters-btn');
+                if(clearFiltersBtn){
+                    clearFilters();
+                    return;
+                }
             });
             
-            configurarModais();
-
-            document.getElementById('kanban-page').addEventListener('click', (e) => {
-                const card = e.target.closest('.kanban-card');
-                if (card && card.dataset.taskId) {
-                    abrirModalTarefa(Number(card.dataset.taskId));
-                }
-            });
-
-            document.getElementById('calendar-page').addEventListener('click', (e) => {
-                const taskItem = e.target.closest('.calendar-task-item');
-                if (taskItem && taskItem.dataset.taskId) {
-                    abrirModalTarefa(Number(taskItem.dataset.taskId));
-                }
-            });
-
-            await showPage('dashboard');
+            // Listeners para filtros
+            document.getElementById('user-filter').addEventListener('change', (e) => applyFilter('userId', e.target.value));
+            document.getElementById('channel-filter').addEventListener('change', (e) => applyFilter('channelId', e.target.value));
+            document.getElementById('tag-filter').addEventListener('change', (e) => applyFilter('tagId', e.target.value));
         }
 
         function setupUserMenu() {
             const user = state.currentUser;
             const userMenuBtn = document.getElementById('user-menu-btn');
-            const logoutPopup = document.getElementById('logout-popup');
-
             if(user.photo_url) {
                 userMenuBtn.innerHTML = `<img src="${user.photo_url}" class="w-full h-full object-cover">`;
             } else {
@@ -493,26 +565,6 @@
             }
             document.getElementById('popup-user-name').textContent = user.name;
             document.getElementById('popup-user-role').textContent = user.role;
-            
-            if (state.userMenuInitialized) return;
-            
-            userMenuBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                logoutPopup.classList.toggle('hidden');
-            });
-            document.getElementById('logout-btn').addEventListener('click', handleLogout);
-            document.getElementById('settings-btn').addEventListener('click', (e) => {
-                e.preventDefault();
-                logoutPopup.classList.add('hidden');
-                abrirModalTags();
-            });
-            
-            document.addEventListener('click', (e) => {
-                if (!logoutPopup.classList.contains('hidden') && !userMenuBtn.contains(e.target)) {
-                    logoutPopup.classList.add('hidden');
-                }
-            });
-            state.userMenuInitialized = true;
         }
 
         // =================================================================================
@@ -567,9 +619,7 @@
             
             const filterBar = document.getElementById('filter-bar');
             
-            if (!state.pagesLoaded[pageId] || ['dashboard', 'kanban', 'calendar', 'ideas'].includes(pageId)) { 
-                await fetchGlobalData();
-            }
+            await fetchGlobalData();
 
             if (pageId === 'kanban' || pageId === 'calendar') {
                 populateFilters();
@@ -579,24 +629,6 @@
             }
 
             await pageConfigs[pageId].loader();
-            //state.pagesLoaded[pageId] = true; // This can cause issues with re-initialization
-
-            attachHeaderEventListeners(pageId);
-        }
-
-        function attachHeaderEventListeners(pageId) {
-             if (pageId === 'kanban') {
-                const addTaskBtn = document.getElementById('add-task-btn');
-                if(addTaskBtn) addTaskBtn.addEventListener('click', criarNovaTarefa);
-            } else if (pageId === 'calendar') {
-                const prevBtn = document.getElementById('prev-btn');
-                const nextBtn = document.getElementById('next-btn');
-                if (prevBtn) prevBtn.addEventListener('click', () => navigateCalendar(-1));
-                if (nextBtn) nextBtn.addEventListener('click', () => navigateCalendar(1));
-                document.querySelectorAll('.calendar-view-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => setCalendarView(e.currentTarget.dataset.view));
-                });
-            }
         }
         
         async function fetchGlobalData() {
@@ -631,11 +663,6 @@
             channelFilter.value = state.filters.channelId;
             tagFilter.value = state.filters.tagId;
         }
-
-        document.getElementById('user-filter').addEventListener('change', (e) => applyFilter('userId', e.target.value));
-        document.getElementById('channel-filter').addEventListener('change', (e) => applyFilter('channelId', e.target.value));
-        document.getElementById('tag-filter').addEventListener('change', (e) => applyFilter('tagId', e.target.value));
-        document.getElementById('clear-filters-btn').addEventListener('click', clearFilters);
 
         async function applyFilter(key, value) {
             state.filters[key] = value;
@@ -683,7 +710,6 @@
             const { data: tasksData, error: tasksError } = await supabaseClient.from('mkt_tasks').select('status_id, due_date, assignee_id');
             if (tasksError) return handleSupabaseError(tasksError, 'carregar dados do dashboard');
 
-            // --- Gamificação: Top Criadores de Ideias ---
             const ideaCounts = state.ideas.reduce((acc, idea) => {
                 acc[idea.user_id] = (acc[idea.user_id] || 0) + 1;
                 return acc;
@@ -698,7 +724,6 @@
                 .sort((a, b) => b.ideaCount - a.ideaCount)
                 .slice(0, 3);
             
-            const podiumColors = ['bg-amber-400', 'bg-slate-400', 'bg-amber-600'];
             const topCreatorsHtml = rankedUsers.length > 0 ? rankedUsers.map((user, index) => `
                 <li class="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50">
                     <div class="flex items-center gap-4">
@@ -713,8 +738,6 @@
                 </li>
             `).join('') : '<p class="text-center text-slate-500 p-4">Nenhuma ideia criada ainda.</p>';
 
-
-            // --- Gráficos ---
             const tasksByStatus = state.status.map(s => {
                 const count = tasksData.filter(t => t.status_id === s.id).length;
                 return { name: s.name, count };
@@ -776,7 +799,6 @@
             const pageContainer = document.getElementById('ideas-page');
             pageContainer.innerHTML = `
                 <div class="flex h-full bg-white border-t border-slate-200">
-                    <!-- Sidebar -->
                     <aside id="ideas-sidebar" class="w-80 h-full bg-slate-50 border-r border-slate-200 flex flex-col flex-shrink-0">
                         <div class="p-4 border-b border-slate-200">
                             <button id="add-new-idea-btn" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center transition-colors">
@@ -785,15 +807,12 @@
                         </div>
                         <div id="ideas-list" class="flex-grow overflow-y-auto p-2 space-y-1"></div>
                     </aside>
-                    <!-- Main Content -->
                     <main id="idea-content-area" class="h-full flex flex-col flex-grow">
-                        <!-- Placeholder -->
                         <div id="idea-placeholder" class="flex-grow flex flex-col items-center justify-center text-center text-slate-500">
                              <i class="fas fa-lightbulb text-6xl text-slate-300 mb-4"></i>
                              <h2 class="text-2xl font-bold">Selecione ou crie uma ideia</h2>
                              <p>Use este espaço para suas anotações e brainstorming.</p>
                         </div>
-                        <!-- Editor -->
                         <div id="idea-editor-wrapper" class="hidden h-full flex-col">
                             <div class="p-4 border-b border-slate-200 flex items-center justify-between gap-4">
                                 <input type="text" id="idea-title-input" class="text-2xl font-bold text-slate-800 w-full focus:outline-none bg-transparent" placeholder="Título da Ideia...">
@@ -817,16 +836,6 @@
             await fetchIdeas();
             renderIdeiasSidebar();
             renderIdeiaConteudo();
-
-            document.getElementById('add-new-idea-btn').addEventListener('click', criarNovaIdeia);
-            document.getElementById('ideas-list').addEventListener('click', (e) => {
-                const item = e.target.closest('.sidebar-item');
-                if (item) {
-                    selecionarIdeia(Number(item.dataset.ideaId));
-                }
-            });
-            document.getElementById('save-idea-btn').addEventListener('click', salvarIdeiaAtiva);
-            document.getElementById('delete-idea-btn').addEventListener('click', () => deletarIdeia(state.activeIdeaId));
         }
         
         async function fetchIdeas() {
@@ -1055,13 +1064,6 @@
         async function inicializarPaginaCalendario() {
             await fetchKanbanTasks();
             renderizarCalendario();
-            const prevBtn = document.getElementById('prev-btn');
-            const nextBtn = document.getElementById('next-btn');
-            if(prevBtn) prevBtn.addEventListener('click', () => navigateCalendar(-1));
-            if(nextBtn) nextBtn.addEventListener('click', () => navigateCalendar(1));
-            document.querySelectorAll('.calendar-view-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => setCalendarView(e.currentTarget.dataset.view));
-            });
         }
         
         function navigateCalendar(direction) {
