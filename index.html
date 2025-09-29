@@ -334,7 +334,8 @@
             calendarView: 'month',
             currentDate: new Date(),
             activeIdeaId: null,
-            isAppInitialized: false, 
+            isAppInitialized: false,
+            authStateSubscription: null, // Para gerenciar o listener de autenticação
         };
 
         let quillEditor;
@@ -406,60 +407,130 @@
         }
         
         // =================================================================================
-        // LÓGICA DE LOGIN E AUTENTICAÇÃO
+        // LÓGICA DE LOGIN E AUTENTICAÇÃO (REESTRUTURADA)
         // =================================================================================
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('login-form').addEventListener('submit', handleLogin);
-        });
         
-        supabaseClient.auth.onAuthStateChange(async (event, session) => {
-            if (session && session.user) {
-                const { data: profileData } = await supabaseClient
-                    .from('mkt_users').select('*').eq('email', session.user.email).single();
-                
-                if (profileData) {
-                    state.currentUser = profileData;
-                    if (!state.isAppInitialized) {
-                        initializeApp();
-                    }
-                    setupUserMenu();
-                    document.getElementById('login-screen').classList.add('hidden');
-                    document.getElementById('app-container').classList.remove('hidden');
-                    await showPage('dashboard');
-                } else {
-                    console.error("Utilizador autenticado mas não foi encontrado perfil.");
-                    await handleLogout();
-                }
-            } else {
-                state.currentUser = null;
-                state.isAppInitialized = false;
-                document.getElementById('app-container').classList.add('hidden');
-                document.getElementById('login-screen').classList.remove('hidden');
-            }
+        document.addEventListener('DOMContentLoaded', () => {
+            // Configura o listener do formulário de login uma única vez
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            // Inicia o fluxo principal da aplicação
+            mainAppFlow();
         });
+
+        async function mainAppFlow() {
+            // 1. Verifica se já existe uma sessão ativa ao carregar a página
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                await processAuthentication(session);
+            } else {
+                showLoginScreen();
+            }
+
+            // 2. Inscreve-se nas mudanças de estado de autenticação para o futuro (login/logout)
+            if (state.authStateSubscription) {
+                state.authStateSubscription.unsubscribe();
+            }
+            const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                switch (event) {
+                    case 'SIGNED_IN':
+                        await processAuthentication(session);
+                        break;
+                    case 'SIGNED_OUT':
+                        resetApplication();
+                        break;
+                }
+            });
+            state.authStateSubscription = subscription;
+        }
+
+        async function processAuthentication(session) {
+            if (!session || !session.user) {
+                resetApplication();
+                return;
+            }
+
+            // Busca o perfil do usuário no banco de dados
+            const { data: profileData, error } = await supabaseClient
+                .from('mkt_users').select('*').eq('email', session.user.email).single();
+
+            if (error || !profileData) {
+                console.error("Erro ao buscar perfil ou perfil não encontrado:", error);
+                showToast("Falha ao carregar perfil de usuário.");
+                await handleLogout(); // Força o logout se o perfil não for encontrado
+                return;
+            }
+
+            state.currentUser = profileData;
+
+            // Inicializa a aplicação principal (event listeners, modais, etc.) se ainda não foi feito
+            if (!state.isAppInitialized) {
+                await initializeApp();
+            }
+
+            setupUserMenu();
+            document.getElementById('app-container').classList.remove('hidden');
+            document.getElementById('login-screen').classList.add('hidden');
+            await showPage('dashboard');
+        }
+
+        function showLoginScreen() {
+            document.getElementById('app-container').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            // Limpa o formulário para evitar que dados antigos permaneçam
+            const loginForm = document.getElementById('login-form');
+            if(loginForm) loginForm.reset();
+            const errorDiv = document.getElementById('login-error');
+            if(errorDiv) errorDiv.classList.add('hidden');
+        }
+        
+        function resetApplication() {
+            // Reseta o estado da aplicação para o inicial
+            state.currentUser = null;
+            state.isAppInitialized = false;
+            // Limpa outros dados de estado se necessário
+            state.tasks = []; state.ideas = []; // etc.
+
+            // Garante que o listener de auth seja removido para evitar chamadas múltiplas
+            if (state.authStateSubscription) {
+                state.authStateSubscription.unsubscribe();
+                state.authStateSubscription = null;
+            }
+            
+            showLoginScreen();
+        }
+
 
         async function handleLogin(e) {
             e.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('login-error');
+            const submitButton = e.target.querySelector('button[type="submit"]');
+
+            toggleButtonLoading(submitButton, true);
             errorDiv.classList.add('hidden');
+
             const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+            toggleButtonLoading(submitButton, false);
+
             if (error) {
                 errorDiv.textContent = 'E-mail ou senha inválidos.';
                 errorDiv.classList.remove('hidden');
             }
+            // A lógica de sucesso é tratada pelo onAuthStateChange
         }
 
         async function handleLogout() {
             const { error } = await supabaseClient.auth.signOut();
             if (error) handleSupabaseError(error, 'logout');
+            // O reset da aplicação é tratado pelo onAuthStateChange
         }
 
         // =================================================================================
         // INICIALIZAÇÃO DA APLICAÇÃO E EVENTOS
         // =================================================================================
-        function initializeApp() {
+        async function initializeApp() {
             if (state.isAppInitialized) return;
             attachEventListeners();
             configurarModais();
@@ -467,7 +538,11 @@
         }
 
         function attachEventListeners() {
-            const app = document.getElementById('app-container');
+            // Usando um clone para remover listeners antigos e evitar duplicação
+            const oldApp = document.getElementById('app-container');
+            const app = oldApp.cloneNode(true);
+            oldApp.parentNode.replaceChild(app, oldApp);
+
             if (!app) return;
 
             app.addEventListener('click', (e) => {
@@ -560,6 +635,7 @@
 
         function setupUserMenu() {
             const user = state.currentUser;
+            if (!user) return;
             const userMenuBtn = document.getElementById('user-menu-btn');
             if(user.photo_url) {
                 userMenuBtn.innerHTML = `<img src="${user.photo_url}" class="w-full h-full object-cover">`;
@@ -1667,4 +1743,3 @@
     </script>
 </body>
 </html>
-
