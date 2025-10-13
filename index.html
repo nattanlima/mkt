@@ -599,6 +599,8 @@
             const app = document.getElementById('app-container');
             if (!app) return;
 
+            // This single event listener handles all clicks inside the app container
+            // using a technique called "event delegation".
             app.addEventListener('click', (e) => {
                 const navBtn = e.target.closest('.nav-btn');
                 if (navBtn) return showPage(navBtn.dataset.page);
@@ -653,6 +655,7 @@
                 if (clearFiltersBtn) return clearFilters();
             });
 
+            // Listener for clicks outside of popups
             document.addEventListener('click', (e) => {
                 const logoutPopup = document.getElementById('logout-popup');
                 const userMenuBtn = document.getElementById('user-menu-btn');
@@ -661,6 +664,7 @@
                 }
             });
             
+            // Filter listeners
             document.getElementById('client-filter').addEventListener('change', (e) => applyFilter('clientId', e.target.value));
             document.getElementById('user-filter').addEventListener('change', (e) => applyFilter('userId', e.target.value));
             document.getElementById('channel-filter').addEventListener('change', (e) => applyFilter('channelId', e.target.value));
@@ -2034,9 +2038,9 @@
             container.classList.remove('hidden');
         }
         
-        function appendNewTaskRow(container, clientId) {
+        function appendNewTaskRow(container) {
              const taskList = container.querySelector('.space-y-3');
-             const newRow = createTaskInputRow({type: 'Extra', number: '', isExtra: true });
+             const newRow = createTaskInputRow({type: 'Extra', number: ''});
              taskList.insertAdjacentHTML('beforeend', newRow);
         }
 
@@ -2063,7 +2067,7 @@
         
         function addTagToRow(tagId, container) {
             const tag = state.tags.find(t => t.id == tagId);
-            if (!tag || container.querySelector(`[data-tag-id="${tagId}"]`)) return; // Prevents duplicates
+            if (!tag || container.querySelector(`[data-tag-id="${tagId}"]`)) return; 
             
             const color = tag.color || generatePastelColor(tag.name);
             const tagPill = `
