@@ -46,9 +46,10 @@
             width: 100%;
             height: 100%;
             background-color: #f7f9fc; 
+            overflow-y: auto;
         }
 
-        #dashboard-page, #calendar-page {
+        #dashboard-page, #calendar-page, #clients-page {
             overflow-y: auto; 
         }
         .page-content.hidden {
@@ -58,6 +59,7 @@
         #kanban-page, #ideas-page {
             display: flex;
             flex-direction: column;
+            overflow-y: hidden;
         }
         .kanban-board-container {
             flex-grow: 1; 
@@ -117,11 +119,14 @@
             margin-left: -5px; border-width: 5px;
             border-style: solid; border-color: #1f2937 transparent transparent transparent;
         }
+        select[multiple] {
+            height: 60px;
+        }
     </style>
 </head>
 <body class="h-full">
 
-    <!-- ECRÃ DE LOGIN ATUALIZADO -->
+    <!-- ECRÃ DE LOGIN -->
     <div id="login-screen" class="flex items-center justify-center h-screen bg-gradient-to-br from-slate-50 to-slate-200 p-4">
         <div class="w-full max-w-sm p-8 space-y-8 bg-white rounded-2xl shadow-xl">
             <div class="text-center">
@@ -148,7 +153,7 @@
         </div>
     </div>
 
-    <!-- APLICAÇÃO PRINCIPAL ATUALIZADA -->
+    <!-- APLICAÇÃO PRINCIPAL -->
     <div id="app-container" class="hidden h-full flex flex-col">
         <header class="bg-white/80 backdrop-blur-sm p-4 flex justify-between items-center border-b border-slate-200 flex-shrink-0">
             <div class="flex items-center space-x-4">
@@ -156,6 +161,7 @@
                 <h1 class="text-xl md:text-2xl font-bold text-gray-800">Marketing Hub</h1>
                 <nav id="view-toggle-buttons" class="hidden md:flex items-center border border-gray-200 rounded-full p-1 bg-slate-100 ml-4">
                     <button data-page="dashboard" class="nav-btn px-4 py-1.5 rounded-full text-sm font-semibold bg-white shadow-sm text-emerald-600"><i class="fas fa-chart-pie mr-2 opacity-80"></i>Dashboard</button>
+                    <button data-page="clients" class="nav-btn px-4 py-1.5 rounded-full text-sm font-semibold text-gray-500 hover:text-gray-800"><i class="fas fa-users mr-2 opacity-80"></i>Clientes</button>
                     <button data-page="ideas" class="nav-btn px-4 py-1.5 rounded-full text-sm font-semibold text-gray-500 hover:text-gray-800"><i class="fas fa-lightbulb mr-2 opacity-80"></i>Ideias</button>
                     <button data-page="kanban" class="nav-btn px-4 py-1.5 rounded-full text-sm font-semibold text-gray-500 hover:text-gray-800"><i class="fas fa-grip-vertical mr-2 opacity-80"></i>Kanban</button>
                     <button data-page="calendar" class="nav-btn px-4 py-1.5 rounded-full text-sm font-semibold text-gray-500 hover:text-gray-800"><i class="fas fa-calendar-alt mr-2 opacity-80"></i>Calendário</button>
@@ -207,6 +213,7 @@
         
         <main id="main-content-area">
             <div id="dashboard-page" class="page-content p-4 sm:p-8"></div>
+            <div id="clients-page" class="page-content hidden p-4 sm:p-8"></div>
             <div id="ideas-page" class="page-content hidden"></div>
             <div id="kanban-page" class="page-content hidden"><div id="kanban-board" class="kanban-board-container flex space-x-6 p-4 sm:p-8"></div></div>
             <div id="calendar-page" class="page-content hidden p-4 sm:p-8"></div>
@@ -251,6 +258,7 @@
                            <h4 class="font-semibold text-sm mb-3 text-gray-600">Detalhes</h4>
                            <div class="space-y-4">
                                 <div><label class="font-medium text-xs text-gray-500">Canal</label><select id="task-channel" class="w-full mt-1 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400" required></select></div>
+                                <div><label class="font-medium text-xs text-gray-500">Cliente</label><select id="task-client" class="w-full mt-1 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400" required></select></div>
                                 <div><label class="font-medium text-xs text-gray-500">Responsável</label><select id="task-assignee" class="w-full mt-1 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400"></select></div>
                                 <div><label class="font-medium text-xs text-gray-500">Data de Entrega</label><input type="date" id="task-due-date" class="w-full mt-1 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400"></div>
                            </div>
@@ -260,9 +268,7 @@
                                 <label class="font-semibold text-sm text-gray-700">Tags</label>
                                 <div id="add-tag-wrapper" class="relative">
                                     <button type="button" id="add-tag-btn" class="text-xs font-semibold text-emerald-600 hover:text-emerald-800">+ Adicionar Tag</button>
-                                    <div id="tag-select-dropdown" class="tag-select-dropdown hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-10">
-                                        <!-- Tags disponíveis serão inseridas aqui -->
-                                    </div>
+                                    <div id="tag-select-dropdown" class="tag-select-dropdown hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border z-10"></div>
                                 </div>
                             </div>
                             <div id="task-tags-container" class="p-2 border rounded-lg bg-slate-50 flex flex-wrap gap-2 min-h-[40px]"></div>
@@ -312,6 +318,68 @@
             </div>
         </div>
     </div>
+
+    <!-- MODAL DE CONTRATO -->
+    <div id="contract-modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-30">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md flex flex-col modal-enter">
+            <form id="contract-form">
+                <input type="hidden" id="contract-client-id">
+                <div class="p-5 border-b flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">Editar Contrato</h3>
+                        <p id="contract-client-name" class="text-sm text-gray-500"></p>
+                    </div>
+                    <button type="button" class="btn-cancel text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label for="client-posts" class="font-semibold text-sm text-gray-700">Nº de Posts Mensais</label>
+                        <input id="client-posts" type="number" min="0" required class="w-full mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+                    </div>
+                    <div>
+                        <label for="client-stories" class="font-semibold text-sm text-gray-700">Nº de Stories Mensais</label>
+                        <input id="client-stories" type="number" min="0" required class="w-full mt-2 p-3 border border-slate-300 rounded-lg bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+                    </div>
+                    <div class="flex items-center">
+                        <input id="client-offline" type="checkbox" class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                        <label for="client-offline" class="ml-2 block text-sm text-gray-900">Inclui Demanda Offline?</label>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-50/70 flex justify-end items-center border-t">
+                    <div class="flex gap-3">
+                        <button type="button" class="btn-cancel px-6 py-2.5 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-full font-semibold transition-colors">Cancelar</button>
+                        <button type="submit" id="save-contract-btn" class="px-6 py-2.5 text-white bg-emerald-500 hover:bg-emerald-600 rounded-full font-semibold transition-colors">Salvar Contrato</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- MODAL DE GERAR TAREFAS -->
+    <div id="generate-tasks-modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-30">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl flex flex-col modal-enter">
+            <form id="generate-tasks-form">
+                <div class="p-5 border-b flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">Gerar Tarefas para <span id="generate-tasks-month"></span></h3>
+                        <p class="text-sm text-gray-500">Selecione os clientes e planeje as tarefas do mês.</p>
+                    </div>
+                    <button type="button" class="btn-cancel text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+                </div>
+                <div id="generate-tasks-body" class="p-6 space-y-6 modal-content-body">
+                    <!-- Conteúdo dinâmico aqui -->
+                </div>
+                <div class="p-4 bg-slate-50/70 flex justify-end items-center border-t">
+                    <div class="flex gap-3">
+                        <button type="button" class="btn-cancel px-6 py-2.5 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-full font-semibold transition-colors">Cancelar</button>
+                        <button type="submit" id="execute-generate-tasks-btn" class="px-6 py-2.5 text-white bg-indigo-500 hover:bg-indigo-600 rounded-full font-semibold transition-colors">Gerar Tarefas</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
     <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white py-3 px-5 rounded-lg shadow-lg opacity-0 transform translate-y-2 transition-all duration-300 z-50 font-semibold"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -327,15 +395,15 @@
 
         const state = {
             currentUser: null, channels: [], status: [], tasks: [], users: [], tags: [], taskTags: [],
-            taskFiles: [], ideas: [],
+            taskFiles: [], ideas: [], clients: [],
             currentPage: 'dashboard',
-            pagesLoaded: { dashboard: false, kanban: false, calendar: false, ideas: false },
+            pagesLoaded: { dashboard: false, kanban: false, calendar: false, ideas: false, clients: false },
             filters: { userId: 'all', channelId: 'all', tagId: 'all' },
             calendarView: 'month',
             currentDate: new Date(),
             activeIdeaId: null,
             isAppInitialized: false,
-            authStateSubscription: null, // Para gerenciar o listener de autenticação
+            authStateSubscription: null, 
         };
 
         let quillEditor;
@@ -407,18 +475,15 @@
         }
         
         // =================================================================================
-        // LÓGICA DE LOGIN E AUTENTICAÇÃO (REESTRUTURADA)
+        // LÓGICA DE LOGIN E AUTENTICAÇÃO
         // =================================================================================
         
         document.addEventListener('DOMContentLoaded', () => {
-            // Configura o listener do formulário de login uma única vez
             document.getElementById('login-form').addEventListener('submit', handleLogin);
-            // Inicia o fluxo principal da aplicação
             mainAppFlow();
         });
 
         async function mainAppFlow() {
-            // 1. Verifica se já existe uma sessão ativa ao carregar a página
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
                 await processAuthentication(session);
@@ -426,7 +491,6 @@
                 showLoginScreen();
             }
 
-            // 2. Inscreve-se nas mudanças de estado de autenticação para o futuro (login/logout)
             if (state.authStateSubscription) {
                 state.authStateSubscription.unsubscribe();
             }
@@ -449,20 +513,18 @@
                 return;
             }
 
-            // Busca o perfil do usuário no banco de dados
             const { data: profileData, error } = await supabaseClient
                 .from('mkt_users').select('*').eq('email', session.user.email).single();
 
             if (error || !profileData) {
                 console.error("Erro ao buscar perfil ou perfil não encontrado:", error);
                 showToast("Falha ao carregar perfil de usuário.");
-                await handleLogout(); // Força o logout se o perfil não for encontrado
+                await handleLogout();
                 return;
             }
 
             state.currentUser = profileData;
 
-            // Inicializa a aplicação principal (event listeners, modais, etc.) se ainda não foi feito
             if (!state.isAppInitialized) {
                 await initializeApp();
             }
@@ -476,7 +538,6 @@
         function showLoginScreen() {
             document.getElementById('app-container').classList.add('hidden');
             document.getElementById('login-screen').classList.remove('hidden');
-            // Limpa o formulário para evitar que dados antigos permaneçam
             const loginForm = document.getElementById('login-form');
             if(loginForm) loginForm.reset();
             const errorDiv = document.getElementById('login-error');
@@ -484,13 +545,10 @@
         }
         
         function resetApplication() {
-            // Reseta o estado da aplicação para o inicial
             state.currentUser = null;
             state.isAppInitialized = false;
-            // Limpa outros dados de estado se necessário
-            state.tasks = []; state.ideas = []; // etc.
+            state.tasks = []; state.ideas = []; state.clients = [];
 
-            // Garante que o listener de auth seja removido para evitar chamadas múltiplas
             if (state.authStateSubscription) {
                 state.authStateSubscription.unsubscribe();
                 state.authStateSubscription = null;
@@ -518,13 +576,11 @@
                 errorDiv.textContent = 'E-mail ou senha inválidos.';
                 errorDiv.classList.remove('hidden');
             }
-            // A lógica de sucesso é tratada pelo onAuthStateChange
         }
 
         async function handleLogout() {
             const { error } = await supabaseClient.auth.signOut();
             if (error) handleSupabaseError(error, 'logout');
-            // O reset da aplicação é tratado pelo onAuthStateChange
         }
 
         // =================================================================================
@@ -538,86 +594,61 @@
         }
 
         function attachEventListeners() {
-            // Usando um clone para remover listeners antigos e evitar duplicação
-            const oldApp = document.getElementById('app-container');
-            const app = oldApp.cloneNode(true);
-            oldApp.parentNode.replaceChild(app, oldApp);
-
+            const app = document.getElementById('app-container');
             if (!app) return;
 
             app.addEventListener('click', (e) => {
                 const navBtn = e.target.closest('.nav-btn');
-                if(navBtn) {
-                    showPage(navBtn.dataset.page);
-                    return;
-                }
+                if (navBtn) return showPage(navBtn.dataset.page);
+                
                 const addTaskBtn = e.target.closest('#add-task-btn');
-                if(addTaskBtn) {
-                    criarNovaTarefa();
-                    return;
-                }
+                if (addTaskBtn) return criarNovaTarefa();
+
+                const editContractBtn = e.target.closest('.edit-contract-btn');
+                if (editContractBtn) return abrirModalContrato(editContractBtn.dataset.clientId);
+                
+                const generateTasksBtn = e.target.closest('#generate-tasks-btn');
+                if (generateTasksBtn) return abrirModalGerarTarefas();
+
                 const prevBtn = e.target.closest('#prev-btn');
-                if(prevBtn) {
-                    navigateCalendar(-1);
-                    return;
-                }
+                if (prevBtn) return navigateCalendar(-1);
+                
                 const nextBtn = e.target.closest('#next-btn');
-                if(nextBtn) {
-                    navigateCalendar(1);
-                    return;
-                }
+                if (nextBtn) return navigateCalendar(1);
+                
                 const calendarViewBtn = e.target.closest('.calendar-view-btn');
-                if(calendarViewBtn) {
-                    setCalendarView(calendarViewBtn.dataset.view);
-                    return;
-                }
+                if (calendarViewBtn) return setCalendarView(calendarViewBtn.dataset.view);
+                
                 const userMenuBtn = e.target.closest('#user-menu-btn');
-                if(userMenuBtn) {
-                    document.getElementById('logout-popup').classList.toggle('hidden');
-                    return;
-                }
+                if (userMenuBtn) return document.getElementById('logout-popup').classList.toggle('hidden');
+                
                 const settingsBtn = e.target.closest('#settings-btn');
-                if(settingsBtn) {
+                if (settingsBtn) {
                     e.preventDefault();
                     document.getElementById('logout-popup').classList.add('hidden');
-                    abrirModalTags();
-                    return;
+                    return abrirModalTags();
                 }
+                
                 const logoutBtn = e.target.closest('#logout-btn');
-                if(logoutBtn) {
-                    handleLogout();
-                    return;
-                }
+                if (logoutBtn) return handleLogout();
+                
                 const card = e.target.closest('.kanban-card, .calendar-task-item');
-                if(card && card.dataset.taskId){
-                    abrirModalTarefa(Number(card.dataset.taskId));
-                    return;
-                }
+                if (card && card.dataset.taskId) return abrirModalTarefa(Number(card.dataset.taskId));
+                
                 const addNewIdeaBtn = e.target.closest('#add-new-idea-btn');
-                if(addNewIdeaBtn){
-                    criarNovaIdeia();
-                    return;
-                }
+                if (addNewIdeaBtn) return criarNovaIdeia();
+                
                 const ideaItem = e.target.closest('.sidebar-item');
-                if(ideaItem){
-                    selecionarIdeia(Number(ideaItem.dataset.ideaId));
-                    return;
-                }
+                if (ideaItem) return selecionarIdeia(Number(ideaItem.dataset.ideaId));
+                
                 const saveIdeaBtn = e.target.closest('#save-idea-btn');
-                if(saveIdeaBtn){
-                    salvarIdeiaAtiva();
-                    return;
-                }
+                if (saveIdeaBtn) return salvarIdeiaAtiva();
+                
                 const deleteIdeaBtn = e.target.closest('#delete-idea-btn');
-                if(deleteIdeaBtn){
-                    deletarIdeia(state.activeIdeaId);
-                    return;
-                }
-                 const clearFiltersBtn = e.target.closest('#clear-filters-btn');
-                if(clearFiltersBtn){
-                    clearFilters();
-                    return;
-                }
+                if (deleteIdeaBtn) return deletarIdeia(state.activeIdeaId);
+                
+                const clearFiltersBtn = e.target.closest('#clear-filters-btn');
+                if (clearFiltersBtn) return clearFilters();
             });
 
             document.addEventListener('click', (e) => {
@@ -651,25 +682,28 @@
         // =================================================================================
         const pageConfigs = {
             dashboard: { loader: carregarDadosDashboard, actions: '' },
+            clients: { loader: inicializarPaginaClientes, actions: '' },
             ideas: { loader: inicializarPaginaIdeias, actions: '' },
             kanban: { 
                 loader: inicializarPaginaKanban,
-                actions: `
-                    <button id="add-task-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded-full flex items-center transition-colors">
-                        <i class="fas fa-plus mr-2"></i> Nova Tarefa
-                    </button>`
+                actions: `<button id="add-task-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded-full flex items-center transition-colors"><i class="fas fa-plus mr-2"></i> Nova Tarefa</button>`
             },
             calendar: { 
                 loader: inicializarPaginaCalendario,
                 actions: `
-                    <div class="flex items-center border border-gray-200 rounded-full p-1 bg-slate-100">
-                        <button data-view="month" class="calendar-view-btn px-3 py-1 rounded-full text-sm font-semibold bg-white shadow-sm text-emerald-600">Mês</button>
-                        <button data-view="week" class="calendar-view-btn px-3 py-1 rounded-full text-sm font-semibold text-gray-500">Semana</button>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button id="prev-btn" class="w-10 h-10 flex items-center justify-center border rounded-full bg-white text-gray-700 hover:bg-gray-100"><i class="fas fa-chevron-left"></i></button>
-                        <span id="current-date-display" class="font-bold text-lg text-gray-700 w-48 text-center"></span>
-                        <button id="next-btn" class="w-10 h-10 flex items-center justify-center border rounded-full bg-white text-gray-700 hover:bg-gray-100"><i class="fas fa-chevron-right"></i></button>
+                    <div class="flex items-center gap-4">
+                        <button id="generate-tasks-btn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-full flex items-center transition-colors">
+                            <i class="fas fa-magic mr-2"></i> Gerar Tarefas
+                        </button>
+                        <div class="flex items-center border border-gray-200 rounded-full p-1 bg-slate-100">
+                            <button data-view="month" class="calendar-view-btn px-3 py-1 rounded-full text-sm font-semibold bg-white shadow-sm text-emerald-600">Mês</button>
+                            <button data-view="week" class="calendar-view-btn px-3 py-1 rounded-full text-sm font-semibold text-gray-500">Semana</button>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="prev-btn" class="w-10 h-10 flex items-center justify-center border rounded-full bg-white text-gray-700 hover:bg-gray-100"><i class="fas fa-chevron-left"></i></button>
+                            <span id="current-date-display" class="font-bold text-lg text-gray-700 w-48 text-center"></span>
+                            <button id="next-btn" class="w-10 h-10 flex items-center justify-center border rounded-full bg-white text-gray-700 hover:bg-gray-100"><i class="fas fa-chevron-right"></i></button>
+                        </div>
                     </div>`
             }
         };
@@ -687,11 +721,7 @@
                 btn.classList.toggle('hover:text-gray-800', !isActive);
             });
             
-            document.querySelectorAll('.page-content').forEach(p => {
-                if (p.id !== `${pageId}-page`) {
-                    p.classList.add('hidden');
-                }
-            });
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
             document.getElementById(`${pageId}-page`).classList.remove('hidden');
 
             document.getElementById('header-actions').innerHTML = pageConfigs[pageId].actions;
@@ -710,15 +740,33 @@
             await pageConfigs[pageId].loader();
         }
         
+        async function fetchMarketingClients() {
+            const { data: clientTags, error: tagsError } = await supabaseClient
+                .from('cliente_tags').select('id_cliente').eq('id_tag', 'TAG-03');
+            if (tagsError) return handleSupabaseError(tagsError, 'buscar tags de cliente');
+            
+            const clientIds = clientTags.map(ct => ct.id_cliente);
+            if (clientIds.length === 0) {
+                state.clients = [];
+                return;
+            }
+
+            const { data, error } = await supabaseClient
+                .from('clientes').select('id_cliente, nome_empresa, postagens_mensais, storys_mensais, demanda_offline').in('id_cliente', clientIds);
+            if (error) handleSupabaseError(error, 'buscar clientes');
+            else state.clients = data || [];
+        }
+
         async function fetchGlobalData() {
-            const [channelsRes, statusRes, usersRes, tagsRes, taskTagsRes, taskFilesRes, ideasRes] = await Promise.all([
+            const [channelsRes, statusRes, usersRes, tagsRes, taskTagsRes, taskFilesRes, ideasRes, _] = await Promise.all([
                 supabaseClient.from('mkt_channels').select('*'),
                 supabaseClient.from('mkt_status').select('*').order('order', { ascending: true }),
                 supabaseClient.from('mkt_users').select('id, name, photo_url'),
                 supabaseClient.from('mkt_tags').select('*'),
                 supabaseClient.from('mkt_task_tags').select('*'),
                 supabaseClient.from('mkt_task_files').select('*'),
-                supabaseClient.from('mkt_ideas').select('*')
+                supabaseClient.from('mkt_ideas').select('*'),
+                fetchMarketingClients()
             ]);
             state.channels = channelsRes.data || [];
             state.status = statusRes.data || [];
@@ -779,6 +827,9 @@
                 } else if (state.currentPage === 'calendar') {
                     renderizarCalendario();
                 }
+            } else if (state.currentPage === 'clients') {
+                await fetchMarketingClients();
+                renderizarTabelaClientes();
             }
         }
         
@@ -870,6 +921,116 @@
                 </div>`;
             document.getElementById('dashboard-page').innerHTML = dashboardContent;
         }
+        
+        // =================================================================================
+        // LÓGICA DA PÁGINA DE CLIENTES
+        // =================================================================================
+        async function inicializarPaginaClientes() {
+            renderizarTabelaClientes();
+        }
+
+        function renderizarTabelaClientes() {
+            const page = document.getElementById('clients-page');
+            if (!page) return;
+
+            const tableHtml = `
+                <div class="bg-white rounded-xl shadow-sm border">
+                    <div class="p-4 border-b">
+                        <h2 class="text-xl font-bold text-gray-800">Gerenciamento de Contratos de Clientes</h2>
+                        <p class="text-sm text-gray-500">Clique em "Editar" para ajustar os detalhes do contrato de cada cliente.</p>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">Nome da Empresa</th>
+                                    <th scope="col" class="px-6 py-3">Posts/Mês</th>
+                                    <th scope="col" class="px-6 py-3">Stories/Mês</th>
+                                    <th scope="col" class="px-6 py-3">Demanda Offline</th>
+                                    <th scope="col" class="px-6 py-3"><span class="sr-only">Ações</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${state.clients.map(client => `
+                                    <tr class="bg-white border-b hover:bg-gray-50">
+                                        <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                                            ${client.nome_empresa}
+                                        </th>
+                                        <td class="px-6 py-4">${client.postagens_mensais || 0}</td>
+                                        <td class="px-6 py-4">${client.storys_mensais || 0}</td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${client.demanda_offline ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                                ${client.demanda_offline ? 'Sim' : 'Não'}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-right">
+                                            <button class="edit-contract-btn font-medium text-emerald-600 hover:underline" data-client-id="${client.id_cliente}">Editar Contrato</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                                ${state.clients.length === 0 ? '<tr><td colspan="5" class="px-6 py-4 text-center">Nenhum cliente de marketing encontrado.</td></tr>' : ''}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            page.innerHTML = tableHtml;
+        }
+
+        function abrirModalContrato(clientId) {
+            const client = state.clients.find(c => c.id_cliente === clientId);
+            if (!client) {
+                showToast('Cliente não encontrado.');
+                return;
+            }
+            
+            document.getElementById('contract-client-id').value = client.id_cliente;
+            document.getElementById('contract-client-name').textContent = client.nome_empresa;
+            document.getElementById('client-posts').value = client.postagens_mensais || 0;
+            document.getElementById('client-stories').value = client.storys_mensais || 0;
+            document.getElementById('client-offline').checked = client.demanda_offline || false;
+
+            showModal('contract-modal');
+        }
+        
+        async function salvarContrato(e) {
+            e.preventDefault();
+            const saveBtn = document.getElementById('save-contract-btn');
+            toggleButtonLoading(saveBtn, true);
+
+            try {
+                const clientId = document.getElementById('contract-client-id').value;
+                const contractData = {
+                    postagens_mensais: parseInt(document.getElementById('client-posts').value) || 0,
+                    storys_mensais: parseInt(document.getElementById('client-stories').value) || 0,
+                    demanda_offline: document.getElementById('client-offline').checked,
+                };
+
+                const { data, error } = await supabaseClient
+                    .from('clientes')
+                    .update(contractData)
+                    .eq('id_cliente', clientId)
+                    .select()
+                    .single();
+
+                if (error) {
+                    handleSupabaseError(error, 'salvar contrato');
+                } else if (data) {
+                    const index = state.clients.findIndex(c => c.id_cliente === clientId);
+                    if (index > -1) {
+                        state.clients[index] = { ...state.clients[index], ...data };
+                    }
+                    renderizarTabelaClientes();
+                    hideModal('contract-modal');
+                    showToast('Contrato atualizado com sucesso!', 'success');
+                }
+            } catch (err) {
+                handleSupabaseError(err, 'salvar contrato');
+            } finally {
+                toggleButtonLoading(saveBtn, false);
+            }
+        }
+
 
         // =================================================================================
         // LÓGICA DA PÁGINA DE IDEIAS
@@ -1065,6 +1226,7 @@
         }
         
         function criarCardTarefa(task) {
+            const client = state.clients.find(c => c.id_cliente === task.client_id);
             const channel = state.channels.find(c => c.id === task.channel_id);
             const assignee = state.users.find(u => u.id === task.assignee_id);
             const dueDate = task.due_date ? new Date(task.due_date + 'T00:00:00') : null;
@@ -1092,10 +1254,15 @@
                 const { data } = supabaseClient.storage.from('mk_files').getPublicUrl(firstImageFile.file_path);
                 fileThumbnailHtml = `<img src="${data.publicUrl}" class="w-full h-32 object-cover rounded-lg mb-3">`;
             }
+            
+            const clientHtml = client 
+                ? `<div class="mb-2 flex items-center gap-2 text-xs font-bold text-slate-500"><i class="fas fa-user-tie"></i><span>${client.nome_empresa}</span></div>` 
+                : '';
 
             return `
                 <div class="kanban-card bg-white rounded-xl p-4 mb-4 border border-slate-200 shadow-sm hover:border-emerald-500 hover:shadow-md cursor-pointer transition-all duration-200" data-task-id="${task.id}">
                     ${fileThumbnailHtml}
+                    ${clientHtml}
                     <div class="flex flex-wrap gap-2 mb-2">
                         ${taskTags.map(tag => {
                             const color = tag.color || generatePastelColor(tag.name);
@@ -1138,7 +1305,7 @@
         }
 
         // =================================================================================
-        // LÓGICA DO CALENDÁRIO
+        // LÓGICA DO CALENDÁRIO E GERAÇÃO DE TAREFAS
         // =================================================================================
         async function inicializarPaginaCalendario() {
             await fetchKanbanTasks();
@@ -1180,18 +1347,18 @@
 
         function createCalendarTaskHTML(task) {
             const channel = state.channels.find(c => c.id === task.channel_id);
-            const assignee = state.users.find(u => u.id === task.assignee_id);
+            const client = state.clients.find(c => c.id_cliente === task.client_id);
             
-            const assigneeHtml = assignee 
-                ? `<img src="${assignee.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(assignee.name)}&background=random`}" class="w-4 h-4 rounded-full">`
-                : '<div></div>';
+            const clientHtml = client
+                ? `<span class="font-bold truncate">${client.nome_empresa}</span>`
+                : `<span class="font-bold truncate">Cliente não definido</span>`;
 
             return `
                 <div class="calendar-task-item bg-emerald-100 text-emerald-800 text-xs p-1.5 rounded mt-1 cursor-pointer hover:bg-emerald-200" data-task-id="${task.id}">
+                    <div class="truncate">${clientHtml}</div>
                     <div class="font-semibold truncate">${task.title}</div>
                     <div class="flex items-center justify-between mt-1">
                         <span class="text-[10px] px-1.5 py-0.5 bg-slate-200 text-slate-600 rounded-full">${channel ? channel.name : 'N/A'}</span>
-                        ${assigneeHtml}
                     </div>
                 </div>
             `;
@@ -1273,13 +1440,16 @@
         // =================================================================================
         const modals = { 
             'task-modal': document.getElementById('task-modal'), 
-            'tags-modal': document.getElementById('tags-modal')
+            'tags-modal': document.getElementById('tags-modal'),
+            'contract-modal': document.getElementById('contract-modal'),
+            'generate-tasks-modal': document.getElementById('generate-tasks-modal'),
         };
         
         function showModal(modalId) { 
             const modal = modals[modalId];
             if (!modal) return;
             modal.classList.remove('hidden'); 
+            modal.classList.add('flex');
             const modalBox = modal.querySelector('.modal-enter');
             if (modalBox) {
                 setTimeout(() => modalBox.classList.add('modal-enter-active'), 10); 
@@ -1293,7 +1463,10 @@
             if (modalBox) {
                 modalBox.classList.remove('modal-enter-active');
             }
-            setTimeout(() => modal.classList.add('hidden'), 300); 
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300); 
         }
 
         function configurarModais() {
@@ -1303,6 +1476,8 @@
                 }
             });
             document.getElementById('task-form').addEventListener('submit', salvarTarefa);
+            document.getElementById('contract-form').addEventListener('submit', salvarContrato);
+            document.getElementById('generate-tasks-form').addEventListener('submit', handleGenerateTasks);
             document.getElementById('delete-task-btn').addEventListener('click', deletarTarefa);
             document.getElementById('add-new-tag-btn').addEventListener('click', adicionarTag);
             
@@ -1419,8 +1594,12 @@
 
             const channelSelect = document.getElementById('task-channel');
             channelSelect.innerHTML = state.channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            
             const assigneeSelect = document.getElementById('task-assignee');
             assigneeSelect.innerHTML = '<option value="">Ninguém</option>' + state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+            
+            const clientSelect = document.getElementById('task-client');
+            clientSelect.innerHTML = '<option value="">Selecione um Cliente</option>' + state.clients.map(c => `<option value="${c.id_cliente}">${c.nome_empresa}</option>`).join('');
 
             const logsContainer = document.getElementById('task-logs-container');
             logsContainer.innerHTML = '';
@@ -1438,6 +1617,7 @@
             document.getElementById('task-id').value = task.id;
             document.getElementById('task-title').value = task.title;
             channelSelect.value = task.channel_id;
+            clientSelect.value = task.client_id || '';
             assigneeSelect.value = task.assignee_id || '';
             document.getElementById('task-due-date').value = task.due_date;
             if (task.description_data && quillEditor) {
@@ -1452,11 +1632,11 @@
             const { data: logs } = await supabaseClient.from('mkt_logs').select('*, mkt_users(name)').eq('task_id', taskId).order('created_at', { ascending: false });
             if (logs && logs.length > 0) {
                  logsContainer.innerHTML = logs.map(log => `
-                     <div class="text-xs pb-2 border-b last:border-b-0">
-                         <p class="text-gray-700">${log.description}</p>
-                         <p class="text-gray-400 mt-1">${log.mkt_users.name} - ${formatLogDate(log.created_at)}</p>
-                     </div>
-                 `).join('');
+                      <div class="text-xs pb-2 border-b last:border-b-0">
+                           <p class="text-gray-700">${log.description}</p>
+                           <p class="text-gray-400 mt-1">${log.mkt_users.name} - ${formatLogDate(log.created_at)}</p>
+                      </div>
+                   `).join('');
             } else {
                 logsContainer.innerHTML = '<p class="text-sm text-gray-500">Nenhum histórico.</p>';
             }
@@ -1536,6 +1716,7 @@
                 const taskData = {
                     title: document.getElementById('task-title').value,
                     channel_id: document.getElementById('task-channel').value,
+                    client_id: document.getElementById('task-client').value || null,
                     assignee_id: document.getElementById('task-assignee').value || null,
                     due_date: document.getElementById('task-due-date').value || null,
                     description_data: editorContents
@@ -1550,7 +1731,7 @@
                     const index = state.tasks.findIndex(t => t.id == id);
                     if (index > -1) state.tasks[index] = savedData;
 
-                    renderizarQuadroKanban();
+                    await refreshCurrentView();
                     hideModal('task-modal');
                     showToast('Tarefa atualizada!');
                 }
@@ -1581,7 +1762,7 @@
             if (error) handleSupabaseError(error, 'excluir tarefa');
             else {
                 state.tasks = state.tasks.filter(t => t.id != id);
-                renderizarQuadroKanban();
+                await refreshCurrentView();
                 hideModal('task-modal');
                 showToast("Tarefa excluída com sucesso.");
             }
@@ -1615,7 +1796,7 @@
         }
 
         // =================================================================================
-        // MODAIS DE TAGS
+        // MODAIS DE TAGS E GERAÇÃO DE TAREFAS
         // =================================================================================
         async function abrirModalTags() {
             await fetchGlobalData();
@@ -1740,6 +1921,201 @@
                 }
             };
         }
+
+        async function abrirModalGerarTarefas() {
+            const modalBody = document.getElementById('generate-tasks-body');
+            const monthName = state.currentDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+            document.getElementById('generate-tasks-month').textContent = monthName;
+
+            modalBody.innerHTML = ''; 
+
+            state.clients.forEach(client => {
+                const totalTasks = (client.postagens_mensais || 0) + (client.storys_mensais || 0);
+                if (totalTasks === 0) return;
+
+                const clientHtml = `
+                    <div class="p-4 border rounded-lg bg-white">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <input id="client-checkbox-${client.id_cliente}" type="checkbox" data-client-id="${client.id_cliente}" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 client-selector">
+                                <label for="client-checkbox-${client.id_cliente}" class="ml-3 block text-lg font-bold text-gray-900 cursor-pointer">${client.nome_empresa} <span class="text-sm font-normal text-gray-500">(${totalTasks} tarefas)</span></label>
+                            </div>
+                        </div>
+                        <div id="task-inputs-${client.id_cliente}" class="hidden mt-4 pt-4 border-t space-y-4">
+                            <!-- Inputs de tarefas serão inseridos aqui -->
+                        </div>
+                    </div>
+                `;
+                modalBody.insertAdjacentHTML('beforeend', clientHtml);
+            });
+            
+            modalBody.querySelectorAll('.client-selector').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    const clientId = e.target.dataset.clientId;
+                    const container = document.getElementById(`task-inputs-${clientId}`);
+                    if (e.target.checked) {
+                        renderTaskInputsForClient(clientId, container);
+                    } else {
+                        container.innerHTML = '';
+                        container.classList.add('hidden');
+                    }
+                });
+            });
+            
+            modalBody.addEventListener('click', e => {
+                if (e.target.classList.contains('add-extra-task-btn')) {
+                    const clientId = e.target.dataset.clientId;
+                    const container = document.getElementById(`task-inputs-${clientId}`);
+                    appendNewTaskRow(container, clientId);
+                }
+            });
+
+
+            showModal('generate-tasks-modal');
+        }
+
+        function renderTaskInputsForClient(clientId, container) {
+            const client = state.clients.find(c => c.id_cliente === clientId);
+            if (!client) return;
+
+            container.innerHTML = '';
+            let inputsHtml = '<div class="space-y-3">';
+
+            for (let i = 1; i <= (client.postagens_mensais || 0); i++) {
+                inputsHtml += createTaskInputRow({ type: 'Post', number: i, clientId });
+            }
+
+            for (let i = 1; i <= (client.storys_mensais || 0); i++) {
+                inputsHtml += createTaskInputRow({ type: 'Story', number: i, clientId });
+            }
+            
+            inputsHtml += '</div>';
+            inputsHtml += `<button type="button" class="add-extra-task-btn mt-4 text-sm font-semibold text-indigo-600 hover:text-indigo-800" data-client-id="${clientId}"><i class="fas fa-plus mr-2"></i>Adicionar Tarefa Extra</button>`;
+
+            container.innerHTML = inputsHtml;
+            container.classList.remove('hidden');
+        }
+        
+        function appendNewTaskRow(container, clientId) {
+             const taskList = container.querySelector('.space-y-3');
+             const newRow = createTaskInputRow({type: 'Extra', number: '', clientId, isExtra: true });
+             taskList.insertAdjacentHTML('beforeend', newRow);
+        }
+
+        function createTaskInputRow({ type, number, clientId, isExtra = false }) {
+            const usersOptions = state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+            const channelsOptions = state.channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            const tagsOptions = state.tags.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            const instagramChannelId = state.channels.find(c => c.name.toLowerCase() === 'instagram')?.id || '';
+
+            return `
+                <div class="p-3 bg-slate-50 rounded-lg border grid grid-cols-1 md:grid-cols-5 gap-3 items-start generated-task-row">
+                    <input type="text" value="${type} ${number}" placeholder="Título da Tarefa" class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400" required>
+                    <input type="date" class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400" required>
+                    <select class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400"><option value="">Responsável...</option>${usersOptions}</select>
+                    <select class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400"><option value="">Canal...</option>${channelsOptions}</select>
+                    <select multiple class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400">${tagsOptions}</select>
+                </div>
+            `;
+        }
+
+        async function handleGenerateTasks(e) {
+            e.preventDefault();
+            const generateBtn = document.getElementById('execute-generate-tasks-btn');
+            toggleButtonLoading(generateBtn, true);
+
+            try {
+                const tasksToInsert = [];
+                const tagsToInsert = [];
+                const firstStatusId = state.status.length > 0 ? state.status[0].id : null;
+
+                if (!firstStatusId) {
+                    showToast('Status inicial "A FAZER" não encontrado.');
+                    return;
+                }
+
+                const selectedCheckboxes = document.querySelectorAll('.client-selector:checked');
+                if (selectedCheckboxes.length === 0) {
+                    showToast('Selecione pelo menos um cliente.');
+                    return;
+                }
+                
+                selectedCheckboxes.forEach(checkbox => {
+                    const clientId = checkbox.dataset.clientId;
+                    const container = document.getElementById(`task-inputs-${clientId}`);
+                    
+                    container.querySelectorAll('.generated-task-row').forEach(row => {
+                        const titleInput = row.children[0];
+                        const dateInput = row.children[1];
+                        const assigneeSelect = row.children[2];
+                        const channelSelect = row.children[3];
+                        
+                        if (titleInput.value && dateInput.value) {
+                             tasksToInsert.push({
+                                title: titleInput.value,
+                                client_id: clientId,
+                                due_date: dateInput.value,
+                                assignee_id: assigneeSelect.value || null,
+                                channel_id: channelSelect.value,
+                                status_id: firstStatusId,
+                            });
+                        }
+                    });
+                });
+
+                if (tasksToInsert.length === 0) {
+                    showToast('Nenhuma tarefa com título e data foi preenchida.');
+                    return;
+                }
+
+                const { data: insertedTasks, error } = await supabaseClient.from('mkt_tasks').insert(tasksToInsert).select();
+
+                if (error) {
+                    handleSupabaseError(error, 'gerar tarefas em massa');
+                    return;
+                }
+                
+                // Agora, lida com as tags
+                let taskIndex = 0;
+                selectedCheckboxes.forEach(checkbox => {
+                    const clientId = checkbox.dataset.clientId;
+                    const container = document.getElementById(`task-inputs-${clientId}`);
+                    container.querySelectorAll('.generated-task-row').forEach(row => {
+                         const titleInput = row.children[0];
+                         const dateInput = row.children[1];
+                         if (titleInput.value && dateInput.value) {
+                            const tagSelect = row.children[4];
+                            const selectedTagIds = Array.from(tagSelect.selectedOptions).map(opt => opt.value);
+                            if (selectedTagIds.length > 0) {
+                                const newTaskId = insertedTasks[taskIndex].id;
+                                selectedTagIds.forEach(tagId => {
+                                    tagsToInsert.push({ task_id: newTaskId, tag_id: tagId });
+                                });
+                            }
+                            taskIndex++;
+                         }
+                    });
+                });
+                
+                if (tagsToInsert.length > 0) {
+                    const { error: tagsError } = await supabaseClient.from('mkt_task_tags').insert(tagsToInsert);
+                    if (tagsError) {
+                         handleSupabaseError(tagsError, 'salvar tags das tarefas geradas');
+                    }
+                }
+
+                showToast(`${insertedTasks.length} tarefas geradas com sucesso!`, 'success');
+                hideModal('generate-tasks-modal');
+                await refreshCurrentView();
+
+            } catch (err) {
+                handleSupabaseError(err, 'gerar tarefas');
+            } finally {
+                toggleButtonLoading(generateBtn, false);
+            }
+        }
+
     </script>
 </body>
 </html>
+
