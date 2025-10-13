@@ -528,7 +528,7 @@
             state.currentUser = profileData;
 
             if (!state.isAppInitialized) {
-                await initializeApp();
+                initializeApp(); // No await needed, it just attaches listeners
             }
 
             setupUserMenu();
@@ -548,7 +548,7 @@
         
         function resetApplication() {
             state.currentUser = null;
-            state.isAppInitialized = false;
+            // state.isAppInitialized = false; // Do not reset this, listeners should persist
             state.tasks = []; state.ideas = []; state.clients = [];
 
             if (state.authStateSubscription) {
@@ -588,7 +588,7 @@
         // =================================================================================
         // INICIALIZAÇÃO DA APLICAÇÃO E EVENTOS
         // =================================================================================
-        async function initializeApp() {
+        function initializeApp() {
             if (state.isAppInitialized) return;
             attachEventListeners();
             configurarModais();
@@ -1601,68 +1601,90 @@
             const form = document.getElementById('task-form');
             form.reset();
             
+            // Reset editor
             editorContents = { ideia: null, roteiro: null, script: null, inspiracoes: null };
             document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
-            const ideaTab = document.querySelector('.editor-tab[data-tab="ideia"]');
-            if (ideaTab) ideaTab.classList.add('active');
+            document.querySelector('.editor-tab[data-tab="ideia"]')?.classList.add('active');
             currentEditorTab = 'ideia';
-
-            const quillContainer = document.querySelector('#quill-editor-container .ql-container');
-            quillContainer.classList.remove('bg-ideia', 'bg-roteiro', 'bg-script', 'bg-inspiracoes');
-            quillContainer.classList.add('bg-ideia');
-
             if (quillEditor) quillEditor.setContents('');
+            const quillContainer = document.querySelector('#quill-editor-container .ql-container');
+            if(quillContainer) {
+                quillContainer.className = 'ql-container ql-snow bg-ideia';
+            }
 
+
+            // Populate dropdowns
             const channelSelect = document.getElementById('task-channel');
             channelSelect.innerHTML = state.channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            
             const assigneeSelect = document.getElementById('task-assignee');
             assigneeSelect.innerHTML = '<option value="">Ninguém</option>' + state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
-            
             const clientSelect = document.getElementById('task-client');
             clientSelect.innerHTML = '<option value="">Selecione um Cliente</option>' + state.clients.map(c => `<option value="${c.id_cliente}">${c.nome_empresa}</option>`).join('');
 
-            const logsContainer = document.getElementById('task-logs-container');
-            logsContainer.innerHTML = '';
-            
             const modalTitle = document.getElementById('modal-title');
-            
-            const task = state.tasks.find(t => t.id == taskId);
-            if (!task) {
-                console.error("Tarefa não encontrada!");
-                return;
-            }
+            const deleteBtn = document.getElementById('delete-task-btn');
+            const taskIdInput = document.getElementById('task-id');
+            const logsContainer = document.getElementById('task-logs-container');
+            const fileContainer = document.getElementById('file-list-container');
+            const dropZone = document.getElementById('drop-zone');
 
-            modalTitle.textContent = `Editar: ${task.title}`;
-            
-            document.getElementById('task-id').value = task.id;
-            document.getElementById('task-title').value = task.title;
-            channelSelect.value = task.channel_id;
-            clientSelect.value = task.client_id || '';
-            assigneeSelect.value = task.assignee_id || '';
-            document.getElementById('task-due-date').value = task.due_date;
-            if (task.description_data && quillEditor) {
-                editorContents = { ...editorContents, ...task.description_data };
-                quillEditor.setContents(editorContents[currentEditorTab] || '');
-            }
-            document.getElementById('delete-task-btn').classList.remove('hidden');
 
-            renderTaskFiles(taskId);
-            renderTaskTags(taskId);
-            
-            const { data: logs } = await supabaseClient.from('mkt_logs').select('*, mkt_users(name)').eq('task_id', taskId).order('created_at', { ascending: false });
-            if (logs && logs.length > 0) {
-                 logsContainer.innerHTML = logs.map(log => `
-                      <div class="text-xs pb-2 border-b last:border-b-0">
-                           <p class="text-gray-700">${log.description}</p>
-                           <p class="text-gray-400 mt-1">${log.mkt_users.name} - ${formatLogDate(log.created_at)}</p>
-                      </div>
-                   `).join('');
-            } else {
+            if (taskId) { // Editing an existing task
+                const task = state.tasks.find(t => t.id == taskId);
+                if (!task) {
+                    showToast("Erro: Tarefa não encontrada.", 'error');
+                    return;
+                }
+
+                modalTitle.textContent = `Editar: ${task.title}`;
+                deleteBtn.classList.remove('hidden');
+                taskIdInput.value = task.id;
+                dropZone.classList.remove('pointer-events-none', 'opacity-50');
+                
+                document.getElementById('task-title').value = task.title;
+                channelSelect.value = task.channel_id;
+                clientSelect.value = task.client_id || '';
+                assigneeSelect.value = task.assignee_id || '';
+                document.getElementById('task-due-date').value = task.due_date;
+                
+                if (task.description_data && quillEditor) {
+                    editorContents = { ...editorContents, ...task.description_data };
+                    quillEditor.setContents(editorContents[currentEditorTab] || '');
+                }
+
+                renderTaskFiles(taskId);
+                renderTaskTags(taskId);
+                const { data: logs } = await supabaseClient.from('mkt_logs').select('*, mkt_users(name)').eq('task_id', taskId).order('created_at', { ascending: false });
+                if (logs && logs.length > 0) {
+                     logsContainer.innerHTML = logs.map(log => `
+                          <div class="text-xs pb-2 border-b last:border-b-0">
+                               <p class="text-gray-700">${log.description}</p>
+                               <p class="text-gray-400 mt-1">${log.mkt_users.name} - ${formatLogDate(log.created_at)}</p>
+                          </div>
+                       `).join('');
+                } else {
+                    logsContainer.innerHTML = '<p class="text-sm text-gray-500">Nenhum histórico.</p>';
+                }
+
+            } else { // Creating a new task
+                modalTitle.textContent = 'Nova Tarefa';
+                deleteBtn.classList.add('hidden');
+                taskIdInput.value = ''; 
+                dropZone.classList.add('pointer-events-none', 'opacity-50');
+
+                document.getElementById('task-tags-container').innerHTML = '';
+                fileContainer.innerHTML = '<p class="text-xs text-center text-slate-400">Salve a tarefa para adicionar anexos.</p>';
                 logsContainer.innerHTML = '<p class="text-sm text-gray-500">Nenhum histórico.</p>';
+                renderTaskTags(null);
             }
-            
+
             showModal('task-modal');
+        }
+
+        async function criarNovaTarefa() {
+            // This function now just opens a blank modal.
+            // The task is created only when the user clicks "Save".
+            abrirModalTarefa();
         }
         
         function renderTaskFiles(taskId) {
@@ -1709,22 +1731,6 @@
             showToast('Anexo excluído com sucesso.');
         }
 
-        async function criarNovaTarefa() {
-            const { data, error } = await supabaseClient
-                .from('mkt_tasks')
-                .insert({ title: 'Nova Tarefa (rascunho)', status_id: state.status[0].id })
-                .select()
-                .single();
-            
-            if (error) {
-                handleSupabaseError(error, 'criar rascunho de tarefa');
-                return;
-            }
-            state.tasks.push(data);
-            renderizarQuadroKanban();
-            abrirModalTarefa(data.id);
-        }
-
         async function salvarTarefa(e) {
             e.preventDefault();
             const saveBtn = document.getElementById('save-task-btn');
@@ -1743,20 +1749,35 @@
                     description_data: editorContents
                 };
 
-                const { data: savedData, error } = await supabaseClient.from('mkt_tasks').update(taskData).eq('id', id).select().single();
+                let savedData, error;
 
-                if (error) {
-                    handleSupabaseError(error, 'salvar tarefa');
-                } else if (savedData) {
+                if (id) { // UPDATE existing task
+                    ({ data: savedData, error } = await supabaseClient.from('mkt_tasks').update(taskData).eq('id', id).select().single());
+                } else { // INSERT new task
+                    taskData.status_id = state.status[0]?.id;
+                    if (!taskData.status_id) {
+                        throw new Error('Não foi possível encontrar um status inicial ("A Fazer").');
+                    }
+                    ({ data: savedData, error } = await supabaseClient.from('mkt_tasks').insert(taskData).select().single());
+                }
+
+                if (error) throw error;
+
+                if (savedData) {
                     await salvarTaskTags(savedData.id);
-                    const index = state.tasks.findIndex(t => t.id == id);
-                    if (index > -1) state.tasks[index] = savedData;
+
+                    if (id) {
+                        const index = state.tasks.findIndex(t => t.id == id);
+                        if (index > -1) state.tasks[index] = { ...state.tasks[index], ...savedData };
+                    } else {
+                        state.tasks.push(savedData);
+                    }
 
                     await refreshCurrentView();
                     hideModal('task-modal');
-                    showToast('Tarefa atualizada!');
+                    showToast(`Tarefa ${id ? 'atualizada' : 'criada'} com sucesso!`, 'success');
                 }
-            } catch(err) {
+            } catch (err) {
                 handleSupabaseError(err, 'salvar tarefa');
             } finally {
                 toggleButtonLoading(saveBtn, false);
@@ -1796,7 +1817,10 @@
         async function salvarTaskTags(taskId) {
             const tagContainer = document.getElementById('task-tags-container');
             const selectedTagIds = Array.from(tagContainer.querySelectorAll('.tag-pill-active')).map(el => parseInt(el.dataset.tagId));
-            const existingTagIds = state.taskTags.filter(tt => tt.task_id === taskId).map(tt => tt.tag_id);
+            
+            // For new tasks, there are no existing tags. For existing, we compare.
+            const existingTagRelations = state.taskTags.filter(tt => tt.task_id === taskId);
+            const existingTagIds = existingTagRelations.map(tt => tt.tag_id);
 
             const tagsToAdd = selectedTagIds.filter(id => !existingTagIds.includes(id));
             const tagsToRemove = existingTagIds.filter(id => !selectedTagIds.includes(id));
@@ -1808,7 +1832,11 @@
                 const newRelations = tagsToAdd.map(tag_id => ({ task_id: taskId, tag_id }));
                 await supabaseClient.from('mkt_task_tags').insert(newRelations);
             }
-            await fetchTaskTags();
+            
+            // Refresh the global state for tags
+            if (tagsToAdd.length > 0 || tagsToRemove.length > 0) {
+                 await fetchTaskTags();
+            }
         }
 
         async function fetchTaskTags() {
@@ -1900,12 +1928,13 @@
             }
         }
 
-        function renderTaskTags(taskId) {
+        function renderTaskTags(taskId) { // Can be null for new tasks
             const container = document.getElementById('task-tags-container');
             const dropdown = document.getElementById('tag-select-dropdown');
             const addTagBtn = document.getElementById('add-tag-btn');
 
-            const taskTagIds = state.taskTags.filter(tt => tt.task_id === taskId).map(tt => tt.tag_id);
+            const taskTagIds = taskId ? state.taskTags.filter(tt => tt.task_id === taskId).map(tt => tt.tag_id) : [];
+            
             const assignedTags = state.tags.filter(t => taskTagIds.includes(t.id));
             const availableTags = state.tags.filter(t => !taskTagIds.includes(t.id));
 
@@ -1921,26 +1950,35 @@
 
             addTagBtn.onclick = () => dropdown.classList.toggle('hidden');
             
-            dropdown.onclick = async (e) => {
+            dropdown.onclick = (e) => {
                 e.preventDefault();
+                const currentTaskId = document.getElementById('task-id').value;
+                if (!currentTaskId) return; // Must save task first
+
                 const tagId = e.target.dataset.tagId ? parseInt(e.target.dataset.tagId) : null;
                 if (tagId) {
-                    await supabaseClient.from('mkt_task_tags').insert({ task_id: Number(taskId), tag_id: tagId });
-                    await fetchTaskTags();
-                    renderTaskTags(taskId);
+                    const tag = state.tags.find(t => t.id === tagId);
+                    if(tag) addTagToPillContainer(tag, container);
                     dropdown.classList.add('hidden');
                 }
             };
 
-            container.onclick = async (e) => {
+            container.onclick = (e) => {
                 if (e.target.classList.contains('remove-tag-btn') || e.target.parentElement.classList.contains('remove-tag-btn')) {
                     const pill = e.target.closest('.tag-pill-active');
-                    const tagId = parseInt(pill.dataset.tagId);
-                    await supabaseClient.from('mkt_task_tags').delete().match({ task_id: Number(taskId), tag_id: tagId });
-                    await fetchTaskTags();
-                    renderTaskTags(taskId);
+                    pill.remove();
                 }
             };
+        }
+
+        function addTagToPillContainer(tag, container) {
+            if (container.querySelector(`[data-tag-id="${tag.id}"]`)) return; // Prevent duplicates
+            const color = tag.color || generatePastelColor(tag.name);
+            const pillHtml = `<div class="tag-pill-active flex items-center gap-2 text-xs font-semibold px-2 py-1 rounded" style="background-color:${color}; color: ${getContrastColor(color)}" data-tag-id="${tag.id}">
+                                <span>${tag.name}</span>
+                                <button type="button" class="remove-tag-btn text-current hover:opacity-75">&times;</button>
+                            </div>`;
+            container.insertAdjacentHTML('beforeend', pillHtml);
         }
 
         async function abrirModalGerarTarefas() {
@@ -1988,7 +2026,7 @@
                 if (addExtraBtn) {
                     const clientId = addExtraBtn.dataset.clientId;
                     const container = document.getElementById(`task-inputs-${clientId}`);
-                    appendNewTaskRow(container, clientId);
+                    appendNewTaskRow(container);
                 }
                 
                 const addTagBtn = e.target.closest('.add-gen-tag-btn');
@@ -2045,16 +2083,26 @@
         }
 
         function createTaskInputRow({ type, number }) {
-            const usersOptions = state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+            const userAvatars = state.users.map(u => `
+                <div class="has-tooltip inline-block">
+                    <img src="${u.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=random`}" 
+                         class="w-8 h-8 rounded-full object-cover cursor-pointer border-2 border-transparent hover:border-emerald-500"
+                         data-user-id="${u.id}">
+                    <span class="tooltip">${u.name}</span>
+                </div>
+            `).join('');
+
             const channelsOptions = state.channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
             const tagsOptions = state.tags.map(t => `<a href="#" class="gen-tag-option block px-4 py-2 text-sm text-gray-700 hover:bg-slate-100" data-tag-id="${t.id}">${t.name}</a>`).join('');
             const instagramChannelId = state.channels.find(c => c.name.toLowerCase() === 'instagram')?.id || '';
 
             return `
-                <div class="p-3 bg-slate-50 rounded-lg border grid grid-cols-1 md:grid-cols-5 gap-3 items-start generated-task-row">
+                <div class="p-3 bg-slate-50 rounded-lg border grid grid-cols-1 md:grid-cols-5 gap-4 items-start generated-task-row">
                     <input type="text" value="${type} ${number}" placeholder="Título da Tarefa" class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400" required>
                     <input type="date" class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400" required>
-                    <select class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400"><option value="">Responsável...</option>${usersOptions}</select>
+                    <div class="assignee-selector flex items-center gap-1 flex-wrap p-1.5 border border-slate-300 rounded-md bg-white min-h-[42px]">
+                        <!-- Selected user goes here -->
+                    </div>
                     <select class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400">${channelsOptions}</select>
                     <div class="relative">
                         <div class="gen-tags-container p-1.5 border border-slate-300 rounded-md bg-white flex flex-wrap gap-1 min-h-[42px]"></div>
