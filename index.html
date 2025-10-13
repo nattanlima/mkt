@@ -103,9 +103,9 @@
             visibility: hidden; opacity: 0;
             width: max-content; max-width: 250px;
             background-color: #1f2937; 
-            color: #fff; text-align: left;
+            color: #fff; text-align: center;
             border-radius: 6px; padding: 8px 12px;
-            position: absolute; z-index: 10;
+            position: absolute; z-index: 50;
             bottom: 125%; left: 50%;
             transform: translateX(-50%);
             transition: opacity 0.2s;
@@ -119,9 +119,7 @@
             margin-left: -5px; border-width: 5px;
             border-style: solid; border-color: #1f2937 transparent transparent transparent;
         }
-        select[multiple] {
-            height: 60px;
-        }
+        
     </style>
 </head>
 <body class="h-full">
@@ -196,8 +194,11 @@
 
         <!-- BARRA DE FILTROS DINÂMICOS -->
         <div id="filter-bar" class="bg-white p-3 border-b border-slate-200 flex-shrink-0 hidden">
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3 flex-wrap">
                 <span class="font-semibold text-sm text-slate-600">Filtar por:</span>
+                <select id="client-filter" class="filter-select bg-slate-100 border-slate-200 rounded-full text-sm py-1.5 pl-3 pr-8 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="all">Todos os Clientes</option>
+                </select>
                 <select id="user-filter" class="filter-select bg-slate-100 border-slate-200 rounded-full text-sm py-1.5 pl-3 pr-8 focus:ring-emerald-500 focus:border-emerald-500">
                     <option value="all">Todos os Usuários</option>
                 </select>
@@ -356,8 +357,8 @@
     </div>
     
     <!-- MODAL DE GERAR TAREFAS -->
-    <div id="generate-tasks-modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-30">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl flex flex-col modal-enter">
+    <div id="generate-tasks-modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl flex flex-col modal-enter">
             <form id="generate-tasks-form">
                 <div class="p-5 border-b flex justify-between items-center">
                     <div>
@@ -372,7 +373,7 @@
                 <div class="p-4 bg-slate-50/70 flex justify-end items-center border-t">
                     <div class="flex gap-3">
                         <button type="button" class="btn-cancel px-6 py-2.5 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-full font-semibold transition-colors">Cancelar</button>
-                        <button type="submit" id="execute-generate-tasks-btn" class="px-6 py-2.5 text-white bg-indigo-500 hover:bg-indigo-600 rounded-full font-semibold transition-colors">Gerar Tarefas</button>
+                        <button type="submit" id="execute-generate-tasks-btn" class="px-6 py-2.5 text-white bg-emerald-500 hover:bg-emerald-600 rounded-full font-semibold transition-colors">Gerar Tarefas</button>
                     </div>
                 </div>
             </form>
@@ -398,7 +399,7 @@
             taskFiles: [], ideas: [], clients: [],
             currentPage: 'dashboard',
             pagesLoaded: { dashboard: false, kanban: false, calendar: false, ideas: false, clients: false },
-            filters: { userId: 'all', channelId: 'all', tagId: 'all' },
+            filters: { clientId: 'all', userId: 'all', channelId: 'all', tagId: 'all' },
             calendarView: 'month',
             currentDate: new Date(),
             activeIdeaId: null,
@@ -452,7 +453,8 @@
         function getContrastColor(colorString) {
             if (!colorString) return '#020617';
             if (colorString.startsWith('hsl')) {
-                return '#020617';
+                const lightness = parseInt(colorString.split(',')[2].replace('%', ''));
+                return lightness > 65 ? '#020617' : '#FFFFFF';
             }
             let hex = colorString.slice(1);
             if (hex.length === 3) {
@@ -659,6 +661,7 @@
                 }
             });
             
+            document.getElementById('client-filter').addEventListener('change', (e) => applyFilter('clientId', e.target.value));
             document.getElementById('user-filter').addEventListener('change', (e) => applyFilter('userId', e.target.value));
             document.getElementById('channel-filter').addEventListener('change', (e) => applyFilter('channelId', e.target.value));
             document.getElementById('tag-filter').addEventListener('change', (e) => applyFilter('tagId', e.target.value));
@@ -692,7 +695,7 @@
                 loader: inicializarPaginaCalendario,
                 actions: `
                     <div class="flex items-center gap-4">
-                        <button id="generate-tasks-btn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-full flex items-center transition-colors">
+                        <button id="generate-tasks-btn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded-full flex items-center transition-colors">
                             <i class="fas fa-magic mr-2"></i> Gerar Tarefas
                         </button>
                         <div class="flex items-center border border-gray-200 rounded-full p-1 bg-slate-100">
@@ -778,14 +781,17 @@
         }
 
         function populateFilters() {
+            const clientFilter = document.getElementById('client-filter');
             const userFilter = document.getElementById('user-filter');
             const channelFilter = document.getElementById('channel-filter');
             const tagFilter = document.getElementById('tag-filter');
 
+            clientFilter.innerHTML = '<option value="all">Todos os Clientes</option>' + state.clients.map(c => `<option value="${c.id_cliente}">${c.nome_empresa}</option>`).join('');
             userFilter.innerHTML = '<option value="all">Todos os Usuários</option>' + state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
             channelFilter.innerHTML = '<option value="all">Todos os Canais</option>' + state.channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
             tagFilter.innerHTML = '<option value="all">Todas as Tags</option>' + state.tags.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
 
+            clientFilter.value = state.filters.clientId;
             userFilter.value = state.filters.userId;
             channelFilter.value = state.filters.channelId;
             tagFilter.value = state.filters.tagId;
@@ -797,15 +803,18 @@
         }
 
         async function clearFilters() {
-            state.filters = { userId: 'all', channelId: 'all', tagId: 'all' };
+            state.filters = { clientId: 'all', userId: 'all', channelId: 'all', tagId: 'all' };
             populateFilters();
             await refreshCurrentView();
         }
 
         function getFilteredTasks() {
-            const { userId, channelId, tagId } = state.filters;
+            const { clientId, userId, channelId, tagId } = state.filters;
             let filtered = [...state.tasks];
-
+            
+            if (clientId !== 'all' && clientId) {
+                filtered = filtered.filter(task => task.client_id == clientId);
+            }
             if (userId !== 'all' && userId) {
                 filtered = filtered.filter(task => task.assignee_id == userId);
             }
@@ -1041,7 +1050,7 @@
                 <div class="flex h-full bg-white border-t border-slate-200">
                     <aside id="ideas-sidebar" class="w-80 h-full bg-slate-50 border-r border-slate-200 flex flex-col flex-shrink-0">
                         <div class="p-4 border-b border-slate-200">
-                            <button id="add-new-idea-btn" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center transition-colors">
+                            <button id="add-new-idea-btn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center transition-colors">
                                 <i class="fas fa-plus mr-2"></i> Nova Ideia
                             </button>
                         </div>
@@ -1218,7 +1227,15 @@
                 const column = document.createElement('div');
                 column.className = 'kanban-column bg-slate-100 rounded-xl p-4 w-80 md:w-96 flex-shrink-0';
                 column.dataset.statusId = stat.id;
-                const tasksInColumn = filteredTasks.filter(task => task.status_id === stat.id);
+                
+                const tasksInColumn = filteredTasks
+                    .filter(task => task.status_id === stat.id)
+                    .sort((a, b) => {
+                        if (!a.due_date) return 1;
+                        if (!b.due_date) return -1;
+                        return new Date(a.due_date) - new Date(b.due_date);
+                    });
+
                 column.innerHTML = `<div class="flex justify-between items-center mb-4"><h2 class="font-bold text-lg text-gray-700">${stat.name}</h2><span class="bg-slate-200 text-slate-600 text-sm font-semibold rounded-full px-2.5 py-0.5">${tasksInColumn.length}</span></div><div class="kanban-cards min-h-[100px] -mr-2 pr-2" data-column-id="${stat.id}">${tasksInColumn.map(task => criarCardTarefa(task)).join('')}</div>`;
                 kanbanBoard.appendChild(column);
             });
@@ -1937,7 +1954,7 @@
                     <div class="p-4 border rounded-lg bg-white">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center">
-                                <input id="client-checkbox-${client.id_cliente}" type="checkbox" data-client-id="${client.id_cliente}" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 client-selector">
+                                <input id="client-checkbox-${client.id_cliente}" type="checkbox" data-client-id="${client.id_cliente}" class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 client-selector">
                                 <label for="client-checkbox-${client.id_cliente}" class="ml-3 block text-lg font-bold text-gray-900 cursor-pointer">${client.nome_empresa} <span class="text-sm font-normal text-gray-500">(${totalTasks} tarefas)</span></label>
                             </div>
                         </div>
@@ -1963,13 +1980,34 @@
             });
             
             modalBody.addEventListener('click', e => {
-                if (e.target.classList.contains('add-extra-task-btn')) {
-                    const clientId = e.target.dataset.clientId;
+                const addExtraBtn = e.target.closest('.add-extra-task-btn');
+                if (addExtraBtn) {
+                    const clientId = addExtraBtn.dataset.clientId;
                     const container = document.getElementById(`task-inputs-${clientId}`);
                     appendNewTaskRow(container, clientId);
                 }
-            });
+                
+                const addTagBtn = e.target.closest('.add-gen-tag-btn');
+                if (addTagBtn) {
+                    const dropdown = addTagBtn.nextElementSibling;
+                    dropdown.classList.toggle('hidden');
+                }
 
+                const tagOption = e.target.closest('.gen-tag-option');
+                if(tagOption) {
+                    e.preventDefault();
+                    const tagId = tagOption.dataset.tagId;
+                    const row = tagOption.closest('.generated-task-row');
+                    const tagsContainer = row.querySelector('.gen-tags-container');
+                    addTagToRow(tagId, tagsContainer);
+                    tagOption.parentElement.classList.add('hidden');
+                }
+                
+                const removeTagBtn = e.target.closest('.remove-gen-tag-btn');
+                if(removeTagBtn) {
+                    removeTagBtn.parentElement.remove();
+                }
+            });
 
             showModal('generate-tasks-modal');
         }
@@ -1982,15 +2020,15 @@
             let inputsHtml = '<div class="space-y-3">';
 
             for (let i = 1; i <= (client.postagens_mensais || 0); i++) {
-                inputsHtml += createTaskInputRow({ type: 'Post', number: i, clientId });
+                inputsHtml += createTaskInputRow({ type: 'Post', number: i });
             }
 
             for (let i = 1; i <= (client.storys_mensais || 0); i++) {
-                inputsHtml += createTaskInputRow({ type: 'Story', number: i, clientId });
+                inputsHtml += createTaskInputRow({ type: 'Story', number: i });
             }
             
             inputsHtml += '</div>';
-            inputsHtml += `<button type="button" class="add-extra-task-btn mt-4 text-sm font-semibold text-indigo-600 hover:text-indigo-800" data-client-id="${clientId}"><i class="fas fa-plus mr-2"></i>Adicionar Tarefa Extra</button>`;
+            inputsHtml += `<button type="button" class="add-extra-task-btn mt-4 text-sm font-semibold text-emerald-600 hover:text-emerald-800" data-client-id="${clientId}"><i class="fas fa-plus mr-2"></i>Adicionar Tarefa Extra</button>`;
 
             container.innerHTML = inputsHtml;
             container.classList.remove('hidden');
@@ -1998,14 +2036,14 @@
         
         function appendNewTaskRow(container, clientId) {
              const taskList = container.querySelector('.space-y-3');
-             const newRow = createTaskInputRow({type: 'Extra', number: '', clientId, isExtra: true });
+             const newRow = createTaskInputRow({type: 'Extra', number: '', isExtra: true });
              taskList.insertAdjacentHTML('beforeend', newRow);
         }
 
-        function createTaskInputRow({ type, number, clientId, isExtra = false }) {
+        function createTaskInputRow({ type, number }) {
             const usersOptions = state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
             const channelsOptions = state.channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            const tagsOptions = state.tags.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            const tagsOptions = state.tags.map(t => `<a href="#" class="gen-tag-option block px-4 py-2 text-sm text-gray-700 hover:bg-slate-100" data-tag-id="${t.id}">${t.name}</a>`).join('');
             const instagramChannelId = state.channels.find(c => c.name.toLowerCase() === 'instagram')?.id || '';
 
             return `
@@ -2013,10 +2051,28 @@
                     <input type="text" value="${type} ${number}" placeholder="Título da Tarefa" class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400" required>
                     <input type="date" class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400" required>
                     <select class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400"><option value="">Responsável...</option>${usersOptions}</select>
-                    <select class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400"><option value="">Canal...</option>${channelsOptions}</select>
-                    <select multiple class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400">${tagsOptions}</select>
+                    <select class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400">${channelsOptions}</select>
+                    <div class="relative">
+                        <div class="gen-tags-container p-1.5 border border-slate-300 rounded-md bg-white flex flex-wrap gap-1 min-h-[42px]"></div>
+                        <button type="button" class="add-gen-tag-btn absolute top-1 right-1 text-xs font-semibold text-emerald-600 hover:text-emerald-800">+</button>
+                        <div class="hidden absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg border z-20">${tagsOptions}</div>
+                    </div>
                 </div>
             `;
+        }
+        
+        function addTagToRow(tagId, container) {
+            const tag = state.tags.find(t => t.id == tagId);
+            if (!tag || container.querySelector(`[data-tag-id="${tagId}"]`)) return; // Prevents duplicates
+            
+            const color = tag.color || generatePastelColor(tag.name);
+            const tagPill = `
+                <div class="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded" style="background-color:${color}; color: ${getContrastColor(color)}" data-tag-id="${tag.id}">
+                    <span>${tag.name}</span>
+                    <button type="button" class="remove-gen-tag-btn text-current hover:opacity-75">&times;</button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', tagPill);
         }
 
         async function handleGenerateTasks(e) {
@@ -2026,79 +2082,76 @@
 
             try {
                 const tasksToInsert = [];
-                const tagsToInsert = [];
-                const firstStatusId = state.status.length > 0 ? state.status[0].id : null;
+                const tagsForNewTasks = [];
+                const firstStatusId = state.status[0]?.id;
 
                 if (!firstStatusId) {
-                    showToast('Status inicial "A FAZER" não encontrado.');
+                    showToast('Status inicial "A FAZER" não encontrado. Verifique as configurações.');
                     return;
                 }
 
                 const selectedCheckboxes = document.querySelectorAll('.client-selector:checked');
                 if (selectedCheckboxes.length === 0) {
-                    showToast('Selecione pelo menos um cliente.');
+                    showToast('Selecione pelo menos um cliente para gerar as tarefas.');
                     return;
                 }
                 
+                let allTasksValid = true;
                 selectedCheckboxes.forEach(checkbox => {
                     const clientId = checkbox.dataset.clientId;
                     const container = document.getElementById(`task-inputs-${clientId}`);
                     
                     container.querySelectorAll('.generated-task-row').forEach(row => {
-                        const titleInput = row.children[0];
-                        const dateInput = row.children[1];
-                        const assigneeSelect = row.children[2];
-                        const channelSelect = row.children[3];
+                        const [titleInput, dateInput, assigneeSelect, channelSelect, tagsWrapper] = row.children;
                         
-                        if (titleInput.value && dateInput.value) {
-                             tasksToInsert.push({
-                                title: titleInput.value,
-                                client_id: clientId,
-                                due_date: dateInput.value,
-                                assignee_id: assigneeSelect.value || null,
-                                channel_id: channelSelect.value,
-                                status_id: firstStatusId,
-                            });
+                        if (!titleInput.value || !dateInput.value) {
+                            allTasksValid = false;
+                            return;
                         }
+
+                        const selectedTagIds = Array.from(tagsWrapper.querySelector('.gen-tags-container').children).map(pill => pill.dataset.tagId);
+                        
+                        tasksToInsert.push({
+                            title: titleInput.value,
+                            client_id: clientId,
+                            due_date: dateInput.value,
+                            assignee_id: assigneeSelect.value || null,
+                            channel_id: channelSelect.value || null,
+                            status_id: firstStatusId,
+                            temp_tag_ids: selectedTagIds 
+                        });
                     });
                 });
 
-                if (tasksToInsert.length === 0) {
-                    showToast('Nenhuma tarefa com título e data foi preenchida.');
+                if (!allTasksValid) {
+                    showToast('Todas as tarefas devem ter um título e uma data de entrega.');
                     return;
                 }
-
-                const { data: insertedTasks, error } = await supabaseClient.from('mkt_tasks').insert(tasksToInsert).select();
+                if (tasksToInsert.length === 0) {
+                    showToast('Nenhuma tarefa foi preenchida para geração.');
+                    return;
+                }
+                
+                const tasksPayload = tasksToInsert.map(({ temp_tag_ids, ...task }) => task);
+                const { data: insertedTasks, error } = await supabaseClient.from('mkt_tasks').insert(tasksPayload).select();
 
                 if (error) {
                     handleSupabaseError(error, 'gerar tarefas em massa');
                     return;
                 }
                 
-                // Agora, lida com as tags
-                let taskIndex = 0;
-                selectedCheckboxes.forEach(checkbox => {
-                    const clientId = checkbox.dataset.clientId;
-                    const container = document.getElementById(`task-inputs-${clientId}`);
-                    container.querySelectorAll('.generated-task-row').forEach(row => {
-                         const titleInput = row.children[0];
-                         const dateInput = row.children[1];
-                         if (titleInput.value && dateInput.value) {
-                            const tagSelect = row.children[4];
-                            const selectedTagIds = Array.from(tagSelect.selectedOptions).map(opt => opt.value);
-                            if (selectedTagIds.length > 0) {
-                                const newTaskId = insertedTasks[taskIndex].id;
-                                selectedTagIds.forEach(tagId => {
-                                    tagsToInsert.push({ task_id: newTaskId, tag_id: tagId });
-                                });
-                            }
-                            taskIndex++;
-                         }
-                    });
-                });
+                for (let i = 0; i < insertedTasks.length; i++) {
+                    const newTaskId = insertedTasks[i].id;
+                    const tagIds = tasksToInsert[i].temp_tag_ids;
+                    if (tagIds && tagIds.length > 0) {
+                        tagIds.forEach(tagId => {
+                            tagsForNewTasks.push({ task_id: newTaskId, tag_id: tagId });
+                        });
+                    }
+                }
                 
-                if (tagsToInsert.length > 0) {
-                    const { error: tagsError } = await supabaseClient.from('mkt_task_tags').insert(tagsToInsert);
+                if (tagsForNewTasks.length > 0) {
+                    const { error: tagsError } = await supabaseClient.from('mkt_task_tags').insert(tagsForNewTasks);
                     if (tagsError) {
                          handleSupabaseError(tagsError, 'salvar tags das tarefas geradas');
                     }
