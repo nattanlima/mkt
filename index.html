@@ -258,6 +258,7 @@
                         <div class="p-4 bg-slate-50 rounded-lg border">
                            <h4 class="font-semibold text-sm mb-3 text-gray-600">Detalhes</h4>
                            <div class="space-y-4">
+                                <div><label class="font-medium text-xs text-gray-500">Status</label><select id="task-status" class="w-full mt-1 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400" required></select></div>
                                 <div><label class="font-medium text-xs text-gray-500">Canal</label><select id="task-channel" class="w-full mt-1 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400" required></select></div>
                                 <div><label class="font-medium text-xs text-gray-500">Cliente</label><select id="task-client" class="w-full mt-1 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400" required></select></div>
                                 <div><label class="font-medium text-xs text-gray-500">Responsável</label><select id="task-assignee" class="w-full mt-1 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400"></select></div>
@@ -1746,6 +1747,8 @@
                 quillContainer.className = 'ql-container ql-snow bg-ideia';
             }
 
+            const statusSelect = document.getElementById('task-status');
+            statusSelect.innerHTML = state.status.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
             const channelSelect = document.getElementById('task-channel');
             channelSelect.innerHTML = state.channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
             const assigneeSelect = document.getElementById('task-assignee');
@@ -1774,6 +1777,7 @@
                 dropZone.classList.remove('pointer-events-none', 'opacity-50');
                 
                 document.getElementById('task-title').value = task.title;
+                statusSelect.value = task.status_id;
                 channelSelect.value = task.channel_id;
                 clientSelect.value = task.client_id || '';
                 assigneeSelect.value = task.assignee_id || '';
@@ -1871,10 +1875,12 @@
 
             try {
                 const id = document.getElementById('task-id').value;
+                const newStatusId = parseInt(document.getElementById('task-status').value);
                 editorContents[currentEditorTab] = quillEditor.getContents();
 
                 const taskData = {
                     title: document.getElementById('task-title').value,
+                    status_id: newStatusId,
                     channel_id: document.getElementById('task-channel').value,
                     client_id: document.getElementById('task-client').value || null,
                     assignee_id: document.getElementById('task-assignee').value || null,
@@ -1883,20 +1889,35 @@
                 };
 
                 let savedData, error;
+                let oldStatus, newStatus;
 
                 if (id) {
+                    const currentTask = state.tasks.find(t => t.id == id);
+                    if (currentTask && currentTask.status_id !== newStatusId) {
+                        oldStatus = state.status.find(s => s.id === currentTask.status_id)?.name;
+                        newStatus = state.status.find(s => s.id === newStatusId)?.name;
+                    }
                     ({ data: savedData, error } = await supabaseClient.from('mkt_tasks').update(taskData).eq('id', id).select().single());
                 } else {
-                    taskData.status_id = state.status[0]?.id;
+                    taskData.status_id = newStatusId || state.status[0]?.id;
                     if (!taskData.status_id) {
-                        throw new Error('Não foi possível encontrar um status inicial ("A Fazer").');
+                        throw new Error('Não foi possível encontrar um status inicial.');
                     }
                     ({ data: savedData, error } = await supabaseClient.from('mkt_tasks').insert(taskData).select().single());
+                    newStatus = state.status.find(s => s.id === taskData.status_id)?.name;
                 }
 
                 if (error) throw error;
 
                 if (savedData) {
+                    if (id) {
+                        if (oldStatus && newStatus) {
+                            await criarLog(savedData.id, `Status alterado de "${oldStatus}" para "${newStatus}".`);
+                        }
+                    } else {
+                        await criarLog(savedData.id, `Tarefa criada no status "${newStatus}".`);
+                    }
+
                     await salvarTaskTags(savedData.id);
                     hideModal('task-modal');
                     showToast(`Tarefa ${id ? 'atualizada' : 'criada'} com sucesso!`, 'success');
@@ -2291,5 +2312,4 @@
     </script>
 </body>
 </html>
-
 
