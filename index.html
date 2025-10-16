@@ -1501,17 +1501,32 @@
         function createCalendarTaskHTML(task) {
             const channel = state.channels.find(c => c.id === task.channel_id);
             const client = state.clients.find(c => c.id_cliente === task.client_id);
+            const status = state.status.find(s => s.id === task.status_id);
+
+            let colorClasses = 'bg-slate-100 text-slate-800 hover:bg-slate-200'; // Cor padrão
+            if (status) {
+                const statusName = status.name.toLowerCase();
+                if (statusName.includes('a fazer')) {
+                    colorClasses = 'bg-red-100 text-red-800 hover:bg-red-200';
+                } else if (statusName.includes('em progresso')) {
+                    colorClasses = 'bg-amber-100 text-amber-800 hover:bg-amber-200';
+                } else if (statusName.includes('aprovado')) {
+                    colorClasses = 'bg-blue-100 text-blue-800 hover:bg-blue-200';
+                } else if (statusName.includes('concluido')) {
+                    colorClasses = 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200';
+                }
+            }
             
             const clientHtml = client
                 ? `<span class="font-bold truncate">${client.nome_empresa}</span>`
                 : `<span class="font-bold truncate">Cliente não definido</span>`;
 
             return `
-                <div class="calendar-task-item bg-emerald-100 text-emerald-800 text-xs p-1.5 rounded mt-1 cursor-pointer hover:bg-emerald-200" data-task-id="${task.id}">
+                <div class="calendar-task-item ${colorClasses} text-xs p-1.5 rounded mt-1 cursor-pointer" data-task-id="${task.id}">
                     <div class="truncate">${clientHtml}</div>
                     <div class="font-semibold truncate">${task.title}</div>
                     <div class="flex items-center justify-between mt-1">
-                        <span class="text-[10px] px-1.5 py-0.5 bg-slate-200 text-slate-600 rounded-full">${channel ? channel.name : 'N/A'}</span>
+                        <span class="text-[10px] px-1.5 py-0.5 bg-white/60 text-current rounded-full">${channel ? channel.name : 'N/A'}</span>
                     </div>
                 </div>
             `;
@@ -2276,4 +2291,5 @@
     </script>
 </body>
 </html>
+
 
