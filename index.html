@@ -586,6 +586,9 @@
                 state.authStateSubscription = null;
             }
             
+            // NOVO: Limpa as inscrições em tempo real ao deslogar
+            supabaseClient.removeAllChannels();
+
             showLoginScreen();
         }
 
@@ -625,6 +628,7 @@
             
             initializeEventListeners();
             configurarQuillEditors();
+            initializeRealtimeListeners(); // NOVO: Inicia os listeners em tempo real
 
             state.isAppInitialized = true;
         }
@@ -912,8 +916,8 @@
             return filtered;
         }
         
+        // CORREÇÃO: Função modificada para não buscar dados novamente
         async function refreshCurrentView() {
-             await fetchGlobalData();
             if (state.currentPage === 'kanban') {
                 renderizarQuadroKanban();
             } else if (state.currentPage === 'calendar') {
@@ -995,7 +999,7 @@
 
             const nonCompletedTasks = tasksInPeriod.filter(t => t.status_id !== concluidoStatusId);
             const tasksByAssignee = state.users.map(u => {
-                 const count = nonCompletedTasks.filter(t => t.assignee_id === u.id).length;
+                  const count = nonCompletedTasks.filter(t => t.assignee_id === u.id).length;
                 return { ...u, count };
             });
 
@@ -1720,10 +1724,10 @@
             const successfulUploads = newFiles.filter(Boolean);
 
             if (successfulUploads.length > 0) {
-                await refreshCurrentView();
+                 // Não precisa buscar tudo de novo, o listener de realtime vai pegar
             }
             
-            renderTaskFiles(taskId);
+            // renderTaskFiles(taskId); // O listener de realtime vai cuidar disso
             
             dropZone.classList.remove('pointer-events-none');
             dropZoneContent.innerHTML = originalDropZoneContent;
@@ -1845,8 +1849,8 @@
                         <div class="flex items-center gap-2">
                              <button type="button" class="view-file-btn text-xs font-semibold text-emerald-600 hover:text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full" data-file-url="${data.publicUrl}" data-is-image="${isImage}">Ver</button>
                              <button type="button" class="delete-file-btn text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" data-file-id="${file.id}" data-file-path="${file.file_path}">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
+                                 <i class="fas fa-trash-alt"></i>
+                             </button>
                         </div>
                     </div>`;
             }).join('');
@@ -1864,8 +1868,7 @@
                 const { error: dbError } = await supabaseClient.from('mkt_task_files').delete().eq('id', fileId);
                 if (dbError) return handleSupabaseError(dbError, 'deletar do banco');
                 
-                await refreshCurrentView();
-                renderTaskFiles(taskId);
+                // O listener de realtime vai atualizar o estado e a UI
                 showToast('Anexo excluído com sucesso.');
             });
         }
@@ -1923,7 +1926,7 @@
                     await salvarTaskTags(savedData.id);
                     hideModal('task-modal');
                     showToast(`Tarefa ${id ? 'atualizada' : 'criada'} com sucesso!`, 'success');
-                    await refreshCurrentView();
+                    // Não precisa chamar refresh, o listener de realtime vai cuidar disso
                 }
             } catch (err) {
                 handleSupabaseError(err, 'salvar tarefa');
@@ -1950,7 +1953,7 @@
                 } else {
                     hideModal('task-modal');
                     showToast("Tarefa excluída com sucesso.");
-                    await refreshCurrentView();
+                    // Não precisa chamar refresh, o listener de realtime vai cuidar disso
                 }
             });
         }
@@ -2042,8 +2045,8 @@
                     handleSupabaseError(tagError, 'excluir tag');
                 } else {
                     showToast('Tag removida com sucesso!');
-                    await refreshCurrentView();
-                    await carregarTagsNoModal();
+                    // O listener vai cuidar da atualização do estado
+                    await carregarTagsNoModal(); // Atualiza apenas o modal
                 }
             });
         }
@@ -2287,7 +2290,7 @@
 
                 showToast(`${insertedTasks.length} tarefas geradas com sucesso!`, 'success');
                 hideModal('generate-tasks-modal');
-                await refreshCurrentView();
+                // O listener de realtime vai cuidar da atualização
 
             } catch (err) {
                 handleSupabaseError(err, 'gerar tarefas');
@@ -2295,9 +2298,70 @@
                 toggleButtonLoading(generateBtn, false);
             }
         }
+        
+        // =================================================================================
+        // NOVO: LÓGICA DE SINCRONIZAÇÃO EM TEMPO REAL
+        // =================================================================================
+        function initializeRealtimeListeners() {
+            console.log("Configurando listeners de tempo real...");
+            
+            const handleRealtimeUpdate = (payload, stateKey, idKey) => {
+                console.log(`Alteração recebida em ${stateKey}:`, payload);
+                const { eventType, new: newRecord, old: oldRecord } = payload;
+                
+                let itemExists = false;
+                const recordId = newRecord[idKey] || oldRecord[idKey];
 
+                switch (eventType) {
+                    case 'INSERT':
+                        itemExists = state[stateKey].some(item => item[idKey] == newRecord[idKey]);
+                        if (!itemExists) {
+                            state[stateKey].push(newRecord);
+                        }
+                        break;
+                    case 'UPDATE':
+                        const indexToUpdate = state[stateKey].findIndex(item => item[idKey] == newRecord[idKey]);
+                        if (indexToUpdate !== -1) {
+                            state[stateKey][indexToUpdate] = newRecord;
+                        } else {
+                            // Se não encontrou, pode ser uma inserção que chegou como update
+                             state[stateKey].push(newRecord);
+                        }
+                        break;
+                    case 'DELETE':
+                        const idToDelete = oldRecord[idKey];
+                        if (idToDelete) {
+                             state[stateKey] = state[stateKey].filter(item => item[idKey] != idToDelete);
+                        }
+                        break;
+                }
+                refreshCurrentView(); // Re-renderiza a UI com os dados atualizados
+            };
+
+            const tablesToWatch = [
+                { table: 'mkt_tasks', stateKey: 'tasks', idKey: 'id' },
+                { table: 'mkt_task_tags', stateKey: 'taskTags', idKey: 'id' },
+                { table: 'mkt_task_files', stateKey: 'taskFiles', idKey: 'id' },
+                { table: 'mkt_tags', stateKey: 'tags', idKey: 'id' },
+                { table: 'clientes', stateKey: 'clients', idKey: 'id_cliente' },
+            ];
+
+            const channel = supabaseClient.channel('public-db-changes');
+
+            tablesToWatch.forEach(({ table, stateKey, idKey }) => {
+                channel.on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: table },
+                    (payload) => handleRealtimeUpdate(payload, stateKey, idKey)
+                );
+            });
+
+            channel.subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    console.log('Conectado ao canal de tempo real!');
+                }
+            });
+        }
     </script>
 </body>
 </html>
-
-
