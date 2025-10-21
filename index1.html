@@ -183,9 +183,9 @@
                         <div class="border-t border-slate-100"></div>
                         <div class="py-1">
                              <a href="#" id="logout-btn" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-slate-100 hover:text-red-600 transition-colors">
-                                <i class="fas fa-sign-out-alt fa-fw w-4 text-center text-gray-400"></i>
-                                <span>Sair da Conta</span>
-                            </a>
+                                 <i class="fas fa-sign-out-alt fa-fw w-4 text-center text-gray-400"></i>
+                                 <span>Sair da Conta</span>
+                             </a>
                         </div>
                     </div>
                 </div>
@@ -222,7 +222,7 @@
     </div>
 
     <!-- MODAIS -->
-    <div id="task-modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-20">
+    <div id="task-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-20">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl flex flex-col modal-enter">
             <form id="task-form">
                 <div class="p-5 border-b flex justify-between items-start">
@@ -258,6 +258,7 @@
                         <div class="p-4 bg-slate-50 rounded-lg border">
                            <h4 class="font-semibold text-sm mb-3 text-gray-600">Detalhes</h4>
                            <div class="space-y-4">
+                                <div><label class="font-medium text-xs text-gray-500">Status</label><select id="task-status" class="w-full mt-1 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400" required></select></div>
                                 <div><label class="font-medium text-xs text-gray-500">Canal</label><select id="task-channel" class="w-full mt-1 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400" required></select></div>
                                 <div><label class="font-medium text-xs text-gray-500">Cliente</label><select id="task-client" class="w-full mt-1 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400" required></select></div>
                                 <div><label class="font-medium text-xs text-gray-500">Responsável</label><select id="task-assignee" class="w-full mt-1 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400"></select></div>
@@ -303,7 +304,7 @@
             </form>
         </div>
     </div>
-    <div id="tags-modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-40">
+    <div id="tags-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-40">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col modal-enter">
             <div class="p-5 border-b flex justify-between items-center">
                 <h3 class="text-xl font-bold text-gray-800">Gerir Tags</h3>
@@ -321,7 +322,7 @@
     </div>
 
     <!-- MODAL DE CONTRATO -->
-    <div id="contract-modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-30">
+    <div id="contract-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-30">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md flex flex-col modal-enter">
             <form id="contract-form">
                 <input type="hidden" id="contract-client-id">
@@ -357,7 +358,7 @@
     </div>
     
     <!-- MODAL DE GERAR TAREFAS -->
-    <div id="generate-tasks-modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-50">
+    <div id="generate-tasks-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl flex flex-col modal-enter">
             <form id="generate-tasks-form">
                 <div class="p-5 border-b flex justify-between items-center">
@@ -380,6 +381,33 @@
         </div>
     </div>
 
+    <!-- NOVO MODAL DE CONFIRMAÇÃO -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm flex flex-col modal-enter">
+            <div class="p-6 text-center">
+                <h3 id="confirm-modal-title" class="text-lg font-semibold text-gray-800"></h3>
+                <p id="confirm-modal-text" class="text-sm text-gray-600 mt-2"></p>
+            </div>
+            <div class="p-4 bg-slate-50/70 flex justify-end items-center border-t gap-3">
+                <button id="confirm-modal-cancel" class="btn-cancel px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-full font-semibold">Cancelar</button>
+                <button id="confirm-modal-ok" class="px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded-full font-semibold">Confirmar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- NOVO MODAL DE VISUALIZAÇÃO DE IMAGEM -->
+    <div id="image-preview-modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl flex flex-col modal-enter relative">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-800">Visualizar Anexo</h3>
+                <button type="button" class="btn-cancel text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-4 flex justify-center items-center" style="max-height: 80vh;">
+                <img id="image-preview-content" src="" alt="Pré-visualização do anexo" class="max-w-full max-h-full object-contain">
+            </div>
+        </div>
+    </div>
+
 
     <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white py-3 px-5 rounded-lg shadow-lg opacity-0 transform translate-y-2 transition-all duration-300 z-50 font-semibold"></div>
 
@@ -398,6 +426,7 @@
             currentUser: null, channels: [], status: [], tasks: [], users: [], tags: [], taskTags: [],
             taskFiles: [], ideas: [], clients: [],
             currentPage: 'dashboard',
+            dashboardFilters: { period: 'this_month' },
             pagesLoaded: { dashboard: false, kanban: false, calendar: false, ideas: false, clients: false },
             filters: { clientId: 'all', userId: 'all', channelId: 'all', tagId: 'all' },
             calendarView: 'month',
@@ -411,6 +440,8 @@
         let ideaQuillEditor;
         let currentEditorTab = 'ideia';
         let editorContents = { ideia: null, roteiro: null, script: null, inspiracoes: null };
+        let confirmCallback = null;
+        let currentModalTagIds = new Set(); // Para gerir tags localmente no modal
 
         // =================================================================================
         // FUNÇÕES UTILITÁRIAS
@@ -528,7 +559,7 @@
             state.currentUser = profileData;
 
             if (!state.isAppInitialized) {
-                initializeApp(); // No await needed, it just attaches listeners
+                await initializeApp(); 
             }
 
             setupUserMenu();
@@ -548,7 +579,6 @@
         
         function resetApplication() {
             state.currentUser = null;
-            // state.isAppInitialized = false; // Do not reset this, listeners should persist
             state.tasks = []; state.ideas = []; state.clients = [];
 
             if (state.authStateSubscription) {
@@ -588,83 +618,133 @@
         // =================================================================================
         // INICIALIZAÇÃO DA APLICAÇÃO E EVENTOS
         // =================================================================================
-        function initializeApp() {
+        async function initializeApp() {
             if (state.isAppInitialized) return;
-            attachEventListeners();
-            configurarModais();
+            
+            await fetchGlobalData();
+            
+            initializeEventListeners();
+            configurarQuillEditors();
+
             state.isAppInitialized = true;
         }
+        
+        function initializeEventListeners() {
+            document.body.addEventListener('click', async (e) => {
+                const card = e.target.closest('.kanban-card, .calendar-task-item, .urgent-task-item');
+                if (card && card.dataset.taskId) {
+                    e.preventDefault();
+                    abrirModalTarefa(Number(card.dataset.taskId));
+                    return;
+                }
 
-        function attachEventListeners() {
-            const app = document.getElementById('app-container');
-            if (!app) return;
+                const modalOverlay = e.target.closest('.fixed.inset-0');
+                if (modalOverlay && (e.target === modalOverlay || e.target.closest('.btn-cancel'))) {
+                    e.preventDefault();
+                    hideModal(modalOverlay.id);
+                    return;
+                }
+                
+                if (e.target.closest('#confirm-modal-ok')) {
+                    if (confirmCallback) confirmCallback();
+                    confirmCallback = null;
+                    hideModal('confirm-modal');
+                    return;
+                }
+                if (e.target.closest('#confirm-modal-cancel')) {
+                    confirmCallback = null;
+                    hideModal('confirm-modal');
+                    return;
+                }
+                
+                const viewFileBtn = e.target.closest('.view-file-btn');
+                if (viewFileBtn) {
+                    e.preventDefault();
+                    const url = viewFileBtn.dataset.fileUrl;
+                    const isImage = viewFileBtn.dataset.isImage === 'true';
 
-            // This single event listener handles all clicks inside the app container
-            // using a technique called "event delegation".
-            app.addEventListener('click', (e) => {
+                    if (isImage) {
+                        document.getElementById('image-preview-content').src = url;
+                        showModal('image-preview-modal');
+                    } else {
+                        window.open(url, '_blank');
+                    }
+                    return;
+                }
+
+                // Lógica de tags refatorada
+                if (e.target.closest('#add-tag-btn')) {
+                    document.getElementById('tag-select-dropdown').classList.toggle('hidden');
+                    return;
+                }
+                const tagOption = e.target.closest('#tag-select-dropdown a');
+                if (tagOption) {
+                    e.preventDefault();
+                    const tagId = Number(tagOption.dataset.tagId);
+                    currentModalTagIds.add(tagId);
+                    renderTaskTags();
+                    document.getElementById('tag-select-dropdown').classList.add('hidden');
+                    return;
+                }
+                const removeTagBtn = e.target.closest('#task-tags-container .remove-tag-btn');
+                if (removeTagBtn) {
+                     const tagId = Number(removeTagBtn.closest('.tag-pill-active').dataset.tagId);
+                     currentModalTagIds.delete(tagId);
+                     renderTaskTags();
+                     return;
+                }
+
                 const navBtn = e.target.closest('.nav-btn');
-                if (navBtn) return showPage(navBtn.dataset.page);
+                if (navBtn) { showPage(navBtn.dataset.page); return; }
                 
                 const addTaskBtn = e.target.closest('#add-task-btn');
-                if (addTaskBtn) return criarNovaTarefa();
+                if (addTaskBtn) { criarNovaTarefa(); return; }
 
                 const editContractBtn = e.target.closest('.edit-contract-btn');
-                if (editContractBtn) return abrirModalContrato(editContractBtn.dataset.clientId);
+                if (editContractBtn) { abrirModalContrato(editContractBtn.dataset.clientId); return; }
                 
                 const generateTasksBtn = e.target.closest('#generate-tasks-btn');
-                if (generateTasksBtn) return abrirModalGerarTarefas();
+                if (generateTasksBtn) { abrirModalGerarTarefas(); return; }
 
-                const prevBtn = e.target.closest('#prev-btn');
-                if (prevBtn) return navigateCalendar(-1);
-                
-                const nextBtn = e.target.closest('#next-btn');
-                if (nextBtn) return navigateCalendar(1);
-                
+                if (e.target.closest('#prev-btn')) { navigateCalendar(-1); return; }
+                if (e.target.closest('#next-btn')) { navigateCalendar(1); return; }
                 const calendarViewBtn = e.target.closest('.calendar-view-btn');
-                if (calendarViewBtn) return setCalendarView(calendarViewBtn.dataset.view);
-                
+                if (calendarViewBtn) { setCalendarView(calendarViewBtn.dataset.view); return; }
+
                 const userMenuBtn = e.target.closest('#user-menu-btn');
-                if (userMenuBtn) return document.getElementById('logout-popup').classList.toggle('hidden');
-                
-                const settingsBtn = e.target.closest('#settings-btn');
-                if (settingsBtn) {
-                    e.preventDefault();
-                    document.getElementById('logout-popup').classList.add('hidden');
-                    return abrirModalTags();
+                const logoutPopup = document.getElementById('logout-popup');
+                if (userMenuBtn) { logoutPopup.classList.toggle('hidden'); return; }
+                if (!logoutPopup.classList.contains('hidden') && !e.target.closest('#logout-popup')) {
+                     logoutPopup.classList.add('hidden');
                 }
-                
-                const logoutBtn = e.target.closest('#logout-btn');
-                if (logoutBtn) return handleLogout();
-                
-                const card = e.target.closest('.kanban-card, .calendar-task-item');
-                if (card && card.dataset.taskId) return abrirModalTarefa(Number(card.dataset.taskId));
-                
-                const addNewIdeaBtn = e.target.closest('#add-new-idea-btn');
-                if (addNewIdeaBtn) return criarNovaIdeia();
-                
+                if (e.target.closest('#settings-btn')) { e.preventDefault(); logoutPopup.classList.add('hidden'); abrirModalTags(); return; }
+                if (e.target.closest('#logout-btn')) { e.preventDefault(); handleLogout(); return; }
+
+                if (e.target.closest('#add-new-idea-btn')) { criarNovaIdeia(); return; }
                 const ideaItem = e.target.closest('.sidebar-item');
-                if (ideaItem) return selecionarIdeia(Number(ideaItem.dataset.ideaId));
-                
-                const saveIdeaBtn = e.target.closest('#save-idea-btn');
-                if (saveIdeaBtn) return salvarIdeiaAtiva();
-                
-                const deleteIdeaBtn = e.target.closest('#delete-idea-btn');
-                if (deleteIdeaBtn) return deletarIdeia(state.activeIdeaId);
-                
-                const clearFiltersBtn = e.target.closest('#clear-filters-btn');
-                if (clearFiltersBtn) return clearFilters();
+                if (ideaItem) { selecionarIdeia(Number(ideaItem.dataset.ideaId)); return; }
+                if (e.target.closest('#save-idea-btn')) { salvarIdeiaAtiva(); return; }
+                if (e.target.closest('#delete-idea-btn')) { deletarIdeia(state.activeIdeaId); return; }
+
+                if (e.target.closest('#clear-filters-btn')) { clearFilters(); return; }
+
+                const deleteTagBtn = e.target.closest('#tags-modal .delete-tag-btn');
+                if (deleteTagBtn) { deletarTag(deleteTagBtn.dataset.id); return; }
             });
 
-            // Listener for clicks outside of popups
-            document.addEventListener('click', (e) => {
-                const logoutPopup = document.getElementById('logout-popup');
-                const userMenuBtn = document.getElementById('user-menu-btn');
-                if (logoutPopup && !logoutPopup.classList.contains('hidden') && !userMenuBtn.contains(e.target) && !logoutPopup.contains(e.target)) {
-                    logoutPopup.classList.add('hidden');
+            document.getElementById('task-form').addEventListener('submit', salvarTarefa);
+            document.getElementById('contract-form').addEventListener('submit', salvarContrato);
+            document.getElementById('generate-tasks-form').addEventListener('submit', handleGenerateTasks);
+            document.getElementById('delete-task-btn').addEventListener('click', deletarTarefa);
+            document.getElementById('add-new-tag-btn').addEventListener('click', adicionarTag);
+            
+            document.getElementById('file-list-container').addEventListener('click', (e) => {
+                const deleteButton = e.target.closest('.delete-file-btn');
+                if (deleteButton) {
+                    deletarArquivo(Number(deleteButton.dataset.fileId), deleteButton.dataset.filePath);
                 }
             });
-            
-            // Filter listeners
+
             document.getElementById('client-filter').addEventListener('change', (e) => applyFilter('clientId', e.target.value));
             document.getElementById('user-filter').addEventListener('change', (e) => applyFilter('userId', e.target.value));
             document.getElementById('channel-filter').addEventListener('change', (e) => applyFilter('channelId', e.target.value));
@@ -734,8 +814,6 @@
             document.getElementById('header-actions').innerHTML = pageConfigs[pageId].actions;
             
             const filterBar = document.getElementById('filter-bar');
-            
-            await fetchGlobalData();
 
             if (pageId === 'kanban' || pageId === 'calendar') {
                 populateFilters();
@@ -765,7 +843,7 @@
         }
 
         async function fetchGlobalData() {
-            const [channelsRes, statusRes, usersRes, tagsRes, taskTagsRes, taskFilesRes, ideasRes, _] = await Promise.all([
+            const [channelsRes, statusRes, usersRes, tagsRes, taskTagsRes, taskFilesRes, ideasRes, tasksRes, _] = await Promise.all([
                 supabaseClient.from('mkt_channels').select('*'),
                 supabaseClient.from('mkt_status').select('*').order('order', { ascending: true }),
                 supabaseClient.from('mkt_users').select('id, name, photo_url'),
@@ -773,6 +851,7 @@
                 supabaseClient.from('mkt_task_tags').select('*'),
                 supabaseClient.from('mkt_task_files').select('*'),
                 supabaseClient.from('mkt_ideas').select('*'),
+                supabaseClient.from('mkt_tasks').select('*'),
                 fetchMarketingClients()
             ]);
             state.channels = channelsRes.data || [];
@@ -782,6 +861,7 @@
             state.taskTags = taskTagsRes.data || [];
             state.taskFiles = taskFilesRes.data || [];
             state.ideas = ideasRes.data || [];
+            state.tasks = tasksRes.data || [];
         }
 
         function populateFilters() {
@@ -833,106 +913,160 @@
         }
         
         async function refreshCurrentView() {
-            if (state.currentPage === 'kanban' || state.currentPage === 'calendar') {
-                await fetchKanbanTasks();
-                if (state.currentPage === 'kanban') {
-                    renderizarQuadroKanban();
-                } else if (state.currentPage === 'calendar') {
-                    renderizarCalendario();
-                }
+             await fetchGlobalData();
+            if (state.currentPage === 'kanban') {
+                renderizarQuadroKanban();
+            } else if (state.currentPage === 'calendar') {
+                renderizarCalendario();
             } else if (state.currentPage === 'clients') {
-                await fetchMarketingClients();
                 renderizarTabelaClientes();
+            } else if (state.currentPage === 'dashboard') {
+                carregarDadosDashboard();
             }
         }
         
         // =================================================================================
         // LÓGICA DO DASHBOARD
         // =================================================================================
-        async function carregarDadosDashboard() {
-            const { data: tasksData, error: tasksError } = await supabaseClient.from('mkt_tasks').select('status_id, due_date, assignee_id');
-            if (tasksError) return handleSupabaseError(tasksError, 'carregar dados do dashboard');
+        function carregarDadosDashboard() {
+            const now = new Date();
+            let startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            let endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-            const ideaCounts = state.ideas.reduce((acc, idea) => {
-                acc[idea.user_id] = (acc[idea.user_id] || 0) + 1;
-                return acc;
-            }, {});
+            switch(document.getElementById('dashboard-period-filter')?.value || 'this_month') {
+                case 'last_7_days':
+                    startDate = new Date();
+                    startDate.setDate(startDate.getDate() - 7);
+                    endDate = new Date();
+                    break;
+                case 'last_30_days':
+                    startDate = new Date();
+                    startDate.setDate(startDate.getDate() - 30);
+                    endDate = new Date();
+                    break;
+            }
 
-            const rankedUsers = Object.keys(ideaCounts)
-                .map(userId => {
-                    const user = state.users.find(u => u.id == userId);
-                    return user ? { ...user, ideaCount: ideaCounts[userId] } : null;
-                })
-                .filter(Boolean) 
-                .sort((a, b) => b.ideaCount - a.ideaCount)
-                .slice(0, 3);
+            const tasksInPeriod = state.tasks.filter(task => {
+                const taskDate = new Date(task.created_at);
+                return taskDate >= startDate && taskDate <= endDate;
+            });
             
-            const topCreatorsHtml = rankedUsers.length > 0 ? rankedUsers.map((user, index) => `
-                <li class="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50">
-                    <div class="flex items-center gap-4">
-                        <span class="font-bold text-lg w-8 text-center text-slate-500">${index + 1}</span>
-                        <img src="${user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}" class="w-10 h-10 rounded-full object-cover">
-                        <span class="font-bold text-slate-700">${user.name}</span>
+            const concluidoStatus = state.status.find(s => s.name.toLowerCase() === 'concluido');
+            const concluidoStatusId = concluidoStatus ? concluidoStatus.id : -1;
+            
+            const aFazerStatus = state.status.find(s => s.name.toLowerCase() === 'a fazer');
+            const emProgressoStatus = state.status.find(s => s.name.toLowerCase() === 'em progresso');
+            const activeStatusIds = [aFazerStatus?.id, emProgressoStatus?.id].filter(Boolean);
+
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const fiveDaysFromNow = new Date();
+            fiveDaysFromNow.setDate(today.getDate() + 5);
+
+            const urgentTasks = state.tasks.filter(task => {
+                if (!task.due_date || !activeStatusIds.includes(task.status_id)) {
+                    return false;
+                }
+                const dueDate = new Date(task.due_date + 'T00:00:00');
+                return dueDate < today || (dueDate >= today && dueDate <= fiveDaysFromNow);
+            }).sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+
+            const urgentTasksHtml = urgentTasks.length > 0 ? urgentTasks.map(task => {
+                const client = state.clients.find(c => c.id_cliente === task.client_id);
+                const channel = state.channels.find(c => c.id === task.channel_id);
+                const assignee = state.users.find(u => u.id === task.assignee_id);
+                const dueDate = new Date(task.due_date + 'T00:00:00');
+                const isOverdue = dueDate < today;
+
+                return `
+                    <li class="urgent-task-item p-3 flex items-center justify-between hover:bg-red-100/50 rounded-lg cursor-pointer" data-task-id="${task.id}">
+                        <div class="flex items-center gap-3 overflow-hidden">
+                            ${assignee ? `<img src="${assignee.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(assignee.name)}&background=random`}" class="w-8 h-8 rounded-full object-cover flex-shrink-0">` : `<div class="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0"></div>`}
+                            <div class="truncate">
+                                <p class="font-bold text-slate-800 truncate">${task.title}</p>
+                                <p class="text-xs text-slate-500 truncate">${client?.nome_empresa || 'Cliente não definido'} | ${channel?.name || 'Canal não definido'}</p>
+                            </div>
+                        </div>
+                        <span class="text-sm font-bold flex-shrink-0 ml-2 ${isOverdue ? 'text-red-600' : 'text-amber-600'}">${dueDate.toLocaleDateString('pt-BR', {day: '2-digit', month:'2-digit'})}</span>
+                    </li>
+                `;
+            }).join('') : '<p class="text-center text-slate-500 p-4">Nenhuma tarefa urgente.</p>';
+
+            const nonCompletedTasks = tasksInPeriod.filter(t => t.status_id !== concluidoStatusId);
+            const tasksByAssignee = state.users.map(u => {
+                 const count = nonCompletedTasks.filter(t => t.assignee_id === u.id).length;
+                return { ...u, count };
+            });
+
+            const tasksByAssigneeHtml = tasksByAssignee.map(user => `
+                <div class="w-full">
+                    <div class="flex justify-between items-center text-sm font-medium text-slate-600 mb-1">
+                        <div class="flex items-center gap-2">
+                           <img src="${user.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}" class="w-5 h-5 rounded-full object-cover">
+                           <span>${user.name}</span>
+                        </div>
+                        <span>${user.count} ${user.count !== 1 ? 'tarefas' : 'tarefa'}</span>
                     </div>
-                    <div class="flex items-center gap-2 font-bold text-indigo-600">
-                        <i class="fas fa-lightbulb"></i>
-                        <span>${user.ideaCount} ${user.ideaCount > 1 ? 'ideias' : 'ideia'}</span>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5">
+                        <div class="bg-indigo-500 h-2.5 rounded-full" style="width: ${nonCompletedTasks.length > 0 ? (user.count / nonCompletedTasks.length) * 100 : 0}%"></div>
                     </div>
-                </li>
-            `).join('') : '<p class="text-center text-slate-500 p-4">Nenhuma ideia criada ainda.</p>';
+                </div>
+            `).join('');
 
             const tasksByStatus = state.status.map(s => {
-                const count = tasksData.filter(t => t.status_id === s.id).length;
+                const count = tasksInPeriod.filter(t => t.status_id === s.id).length;
                 return { name: s.name, count };
             });
 
-            const tasksByAssignee = state.users.map(u => {
-                 const count = tasksData.filter(t => t.assignee_id === u.id).length;
-                return { name: u.name, count };
-            });
-
             const dashboardContent = `
-                <div class="space-y-8">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-                        <div class="bg-white p-6 rounded-xl shadow-sm border">
-                            <h3 class="font-semibold text-gray-800 mb-4">Funil de Produtividade</h3>
-                            <div class="space-y-3">
-                                ${tasksByStatus.map(status => `
-                                    <div class="w-full">
-                                        <div class="flex justify-between text-sm font-medium text-slate-600 mb-1">
-                                            <span>${status.name}</span>
-                                            <span>${status.count}</span>
-                                        </div>
-                                        <div class="w-full bg-slate-200 rounded-full h-2.5">
-                                            <div class="bg-emerald-500 h-2.5 rounded-full" style="width: ${tasksData.length > 0 ? (status.count / tasksData.length) * 100 : 0}%"></div>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
+                <div class="flex justify-end mb-4">
+                    <select id="dashboard-period-filter" class="filter-select bg-white border-slate-300 rounded-full text-sm py-1.5 pl-3 pr-8 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="this_month">Este Mês</option>
+                        <option value="last_7_days">Últimos 7 dias</option>
+                        <option value="last_30_days">Últimos 30 dias</option>
+                    </select>
+                </div>
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-1 bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-xl shadow-sm border border-red-200">
+                            <h3 class="font-semibold text-red-800 mb-4 flex items-center gap-2"><i class="fas fa-fire"></i> Tarefas Urgentes</h3>
+                            <ul class="space-y-2">${urgentTasksHtml}</ul>
                         </div>
-                         <div class="bg-white p-6 rounded-xl shadow-sm border">
-                            <h3 class="font-semibold text-gray-800 mb-4">Carga de Trabalho da Equipa</h3>
-                            <div class="space-y-3">
-                                ${tasksByAssignee.map(user => `
-                                     <div class="w-full">
-                                        <div class="flex justify-between text-sm font-medium text-slate-600 mb-1">
-                                            <span>${user.name}</span>
-                                            <span>${user.count} ${user.count !== 1 ? 'tarefas' : 'tarefa'}</span>
+                        <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                                <h3 class="font-semibold text-gray-800 mb-4">Funil de Produtividade</h3>
+                                <div class="space-y-3">
+                                    ${tasksByStatus.map(status => `
+                                        <div class="w-full">
+                                            <div class="flex justify-between text-sm font-medium text-slate-600 mb-1">
+                                                <span>${status.name}</span>
+                                                <span>${status.count}</span>
+                                            </div>
+                                            <div class="w-full bg-slate-200 rounded-full h-2.5">
+                                                <div class="bg-emerald-500 h-2.5 rounded-full" style="width: ${tasksInPeriod.length > 0 ? (status.count / tasksInPeriod.length) * 100 : 0}%"></div>
+                                            </div>
                                         </div>
-                                        <div class="w-full bg-slate-200 rounded-full h-2.5">
-                                            <div class="bg-indigo-500 h-2.5 rounded-full" style="width: ${tasksData.length > 0 ? (user.count / tasksData.length) * 100 : 0}%"></div>
-                                        </div>
-                                    </div>
-                                `).join('')}
+                                    `).join('')}
+                                </div>
                             </div>
+                             <div class="bg-white p-6 rounded-xl shadow-sm border">
+                                 <h3 class="font-semibold text-gray-800 mb-4">Carga de Trabalho da Equipe</h3>
+                                 <div class="space-y-3">${tasksByAssigneeHtml}</div>
+                             </div>
                         </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border">
-                        <h3 class="font-semibold text-gray-800 mb-4">🏆 Pódio de Ideias</h3>
-                        <ul class="space-y-2">${topCreatorsHtml}</ul>
                     </div>
                 </div>`;
             document.getElementById('dashboard-page').innerHTML = dashboardContent;
+            
+            const filterEl = document.getElementById('dashboard-period-filter');
+            if (filterEl) {
+              filterEl.value = state.dashboardFilters.period;
+              filterEl.addEventListener('change', (e) => {
+                state.dashboardFilters.period = e.target.value;
+                carregarDadosDashboard();
+              });
+            }
         }
         
         // =================================================================================
@@ -1083,8 +1217,10 @@
                     </main>
                 </div>
             `;
-
-            ideaQuillEditor = new Quill('#idea-editor-quill', { theme: 'snow', placeholder: 'Comece a escrever...' });
+            
+            if (!ideaQuillEditor) {
+                 ideaQuillEditor = new Quill('#idea-editor-quill', { theme: 'snow', placeholder: 'Comece a escrever...' });
+            }
 
             await fetchIdeas();
             renderIdeiasSidebar();
@@ -1096,7 +1232,7 @@
             if (error) {
                 handleSupabaseError(error, 'buscar ideias');
             } else {
-                state.ideas = data;
+                state.ideas = data || [];
             }
         }
 
@@ -1191,21 +1327,22 @@
         }
         
         async function deletarIdeia(ideaId) {
-            if (!ideaId || !confirm('Tem certeza que deseja excluir esta ideia?')) return;
-            
-            const { error } = await supabaseClient.from('mkt_ideas').delete().eq('id', ideaId);
-            
-            if (error) {
-                handleSupabaseError(error, 'deletar ideia');
-            } else {
-                state.ideas = state.ideas.filter(i => i.id !== ideaId);
-                if (state.activeIdeaId === ideaId) {
-                    state.activeIdeaId = null;
+            if (!ideaId) return;
+            showConfirmModal('Excluir Ideia?', 'Tem certeza que deseja excluir esta ideia? Esta ação é irreversível.', async () => {
+                const { error } = await supabaseClient.from('mkt_ideas').delete().eq('id', ideaId);
+                
+                if (error) {
+                    handleSupabaseError(error, 'deletar ideia');
+                } else {
+                    state.ideas = state.ideas.filter(i => i.id !== ideaId);
+                    if (state.activeIdeaId === ideaId) {
+                        state.activeIdeaId = null;
+                    }
+                    renderIdeiasSidebar();
+                    renderIdeiaConteudo();
+                    showToast('Ideia excluída com sucesso.');
                 }
-                renderIdeiasSidebar();
-                renderIdeiaConteudo();
-                showToast('Ideia excluída com sucesso.');
-            }
+            });
         }
 
 
@@ -1213,13 +1350,7 @@
         // LÓGICA DO KANBAN
         // =================================================================================
         async function inicializarPaginaKanban() {
-            await fetchKanbanTasks();
             renderizarQuadroKanban();
-        }
-        
-        async function fetchKanbanTasks() {
-            const { data, error } = await supabaseClient.from('mkt_tasks').select('*');
-            if (error) handleSupabaseError(error, 'buscar tarefas'); else state.tasks = data;
         }
         
         function renderizarQuadroKanban() {
@@ -1318,7 +1449,7 @@
                             task.status_id = parseInt(newStatusId);
                             await criarLog(taskId, `Status alterado de "${oldStatus}" para "${newStatus}".`);
                             const { error } = await supabaseClient.from('mkt_tasks').update({ status_id: newStatusId }).eq('id', taskId);
-                            if (error) { handleSupabaseError(error, 'atualizar status da tarefa'); fetchKanbanTasks().then(renderizarQuadroKanban); }
+                            if (error) { handleSupabaseError(error, 'atualizar status da tarefa'); await refreshCurrentView(); }
                         }
                     }
                 });
@@ -1326,10 +1457,9 @@
         }
 
         // =================================================================================
-        // LÓGICA DO CALENDÁRIO E GERAÇÃO DE TAREFAS
+        // LÓGICA DO CALENDÁRIO
         // =================================================================================
         async function inicializarPaginaCalendario() {
-            await fetchKanbanTasks();
             renderizarCalendario();
         }
         
@@ -1369,17 +1499,32 @@
         function createCalendarTaskHTML(task) {
             const channel = state.channels.find(c => c.id === task.channel_id);
             const client = state.clients.find(c => c.id_cliente === task.client_id);
+            const status = state.status.find(s => s.id === task.status_id);
+
+            let colorClasses = 'bg-slate-100 text-slate-800 hover:bg-slate-200'; // Cor padrão
+            if (status) {
+                const statusName = status.name.toLowerCase();
+                if (statusName.includes('a fazer')) {
+                    colorClasses = 'bg-red-100 text-red-800 hover:bg-red-200';
+                } else if (statusName.includes('em progresso')) {
+                    colorClasses = 'bg-amber-100 text-amber-800 hover:bg-amber-200';
+                } else if (statusName.includes('aprovado')) {
+                    colorClasses = 'bg-blue-100 text-blue-800 hover:bg-blue-200';
+                } else if (statusName.includes('concluido')) {
+                    colorClasses = 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200';
+                }
+            }
             
             const clientHtml = client
                 ? `<span class="font-bold truncate">${client.nome_empresa}</span>`
                 : `<span class="font-bold truncate">Cliente não definido</span>`;
 
             return `
-                <div class="calendar-task-item bg-emerald-100 text-emerald-800 text-xs p-1.5 rounded mt-1 cursor-pointer hover:bg-emerald-200" data-task-id="${task.id}">
+                <div class="calendar-task-item ${colorClasses} text-xs p-1.5 rounded mt-1 cursor-pointer" data-task-id="${task.id}">
                     <div class="truncate">${clientHtml}</div>
                     <div class="font-semibold truncate">${task.title}</div>
                     <div class="flex items-center justify-between mt-1">
-                        <span class="text-[10px] px-1.5 py-0.5 bg-slate-200 text-slate-600 rounded-full">${channel ? channel.name : 'N/A'}</span>
+                        <span class="text-[10px] px-1.5 py-0.5 bg-white/60 text-current rounded-full">${channel ? channel.name : 'N/A'}</span>
                     </div>
                 </div>
             `;
@@ -1464,6 +1609,8 @@
             'tags-modal': document.getElementById('tags-modal'),
             'contract-modal': document.getElementById('contract-modal'),
             'generate-tasks-modal': document.getElementById('generate-tasks-modal'),
+            'confirm-modal': document.getElementById('confirm-modal'),
+            'image-preview-modal': document.getElementById('image-preview-modal'),
         };
         
         function showModal(modalId) { 
@@ -1490,28 +1637,16 @@
             }, 300); 
         }
 
-        function configurarModais() {
-            Object.values(modals).forEach(modal => {
-                if (modal) {
-                    modal.addEventListener('click', e => { if (e.target === modal || e.target.closest('.btn-cancel')) { hideModal(modal.id); } });
-                }
-            });
-            document.getElementById('task-form').addEventListener('submit', salvarTarefa);
-            document.getElementById('contract-form').addEventListener('submit', salvarContrato);
-            document.getElementById('generate-tasks-form').addEventListener('submit', handleGenerateTasks);
-            document.getElementById('delete-task-btn').addEventListener('click', deletarTarefa);
-            document.getElementById('add-new-tag-btn').addEventListener('click', adicionarTag);
-            
-            document.getElementById('file-list-container').addEventListener('click', (e) => {
-                const deleteButton = e.target.closest('.delete-file-btn');
-                if (deleteButton) {
-                    const fileId = Number(deleteButton.dataset.fileId);
-                    const filePath = deleteButton.dataset.filePath;
-                    deletarArquivo(fileId, filePath);
-                }
-            });
+        function showConfirmModal(title, text, onConfirm) {
+            document.getElementById('confirm-modal-title').textContent = title;
+            document.getElementById('confirm-modal-text').textContent = text;
+            confirmCallback = onConfirm;
+            showModal('confirm-modal');
+        }
 
+        function configurarQuillEditors() {
             quillEditor = new Quill('#quill-editor', { theme: 'snow' });
+            
             const editorTabs = document.querySelectorAll('.editor-tab');
             editorTabs.forEach(tab => {
                 tab.addEventListener('click', () => {
@@ -1521,7 +1656,7 @@
                     tab.classList.add('active');
                     currentEditorTab = tab.dataset.tab;
                     const nextContent = editorContents[currentEditorTab] || '';
-                    quillEditor.setContents(nextContent);
+                    quillEditor.setContents(nextContent, 'silent');
                     
                     const quillContainer = document.querySelector('#quill-editor-container .ql-container');
                     quillContainer.classList.remove('bg-ideia', 'bg-roteiro', 'bg-script', 'bg-inspiracoes');
@@ -1585,11 +1720,10 @@
             const successfulUploads = newFiles.filter(Boolean);
 
             if (successfulUploads.length > 0) {
-                state.taskFiles.push(...successfulUploads);
+                await refreshCurrentView();
             }
             
             renderTaskFiles(taskId);
-            renderizarQuadroKanban();
             
             dropZone.classList.remove('pointer-events-none');
             dropZoneContent.innerHTML = originalDropZoneContent;
@@ -1597,23 +1731,22 @@
         }
 
         async function abrirModalTarefa(taskId = null) {
-            await fetchGlobalData();
             const form = document.getElementById('task-form');
             form.reset();
             
-            // Reset editor
+            currentModalTagIds.clear(); // Limpa o conjunto de tags temporário
             editorContents = { ideia: null, roteiro: null, script: null, inspiracoes: null };
             document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
             document.querySelector('.editor-tab[data-tab="ideia"]')?.classList.add('active');
             currentEditorTab = 'ideia';
-            if (quillEditor) quillEditor.setContents('');
+            if (quillEditor) quillEditor.setContents('', 'silent');
             const quillContainer = document.querySelector('#quill-editor-container .ql-container');
             if(quillContainer) {
                 quillContainer.className = 'ql-container ql-snow bg-ideia';
             }
 
-
-            // Populate dropdowns
+            const statusSelect = document.getElementById('task-status');
+            statusSelect.innerHTML = state.status.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
             const channelSelect = document.getElementById('task-channel');
             channelSelect.innerHTML = state.channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
             const assigneeSelect = document.getElementById('task-assignee');
@@ -1629,7 +1762,7 @@
             const dropZone = document.getElementById('drop-zone');
 
 
-            if (taskId) { // Editing an existing task
+            if (taskId) {
                 const task = state.tasks.find(t => t.id == taskId);
                 if (!task) {
                     showToast("Erro: Tarefa não encontrada.", 'error');
@@ -1642,6 +1775,7 @@
                 dropZone.classList.remove('pointer-events-none', 'opacity-50');
                 
                 document.getElementById('task-title').value = task.title;
+                statusSelect.value = task.status_id;
                 channelSelect.value = task.channel_id;
                 clientSelect.value = task.client_id || '';
                 assigneeSelect.value = task.assignee_id || '';
@@ -1649,11 +1783,15 @@
                 
                 if (task.description_data && quillEditor) {
                     editorContents = { ...editorContents, ...task.description_data };
-                    quillEditor.setContents(editorContents[currentEditorTab] || '');
+                    quillEditor.setContents(editorContents[currentEditorTab] || '', 'silent');
                 }
 
+                // Popula o conjunto de tags temporário com as tags existentes da tarefa
+                const taskTagIds = state.taskTags.filter(tt => tt.task_id === taskId).map(tt => tt.tag_id);
+                taskTagIds.forEach(id => currentModalTagIds.add(id));
+
                 renderTaskFiles(taskId);
-                renderTaskTags(taskId);
+                renderTaskTags(); // Renderiza as tags com base no conjunto temporário
                 const { data: logs } = await supabaseClient.from('mkt_logs').select('*, mkt_users(name)').eq('task_id', taskId).order('created_at', { ascending: false });
                 if (logs && logs.length > 0) {
                      logsContainer.innerHTML = logs.map(log => `
@@ -1661,12 +1799,12 @@
                                <p class="text-gray-700">${log.description}</p>
                                <p class="text-gray-400 mt-1">${log.mkt_users.name} - ${formatLogDate(log.created_at)}</p>
                           </div>
-                       `).join('');
+                         `).join('');
                 } else {
                     logsContainer.innerHTML = '<p class="text-sm text-gray-500">Nenhum histórico.</p>';
                 }
 
-            } else { // Creating a new task
+            } else {
                 modalTitle.textContent = 'Nova Tarefa';
                 deleteBtn.classList.add('hidden');
                 taskIdInput.value = ''; 
@@ -1675,15 +1813,13 @@
                 document.getElementById('task-tags-container').innerHTML = '';
                 fileContainer.innerHTML = '<p class="text-xs text-center text-slate-400">Salve a tarefa para adicionar anexos.</p>';
                 logsContainer.innerHTML = '<p class="text-sm text-gray-500">Nenhum histórico.</p>';
-                renderTaskTags(null);
+                renderTaskTags();
             }
 
             showModal('task-modal');
         }
 
-        async function criarNovaTarefa() {
-            // This function now just opens a blank modal.
-            // The task is created only when the user clicks "Save".
+        function criarNovaTarefa() {
             abrirModalTarefa();
         }
         
@@ -1701,34 +1837,37 @@
                 const { data } = supabaseClient.storage.from('mk_files').getPublicUrl(file.file_path);
                 const isImage = /\.(jpe?g|png|gif|webp)$/i.test(file.file_name);
                 return `
-                    <div class="file-item flex items-center justify-between p-2 hover:bg-slate-100 rounded-md">
-                        <a href="${data.publicUrl}" target="_blank" class="flex items-center gap-3 truncate">
-                            ${isImage ? `<img src="${data.publicUrl}" class="w-8 h-8 object-cover rounded-sm">` : '<i class="fas fa-file-alt text-2xl text-slate-400"></i>'}
+                    <div class="file-item group flex items-center justify-between p-2 hover:bg-slate-100 rounded-md">
+                        <div class="flex items-center gap-3 truncate">
+                            ${isImage ? `<img src="${data.publicUrl}" class="w-8 h-8 object-cover rounded-sm">` : '<i class="fas fa-file-alt text-2xl text-slate-400 w-8 text-center"></i>'}
                             <span class="text-sm font-medium text-slate-700 truncate">${file.file_name}</span>
-                        </a>
-                        <button type="button" class="delete-file-btn text-slate-400 hover:text-red-500 opacity-0 transition-opacity" data-file-id="${file.id}" data-file-path="${file.file_path}">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
+                        </div>
+                        <div class="flex items-center gap-2">
+                             <button type="button" class="view-file-btn text-xs font-semibold text-emerald-600 hover:text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full" data-file-url="${data.publicUrl}" data-is-image="${isImage}">Ver</button>
+                             <button type="button" class="delete-file-btn text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" data-file-id="${file.id}" data-file-path="${file.file_path}">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
                     </div>`;
             }).join('');
         }
 
         async function deletarArquivo(fileId, filePath) {
-            const fileToDelete = state.taskFiles.find(f => f.id === fileId);
-            if (!fileToDelete) return;
-            const taskId = fileToDelete.task_id;
+            showConfirmModal('Excluir Anexo?', 'Tem certeza que deseja excluir este arquivo?', async () => {
+                const fileToDelete = state.taskFiles.find(f => f.id === fileId);
+                if (!fileToDelete) return;
+                const taskId = fileToDelete.task_id;
 
-            const { error: storageError } = await supabaseClient.storage.from('mk_files').remove([filePath]);
-            if (storageError) return handleSupabaseError(storageError, 'deletar do storage');
+                const { error: storageError } = await supabaseClient.storage.from('mk_files').remove([filePath]);
+                if (storageError) return handleSupabaseError(storageError, 'deletar do storage');
 
-            const { error: dbError } = await supabaseClient.from('mkt_task_files').delete().eq('id', fileId);
-            if (dbError) return handleSupabaseError(dbError, 'deletar do banco');
-            
-            state.taskFiles = state.taskFiles.filter(f => f.id !== fileId);
-            
-            renderTaskFiles(taskId);
-            renderizarQuadroKanban();
-            showToast('Anexo excluído com sucesso.');
+                const { error: dbError } = await supabaseClient.from('mkt_task_files').delete().eq('id', fileId);
+                if (dbError) return handleSupabaseError(dbError, 'deletar do banco');
+                
+                await refreshCurrentView();
+                renderTaskFiles(taskId);
+                showToast('Anexo excluído com sucesso.');
+            });
         }
 
         async function salvarTarefa(e) {
@@ -1738,10 +1877,12 @@
 
             try {
                 const id = document.getElementById('task-id').value;
+                const newStatusId = parseInt(document.getElementById('task-status').value);
                 editorContents[currentEditorTab] = quillEditor.getContents();
 
                 const taskData = {
                     title: document.getElementById('task-title').value,
+                    status_id: newStatusId,
                     channel_id: document.getElementById('task-channel').value,
                     client_id: document.getElementById('task-client').value || null,
                     assignee_id: document.getElementById('task-assignee').value || null,
@@ -1750,32 +1891,39 @@
                 };
 
                 let savedData, error;
+                let oldStatus, newStatus;
 
-                if (id) { // UPDATE existing task
+                if (id) {
+                    const currentTask = state.tasks.find(t => t.id == id);
+                    if (currentTask && currentTask.status_id !== newStatusId) {
+                        oldStatus = state.status.find(s => s.id === currentTask.status_id)?.name;
+                        newStatus = state.status.find(s => s.id === newStatusId)?.name;
+                    }
                     ({ data: savedData, error } = await supabaseClient.from('mkt_tasks').update(taskData).eq('id', id).select().single());
-                } else { // INSERT new task
-                    taskData.status_id = state.status[0]?.id;
+                } else {
+                    taskData.status_id = newStatusId || state.status[0]?.id;
                     if (!taskData.status_id) {
-                        throw new Error('Não foi possível encontrar um status inicial ("A Fazer").');
+                        throw new Error('Não foi possível encontrar um status inicial.');
                     }
                     ({ data: savedData, error } = await supabaseClient.from('mkt_tasks').insert(taskData).select().single());
+                    newStatus = state.status.find(s => s.id === taskData.status_id)?.name;
                 }
 
                 if (error) throw error;
 
                 if (savedData) {
-                    await salvarTaskTags(savedData.id);
-
                     if (id) {
-                        const index = state.tasks.findIndex(t => t.id == id);
-                        if (index > -1) state.tasks[index] = { ...state.tasks[index], ...savedData };
+                        if (oldStatus && newStatus) {
+                            await criarLog(savedData.id, `Status alterado de "${oldStatus}" para "${newStatus}".`);
+                        }
                     } else {
-                        state.tasks.push(savedData);
+                        await criarLog(savedData.id, `Tarefa criada no status "${newStatus}".`);
                     }
 
-                    await refreshCurrentView();
+                    await salvarTaskTags(savedData.id);
                     hideModal('task-modal');
                     showToast(`Tarefa ${id ? 'atualizada' : 'criada'} com sucesso!`, 'success');
+                    await refreshCurrentView();
                 }
             } catch (err) {
                 handleSupabaseError(err, 'salvar tarefa');
@@ -1786,28 +1934,25 @@
 
         async function deletarTarefa() {
             const id = document.getElementById('task-id').value;
-            if (!id || !confirm('Tem a certeza que deseja excluir esta tarefa? Esta ação é irreversível.')) return;
-            
-            const filesToDelete = state.taskFiles.filter(f => f.task_id == id);
-            if (filesToDelete.length > 0) {
-                const filePaths = filesToDelete.map(f => f.file_path);
-                await supabaseClient.storage.from('mk_files').remove(filePaths);
-                await supabaseClient.from('mkt_task_files').delete().eq('task_id', id);
-                state.taskFiles = state.taskFiles.filter(f => f.task_id != id);
-            }
+            if (!id) return;
 
-            await supabaseClient.from('mkt_task_tags').delete().eq('task_id', id);
-            state.taskTags = state.taskTags.filter(tt => tt.task_id != id);
-
-            const { error } = await supabaseClient.from('mkt_tasks').delete().eq('id', id);
-            
-            if (error) handleSupabaseError(error, 'excluir tarefa');
-            else {
-                state.tasks = state.tasks.filter(t => t.id != id);
-                await refreshCurrentView();
-                hideModal('task-modal');
-                showToast("Tarefa excluída com sucesso.");
-            }
+            showConfirmModal('Excluir Tarefa?', 'Esta ação é irreversível.', async () => {
+                const filesToDelete = state.taskFiles.filter(f => f.task_id == id);
+                if (filesToDelete.length > 0) {
+                    const filePaths = filesToDelete.map(f => f.file_path);
+                    await supabaseClient.storage.from('mk_files').remove(filePaths);
+                }
+                
+                const { error } = await supabaseClient.from('mkt_tasks').delete().eq('id', id);
+                
+                if (error) {
+                     handleSupabaseError(error, 'excluir tarefa');
+                } else {
+                    hideModal('task-modal');
+                    showToast("Tarefa excluída com sucesso.");
+                    await refreshCurrentView();
+                }
+            });
         }
         
         async function criarLog(taskId, description) {
@@ -1815,10 +1960,8 @@
         }
         
         async function salvarTaskTags(taskId) {
-            const tagContainer = document.getElementById('task-tags-container');
-            const selectedTagIds = Array.from(tagContainer.querySelectorAll('.tag-pill-active')).map(el => parseInt(el.dataset.tagId));
+            const selectedTagIds = Array.from(currentModalTagIds);
             
-            // For new tasks, there are no existing tags. For existing, we compare.
             const existingTagRelations = state.taskTags.filter(tt => tt.task_id === taskId);
             const existingTagIds = existingTagRelations.map(tt => tt.tag_id);
 
@@ -1832,23 +1975,12 @@
                 const newRelations = tagsToAdd.map(tag_id => ({ task_id: taskId, tag_id }));
                 await supabaseClient.from('mkt_task_tags').insert(newRelations);
             }
-            
-            // Refresh the global state for tags
-            if (tagsToAdd.length > 0 || tagsToRemove.length > 0) {
-                 await fetchTaskTags();
-            }
-        }
-
-        async function fetchTaskTags() {
-            const { data } = await supabaseClient.from('mkt_task_tags').select('*');
-            state.taskTags = data || [];
         }
 
         // =================================================================================
         // MODAIS DE TAGS E GERAÇÃO DE TAREFAS
         // =================================================================================
         async function abrirModalTags() {
-            await fetchGlobalData();
             await carregarTagsNoModal();
             showModal('tags-modal');
         }
@@ -1863,8 +1995,6 @@
                     </div>
                     <button class="delete-tag-btn text-gray-400 hover:text-red-500" data-id="${tag.id}"><i class="fas fa-trash-alt"></i></button>
                 </div>`).join('');
-            
-            document.querySelectorAll('.delete-tag-btn').forEach(btn => btn.addEventListener('click', (e) => deletarTag(e.currentTarget.dataset.id)));
         }
         
         async function adicionarTag() {
@@ -1904,36 +2034,25 @@
         }
         
         async function deletarTag(id) {
-            if (!confirm('Tem certeza? Excluir uma tag irá removê-la de todas as tarefas.')) return;
-            
-            const tagId = parseInt(id);
-            
-            const { error: relationError } = await supabaseClient.from('mkt_task_tags').delete().eq('tag_id', tagId);
-            if (relationError) {
-                handleSupabaseError(relationError, 'excluir relações da tag');
-                return;
-            }
+            showConfirmModal('Excluir Tag?', 'A tag será removida de todas as tarefas.', async () => {
+                const tagId = parseInt(id);
+                const { error: tagError } = await supabaseClient.from('mkt_tags').delete().eq('id', tagId);
 
-            const { error: tagError } = await supabaseClient.from('mkt_tags').delete().eq('id', tagId);
-            if (tagError) {
-                handleSupabaseError(tagError, 'excluir tag');
-            } else {
-                state.tags = state.tags.filter(t => t.id !== tagId);
-                state.taskTags = state.taskTags.filter(tt => tt.tag_id !== tagId);
-                await carregarTagsNoModal();
-                showToast('Tag removida com sucesso!');
-                if (state.currentPage === 'kanban' || state.currentPage === 'calendar') {
-                   refreshCurrentView();
+                if (tagError) {
+                    handleSupabaseError(tagError, 'excluir tag');
+                } else {
+                    showToast('Tag removida com sucesso!');
+                    await refreshCurrentView();
+                    await carregarTagsNoModal();
                 }
-            }
+            });
         }
 
-        function renderTaskTags(taskId) { // Can be null for new tasks
+        function renderTaskTags() { // O parâmetro taskId foi removido
             const container = document.getElementById('task-tags-container');
             const dropdown = document.getElementById('tag-select-dropdown');
-            const addTagBtn = document.getElementById('add-tag-btn');
-
-            const taskTagIds = taskId ? state.taskTags.filter(tt => tt.task_id === taskId).map(tt => tt.tag_id) : [];
+            
+            const taskTagIds = Array.from(currentModalTagIds); // Usa o conjunto temporário
             
             const assignedTags = state.tags.filter(t => taskTagIds.includes(t.id));
             const availableTags = state.tags.filter(t => !taskTagIds.includes(t.id));
@@ -1947,38 +2066,6 @@
             }).join('');
             
             dropdown.innerHTML = availableTags.map(tag => `<a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-100" data-tag-id="${tag.id}">${tag.name}</a>`).join('');
-
-            addTagBtn.onclick = () => dropdown.classList.toggle('hidden');
-            
-            dropdown.onclick = (e) => {
-                e.preventDefault();
-                const currentTaskId = document.getElementById('task-id').value;
-                if (!currentTaskId) return; // Must save task first
-
-                const tagId = e.target.dataset.tagId ? parseInt(e.target.dataset.tagId) : null;
-                if (tagId) {
-                    const tag = state.tags.find(t => t.id === tagId);
-                    if(tag) addTagToPillContainer(tag, container);
-                    dropdown.classList.add('hidden');
-                }
-            };
-
-            container.onclick = (e) => {
-                if (e.target.classList.contains('remove-tag-btn') || e.target.parentElement.classList.contains('remove-tag-btn')) {
-                    const pill = e.target.closest('.tag-pill-active');
-                    pill.remove();
-                }
-            };
-        }
-
-        function addTagToPillContainer(tag, container) {
-            if (container.querySelector(`[data-tag-id="${tag.id}"]`)) return; // Prevent duplicates
-            const color = tag.color || generatePastelColor(tag.name);
-            const pillHtml = `<div class="tag-pill-active flex items-center gap-2 text-xs font-semibold px-2 py-1 rounded" style="background-color:${color}; color: ${getContrastColor(color)}" data-tag-id="${tag.id}">
-                                <span>${tag.name}</span>
-                                <button type="button" class="remove-tag-btn text-current hover:opacity-75">&times;</button>
-                            </div>`;
-            container.insertAdjacentHTML('beforeend', pillHtml);
         }
 
         async function abrirModalGerarTarefas() {
@@ -2000,9 +2087,7 @@
                                 <label for="client-checkbox-${client.id_cliente}" class="ml-3 block text-lg font-bold text-gray-900 cursor-pointer">${client.nome_empresa} <span class="text-sm font-normal text-gray-500">(${totalTasks} tarefas)</span></label>
                             </div>
                         </div>
-                        <div id="task-inputs-${client.id_cliente}" class="hidden mt-4 pt-4 border-t space-y-4">
-                            <!-- Inputs de tarefas serão inseridos aqui -->
-                        </div>
+                        <div id="task-inputs-${client.id_cliente}" class="hidden mt-4 pt-4 border-t space-y-4"></div>
                     </div>
                 `;
                 modalBody.insertAdjacentHTML('beforeend', clientHtml);
@@ -2031,8 +2116,7 @@
                 
                 const addTagBtn = e.target.closest('.add-gen-tag-btn');
                 if (addTagBtn) {
-                    const dropdown = addTagBtn.nextElementSibling;
-                    dropdown.classList.toggle('hidden');
+                    addTagBtn.nextElementSibling.classList.toggle('hidden');
                 }
 
                 const tagOption = e.target.closest('.gen-tag-option');
@@ -2083,27 +2167,19 @@
         }
 
         function createTaskInputRow({ type, number }) {
-            const userAvatars = state.users.map(u => `
-                <div class="has-tooltip inline-block">
-                    <img src="${u.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=random`}" 
-                         class="w-8 h-8 rounded-full object-cover cursor-pointer border-2 border-transparent hover:border-emerald-500"
-                         data-user-id="${u.id}">
-                    <span class="tooltip">${u.name}</span>
-                </div>
-            `).join('');
-
+            const usersOptions = state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
             const channelsOptions = state.channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
             const tagsOptions = state.tags.map(t => `<a href="#" class="gen-tag-option block px-4 py-2 text-sm text-gray-700 hover:bg-slate-100" data-tag-id="${t.id}">${t.name}</a>`).join('');
-            const instagramChannelId = state.channels.find(c => c.name.toLowerCase() === 'instagram')?.id || '';
+            const instagramChannel = state.channels.find(c => c.name.toLowerCase() === 'instagram');
 
             return `
                 <div class="p-3 bg-slate-50 rounded-lg border grid grid-cols-1 md:grid-cols-5 gap-4 items-start generated-task-row">
                     <input type="text" value="${type} ${number}" placeholder="Título da Tarefa" class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400" required>
                     <input type="date" class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400" required>
-                    <div class="assignee-selector flex items-center gap-1 flex-wrap p-1.5 border border-slate-300 rounded-md bg-white min-h-[42px]">
-                        <!-- Selected user goes here -->
-                    </div>
-                    <select class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400">${channelsOptions}</select>
+                    <select class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400"><option value="">Responsável...</option>${usersOptions}</select>
+                    <select class="w-full p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-emerald-400">
+                        ${state.channels.map(c => `<option value="${c.id}" ${instagramChannel && c.id === instagramChannel.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+                    </select>
                     <div class="relative">
                         <div class="gen-tags-container p-1.5 border border-slate-300 rounded-md bg-white flex flex-wrap gap-1 min-h-[42px]"></div>
                         <button type="button" class="add-gen-tag-btn absolute top-1 right-1 text-xs font-semibold text-emerald-600 hover:text-emerald-800">+</button>
@@ -2223,4 +2299,5 @@
     </script>
 </body>
 </html>
+
 
