@@ -1,0 +1,767 @@
+/* =================================================================================
+   MARKETING HUB - STYLES
+   Versão 2.0 Refatorada
+   ================================================================================= */
+
+/* =================================================================================
+   BASE & RESET
+   ================================================================================= */
+:root {
+    --color-primary: #10b981;
+    --color-primary-hover: #059669;
+    --color-primary-light: #d1fae5;
+    --color-danger: #ef4444;
+    --color-danger-hover: #dc2626;
+    --color-warning: #f59e0b;
+    --color-info: #3b82f6;
+    --color-bg: #f7f9fc;
+    --color-bg-card: #ffffff;
+    --color-bg-elevated: #ffffff;
+    --color-text: #1f2937;
+    --color-text-muted: #6b7280;
+    --color-text-inverted: #ffffff;
+    --color-border: #e2e8f0;
+    --color-border-light: #f1f5f9;
+    --color-scrollbar-track: #eef2f7;
+    --color-scrollbar-thumb: #cbd5e1;
+    --color-scrollbar-thumb-hover: #a8b8d0;
+    --color-skeleton-base: #f0f0f0;
+    --color-skeleton-shine: #e0e0e0;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-full: 9999px;
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =================================================================================
+   DARK MODE
+   ================================================================================= */
+[data-theme="dark"] {
+    --color-primary: #34d399;
+    --color-primary-hover: #10b981;
+    --color-primary-light: #064e3b;
+    --color-danger: #f87171;
+    --color-danger-hover: #ef4444;
+    --color-warning: #fbbf24;
+    --color-info: #60a5fa;
+    --color-bg: #000000;
+    --color-bg-card: #121212;
+    --color-bg-elevated: #1e1e1e;
+    --color-text: #ffffff;
+    --color-text-muted: #a0a0a0;
+    --color-text-inverted: #000000;
+    --color-border: #2a2a2a;
+    --color-border-light: #1a1a1a;
+    --color-scrollbar-track: #1a1a1a;
+    --color-scrollbar-thumb: #3a3a3a;
+    --color-scrollbar-thumb-hover: #4a4a4a;
+    --color-skeleton-base: #2a2a2a;
+    --color-skeleton-shine: #3a3a3a;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.6);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.7);
+}
+
+/* Auto dark mode based on system preference */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --color-primary: #34d399;
+        --color-primary-hover: #10b981;
+        --color-primary-light: #064e3b;
+        --color-danger: #f87171;
+        --color-danger-hover: #ef4444;
+        --color-warning: #fbbf24;
+        --color-info: #60a5fa;
+        --color-bg: #000000;
+        --color-bg-card: #121212;
+        --color-bg-elevated: #1e1e1e;
+        --color-text: #ffffff;
+        --color-text-muted: #a0a0a0;
+        --color-text-inverted: #000000;
+        --color-border: #2a2a2a;
+        --color-border-light: #1a1a1a;
+        --color-scrollbar-track: #1a1a1a;
+        --color-scrollbar-thumb: #3a3a3a;
+        --color-scrollbar-thumb-hover: #4a4a4a;
+        --color-skeleton-base: #2a2a2a;
+        --color-skeleton-shine: #3a3a3a;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.6);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+    }
+}
+
+/* =================================================================================
+   DARK MODE COMPONENT STYLES
+   ================================================================================= */
+
+/* Cards & Containers */
+[data-theme="dark"] .bg-white {
+    background-color: var(--color-bg-card) !important;
+}
+
+[data-theme="dark"] .bg-slate-50,
+[data-theme="dark"] .bg-slate-100 {
+    background-color: var(--color-bg) !important;
+}
+
+[data-theme="dark"] .bg-slate-200 {
+    background-color: var(--color-bg-elevated) !important;
+}
+
+/* Text Colors */
+[data-theme="dark"] .text-gray-800,
+[data-theme="dark"] .text-gray-900,
+[data-theme="dark"] .text-slate-800,
+[data-theme="dark"] .text-slate-900 {
+    color: var(--color-text) !important;
+}
+
+[data-theme="dark"] .text-gray-500,
+[data-theme="dark"] .text-gray-600,
+[data-theme="dark"] .text-gray-700,
+[data-theme="dark"] .text-slate-500,
+[data-theme="dark"] .text-slate-600,
+[data-theme="dark"] .text-slate-700 {
+    color: var(--color-text-muted) !important;
+}
+
+[data-theme="dark"] .text-gray-400,
+[data-theme="dark"] .text-slate-400 {
+    color: #64748b !important;
+}
+
+/* Borders */
+[data-theme="dark"] .border-slate-100,
+[data-theme="dark"] .border-slate-200,
+[data-theme="dark"] .border-slate-300 {
+    border-color: var(--color-border) !important;
+}
+
+/* Hovers */
+[data-theme="dark"] .hover\:bg-slate-100:hover,
+[data-theme="dark"] .hover\:bg-slate-50:hover {
+    background-color: var(--color-bg-elevated) !important;
+}
+
+[data-theme="dark"] .hover\:bg-slate-300:hover {
+    background-color: #475569 !important;
+}
+
+[data-theme="dark"] .hover\:text-slate-800:hover,
+[data-theme="dark"] .hover\:text-slate-600:hover {
+    color: var(--color-text) !important;
+}
+
+/* Input Fields */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background-color: var(--color-bg-elevated) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-border) !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+    color: var(--color-text-muted) !important;
+}
+
+/* Focus States */
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+    border-color: var(--color-primary) !important;
+}
+
+/* Navigation */
+[data-theme="dark"] .nav-btn {
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .nav-btn:hover {
+    color: var(--color-text);
+}
+
+[data-theme="dark"] .nav-btn.active {
+    background-color: var(--color-bg-elevated) !important;
+    color: var(--color-primary) !important;
+}
+
+/* Dashboard Cards */
+[data-theme="dark"] .bg-rose-50,
+[data-theme="dark"] .bg-blue-50,
+[data-theme="dark"] .bg-purple-50,
+[data-theme="dark"] .bg-emerald-50,
+[data-theme="dark"] .bg-amber-50 {
+    background-color: var(--color-bg-card) !important;
+}
+
+/* Kanban Column Headers */
+[data-theme="dark"] .bg-yellow-50,
+[data-theme="dark"] .bg-orange-50,
+[data-theme="dark"] .bg-green-50 {
+    background-color: var(--color-bg-elevated) !important;
+}
+
+/* Gradient Backgrounds (Dashboard Urgent Tasks) */
+[data-theme="dark"] .bg-gradient-to-br.from-red-50.to-red-100,
+[data-theme="dark"] .bg-gradient-to-br,
+[data-theme="dark"] [class*="from-red-"],
+[data-theme="dark"] [class*="to-red-"] {
+    background: var(--color-bg-card) !important;
+}
+
+[data-theme="dark"] .border-red-200,
+[data-theme="dark"] .border-red-300 {
+    border-color: #991b1b !important;
+}
+
+[data-theme="dark"] .text-red-800 {
+    color: #fca5a5 !important;
+}
+
+/* Table Rows */
+[data-theme="dark"] .hover\:bg-gray-50:hover {
+    background-color: var(--color-bg-elevated) !important;
+}
+
+[data-theme="dark"] .bg-gray-50 {
+    background-color: var(--color-bg) !important;
+}
+
+[data-theme="dark"] .bg-gray-100 {
+    background-color: var(--color-bg-elevated) !important;
+}
+
+/* Filter Bar */
+[data-theme="dark"] .filter-select {
+    background-color: var(--color-bg-elevated) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-border) !important;
+}
+
+/* Dropdown/Popup Menus */
+[data-theme="dark"] #logout-popup {
+    background-color: var(--color-bg-card) !important;
+    border-color: var(--color-border) !important;
+}
+
+/* Modals */
+[data-theme="dark"] .modal-enter {
+    background-color: var(--color-bg-card) !important;
+}
+
+/* Headers and Footers */
+[data-theme="dark"] header {
+    background-color: var(--color-bg-card) !important;
+    border-color: var(--color-border) !important;
+}
+
+/* Kanban Cards */
+[data-theme="dark"] .kanban-card {
+    background-color: var(--color-bg-card) !important;
+    border-color: var(--color-border) !important;
+}
+
+/* Table/List Items */
+[data-theme="dark"] .divide-slate-200>*+* {
+    border-color: var(--color-border) !important;
+}
+
+/* Quill Editor */
+[data-theme="dark"] .ql-toolbar {
+    background-color: var(--color-bg-elevated) !important;
+    border-color: var(--color-border) !important;
+}
+
+[data-theme="dark"] .ql-container {
+    background-color: var(--color-bg-card) !important;
+    border-color: var(--color-border) !important;
+}
+
+[data-theme="dark"] .ql-editor {
+    color: var(--color-text) !important;
+}
+
+[data-theme="dark"] .ql-editor.ql-blank::before {
+    color: var(--color-text-muted) !important;
+}
+
+[data-theme="dark"] .ql-toolbar button,
+[data-theme="dark"] .ql-toolbar .ql-picker {
+    color: var(--color-text-muted) !important;
+}
+
+[data-theme="dark"] .ql-toolbar button:hover,
+[data-theme="dark"] .ql-toolbar .ql-picker:hover {
+    color: var(--color-primary) !important;
+}
+
+[data-theme="dark"] .ql-toolbar .ql-stroke {
+    stroke: var(--color-text-muted) !important;
+}
+
+[data-theme="dark"] .ql-toolbar .ql-fill {
+    fill: var(--color-text-muted) !important;
+}
+
+[data-theme="dark"] .ql-toolbar button:hover .ql-stroke {
+    stroke: var(--color-primary) !important;
+}
+
+[data-theme="dark"] .ql-toolbar button:hover .ql-fill {
+    fill: var(--color-primary) !important;
+}
+
+/* Calendar */
+[data-theme="dark"] .calendar-day {
+    background-color: var(--color-bg-card) !important;
+    border-color: var(--color-border) !important;
+}
+
+[data-theme="dark"] .calendar-day:hover {
+    background-color: var(--color-bg-elevated) !important;
+}
+
+[data-theme="dark"] .calendar-day.today {
+    background-color: var(--color-primary-light) !important;
+}
+
+/* Ideas Page */
+[data-theme="dark"] #ideas-list-container {
+    background-color: var(--color-bg) !important;
+}
+
+[data-theme="dark"] .idea-item {
+    background-color: transparent !important;
+}
+
+[data-theme="dark"] .idea-item:hover {
+    background-color: var(--color-bg-elevated) !important;
+}
+
+[data-theme="dark"] .idea-item.active {
+    background-color: var(--color-bg-card) !important;
+}
+
+/* Tags */
+[data-theme="dark"] .tag-item {
+    background-color: var(--color-bg-elevated) !important;
+}
+
+/* Shadows for dark mode */
+[data-theme="dark"] .shadow-sm {
+    box-shadow: var(--shadow-sm) !important;
+}
+
+[data-theme="dark"] .shadow-md,
+[data-theme="dark"] .shadow {
+    box-shadow: var(--shadow-md) !important;
+}
+
+[data-theme="dark"] .shadow-lg {
+    box-shadow: var(--shadow-lg) !important;
+}
+
+[data-theme="dark"] .shadow-2xl,
+[data-theme="dark"] .shadow-xl {
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5) !important;
+}
+
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* =================================================================================
+   LAYOUT
+   ================================================================================= */
+#app-container {
+    height: 100vh;
+}
+
+#main-content-area {
+    flex-grow: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+.page-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-bg);
+    overflow-y: auto;
+}
+
+.page-content.hidden {
+    display: none !important;
+}
+
+#dashboard-page,
+#calendar-page,
+#clients-page {
+    overflow-y: auto;
+}
+
+#kanban-page,
+#ideas-page {
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden;
+}
+
+/* =================================================================================
+   NAVIGATION
+   ================================================================================= */
+.nav-btn {
+    cursor: pointer;
+    outline: none;
+    border: none;
+    background: transparent;
+}
+
+.nav-btn.active {
+    background-color: white;
+    color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+/* =================================================================================
+   KANBAN
+   ================================================================================= */
+.kanban-board-container {
+    flex-grow: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.kanban-column {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.kanban-cards {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.kanban-card {
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.kanban-card:hover {
+    border-color: var(--color-primary);
+}
+
+/* =================================================================================
+   SCROLLBAR
+   ================================================================================= */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-scrollbar-thumb);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-scrollbar-thumb-hover);
+}
+
+/* =================================================================================
+   MODALS
+   ================================================================================= */
+.modal-content-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.modal-enter {
+    transform: scale(0.95) translateY(10px);
+    opacity: 0;
+}
+
+.modal-enter-active {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+    transition: all var(--transition-normal);
+}
+
+/* =================================================================================
+   QUILL EDITOR
+   ================================================================================= */
+.ql-toolbar {
+    border-top-left-radius: var(--radius-md);
+    border-top-right-radius: var(--radius-md);
+    border-color: var(--color-border) !important;
+}
+
+.ql-container {
+    border-bottom-left-radius: var(--radius-md);
+    border-bottom-right-radius: var(--radius-md);
+    min-height: 250px;
+    font-size: 1rem;
+    border-color: var(--color-border) !important;
+}
+
+.ql-editor {
+    font-family: 'Inter', sans-serif;
+}
+
+#idea-editor-container .ql-container {
+    border: none !important;
+    height: 100%;
+}
+
+#idea-editor-container .ql-toolbar {
+    border: none !important;
+    border-bottom: 1px solid var(--color-border) !important;
+    background: var(--color-bg-card);
+}
+
+#idea-editor-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#idea-editor-quill {
+    height: 100%;
+}
+
+/* =================================================================================
+   EDITOR TABS
+   ================================================================================= */
+.editor-tab {
+    padding: 0.75rem 1.25rem;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    color: #475569;
+    font-weight: 600;
+    transition: all var(--transition-fast);
+    text-transform: capitalize;
+}
+
+.editor-tab:hover {
+    background-color: #f8fafc;
+    color: var(--color-primary);
+}
+
+.editor-tab.active {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+/* Editor Tab Backgrounds */
+#quill-editor-container .ql-container.bg-ideia {
+    background-color: #f0fdf4;
+}
+
+#quill-editor-container .ql-container.bg-roteiro {
+    background-color: #eff6ff;
+}
+
+#quill-editor-container .ql-container.bg-script {
+    background-color: #fefce8;
+}
+
+#quill-editor-container .ql-container.bg-inspiracoes {
+    background-color: #faf5ff;
+}
+
+/* =================================================================================
+   DRAG & DROP
+   ================================================================================= */
+.drag-over {
+    border-color: var(--color-primary) !important;
+    background-color: var(--color-primary-light) !important;
+    transform: scale(1.02);
+}
+
+/* =================================================================================
+   SIDEBAR
+   ================================================================================= */
+.sidebar-item.active {
+    background-color: #eef2ff;
+    color: #4f46e5;
+}
+
+/* =================================================================================
+   TOOLTIPS
+   ================================================================================= */
+.has-tooltip {
+    position: relative;
+}
+
+.tooltip {
+    visibility: hidden;
+    opacity: 0;
+    width: max-content;
+    max-width: 250px;
+    background-color: #1f2937;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px 12px;
+    position: absolute;
+    z-index: 50;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: opacity var(--transition-fast);
+    font-size: 0.75rem;
+    line-height: 1.25;
+    pointer-events: none;
+}
+
+.has-tooltip:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+.tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #1f2937 transparent transparent transparent;
+}
+
+/* =================================================================================
+   TAG DROPDOWN
+   ================================================================================= */
+.tag-select-dropdown {
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+/* =================================================================================
+   FILE ITEMS
+   ================================================================================= */
+.file-item:hover .delete-file-btn {
+    opacity: 1;
+}
+
+/* =================================================================================
+   TOAST NOTIFICATIONS
+   ================================================================================= */
+#sync-toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background-color: rgba(31, 41, 55, 0.95);
+    color: white;
+    padding: 10px 20px;
+    border-radius: var(--radius-full);
+    font-size: 0.9rem;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: var(--shadow-lg);
+    pointer-events: none;
+}
+
+#sync-toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+/* =================================================================================
+   UTILITIES
+   ================================================================================= */
+.btn-primary {
+    background-color: var(--color-primary);
+    color: white;
+    font-weight: 600;
+    padding: 0.625rem 1.5rem;
+    border-radius: var(--radius-full);
+    transition: background-color var(--transition-fast);
+}
+
+.btn-primary:hover {
+    background-color: var(--color-primary-hover);
+}
+
+.btn-secondary {
+    background-color: #e5e7eb;
+    color: #374151;
+    font-weight: 600;
+    padding: 0.625rem 1.5rem;
+    border-radius: var(--radius-full);
+    transition: background-color var(--transition-fast);
+}
+
+.btn-secondary:hover {
+    background-color: #d1d5db;
+}
+
+.btn-danger {
+    color: var(--color-danger);
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    transition: background-color var(--transition-fast);
+}
+
+.btn-danger:hover {
+    background-color: #fee2e2;
+}
+
+/* =================================================================================
+   LOADING STATES
+   ================================================================================= */
+.loading-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* =================================================================================
+   RESPONSIVE
+   ================================================================================= */
+@media (max-width: 768px) {
+    .kanban-column {
+        min-width: 280px;
+    }
+}
