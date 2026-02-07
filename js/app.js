@@ -82,11 +82,12 @@ const modals = {};
 
 function initModals() {
     modals['task-modal'] = document.getElementById('task-modal');
-    modals['tags-modal'] = document.getElementById('tags-modal');
-    modals['contract-modal'] = document.getElementById('contract-modal');
-    modals['generate-tasks-modal'] = document.getElementById('generate-tasks-modal');
-    modals['confirm-modal'] = document.getElementById('confirm-modal');
+    modals['delete-modal'] = document.getElementById('delete-modal');
+    modals['client-modal'] = document.getElementById('client-modal');
+    modals['channels-modal'] = document.getElementById('channels-modal');
+    modals['alert-modal'] = document.getElementById('alert-modal');
     modals['image-preview-modal'] = document.getElementById('image-preview-modal');
+    modals['confirm-modal'] = document.getElementById('confirm-modal');
 }
 
 function showModal(modalId) {
@@ -431,7 +432,7 @@ async function openTaskModal(taskId = null) {
             quillEditor.setContents(editorContents[currentEditorTab] || '', 'silent');
         }
 
-        const taskTagIds = state.taskTags.filter(tt => tt.task_id === taskId).map(tt => tt.tag_id);
+        const taskTagIds = state.taskTags.filter(tt => Number(tt.task_id) === Number(taskId)).map(tt => tt.tag_id);
         taskTagIds.forEach(id => currentModalTagIds.add(id));
 
         renderTaskFiles(taskId);
@@ -494,12 +495,24 @@ function renderTaskFiles(taskId) {
 }
 
 function renderTaskTags() {
-    const container = document.getElementById('task-tags-container');
+    const container = document.getElementById('selected-tags');
     const dropdown = document.getElementById('tag-select-dropdown');
+
+    if (!container || !dropdown) {
+        console.warn('Tag containers not found:', { container: !!container, dropdown: !!dropdown });
+        return;
+    }
 
     const taskTagIds = Array.from(currentModalTagIds);
     const assignedTags = state.tags.filter(t => taskTagIds.includes(t.id));
     const availableTags = state.tags.filter(t => !taskTagIds.includes(t.id));
+
+    console.log('Rendering tags:', {
+        total: state.tags.length,
+        assigned: assignedTags.length,
+        available: availableTags.length,
+        currentModalTagIds: taskTagIds
+    });
 
     container.innerHTML = assignedTags.map(tag => {
         const color = tag.color || generatePastelColor(tag.name);
@@ -510,9 +523,13 @@ function renderTaskTags() {
             </div>`;
     }).join('');
 
-    dropdown.innerHTML = availableTags.map(tag =>
-        `<a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-100" data-tag-id="${tag.id}">${escapeHtml(tag.name)}</a>`
-    ).join('');
+    if (availableTags.length === 0) {
+        dropdown.innerHTML = '<div class="px-4 py-2 text-sm text-gray-500">Nenhuma tag disponível</div>';
+    } else {
+        dropdown.innerHTML = availableTags.map(tag =>
+            `<a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-slate-100" data-tag-id="${tag.id}">${escapeHtml(tag.name)}</a>`
+        ).join('');
+    }
 }
 
 async function saveTask(e) {
@@ -523,24 +540,30 @@ async function saveTask(e) {
     try {
         const id = document.getElementById('task-id').value;
         const newStatusId = parseInt(document.getElementById('task-status').value);
-        editorContents[currentEditorTab] = quillEditor.getContents();
+
+        // Final sync of current tab content before saving
+        if (quillEditor) {
+            editorContents[currentEditorTab] = quillEditor.getContents();
+        }
 
         const taskData = {
             title: document.getElementById('task-title').value,
             status_id: newStatusId,
-            channel_id: document.getElementById('task-channel').value,
+            channel_id: parseInt(document.getElementById('task-channel').value),
             client_id: document.getElementById('task-client').value || null,
-            assignee_id: document.getElementById('task-assignee').value || null,
+            assignee_id: document.getElementById('task-assignee').value ? parseInt(document.getElementById('task-assignee').value) : null,
             due_date: document.getElementById('task-due-date').value || null,
             description_data: editorContents
         };
+
+        console.log('Saving task data:', taskData);
 
         let savedData;
         let oldStatus, newStatus;
 
         if (id) {
-            const currentTask = state.tasks.find(t => t.id == id);
-            if (currentTask && currentTask.status_id !== newStatusId) {
+            const currentTask = state.tasks.find(t => Number(t.id) === Number(id));
+            if (currentTask && Number(currentTask.status_id) !== newStatusId) {
                 oldStatus = state.status.find(s => s.id === currentTask.status_id)?.name;
                 newStatus = state.status.find(s => s.id === newStatusId)?.name;
             }
@@ -907,6 +930,9 @@ async function handleGenerateTasks(e) {
 // QUILL EDITOR SETUP
 // =================================================================================
 function setupQuillEditors() {
+    const quillElement = document.getElementById('quill-editor');
+    if (!quillElement) return; // Skip if quill-editor not present
+
     quillEditor = new Quill('#quill-editor', { theme: 'snow' });
 
     document.querySelectorAll('.editor-tab').forEach(tab => {
@@ -921,8 +947,10 @@ function setupQuillEditors() {
             quillEditor.setContents(editorContents[currentEditorTab] || '', 'silent');
 
             const quillContainer = document.querySelector('#quill-editor-container .ql-container');
-            quillContainer.classList.remove('bg-ideia', 'bg-roteiro', 'bg-script', 'bg-inspiracoes');
-            quillContainer.classList.add(`bg-${currentEditorTab}`);
+            if (quillContainer) {
+                quillContainer.classList.remove('bg-ideia', 'bg-roteiro', 'bg-script', 'bg-inspiracoes');
+                quillContainer.classList.add(`bg-${currentEditorTab}`);
+            }
         });
     });
 
@@ -930,30 +958,39 @@ function setupQuillEditors() {
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('task-file-input');
 
-    fileInput.addEventListener('change', () => {
-        const taskId = document.getElementById('task-id').value;
-        if (taskId) handleFileUpload(fileInput.files, Number(taskId));
-    });
-
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, e => {
-            e.preventDefault();
-            e.stopPropagation();
+    if (fileInput) {
+        fileInput.addEventListener('change', () => {
+            const taskId = document.getElementById('task-id')?.value;
+            if (taskId) handleFileUpload(fileInput.files, Number(taskId));
         });
-    });
+    }
 
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'));
-    });
+    if (dropZone) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
 
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'));
-    });
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'));
+        });
 
-    dropZone.addEventListener('drop', (e) => {
-        const taskId = document.getElementById('task-id').value;
-        if (taskId) handleFileUpload(e.dataTransfer.files, Number(taskId));
-    });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'));
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const taskId = document.getElementById('task-id')?.value;
+            if (taskId) handleFileUpload(e.dataTransfer.files, Number(taskId));
+        });
+
+        // Click to open file dialog
+        dropZone.addEventListener('click', () => {
+            if (fileInput) fileInput.click();
+        });
+    }
 }
 
 // =================================================================================
@@ -1170,14 +1207,14 @@ function initializeEventListeners() {
     });
 
     // Form submissions
-    document.getElementById('task-form').addEventListener('submit', saveTask);
-    document.getElementById('contract-form').addEventListener('submit', saveContract);
-    document.getElementById('generate-tasks-form').addEventListener('submit', handleGenerateTasks);
-    document.getElementById('delete-task-btn').addEventListener('click', deleteTask);
-    document.getElementById('add-new-tag-btn').addEventListener('click', addTag);
+    document.getElementById('task-form')?.addEventListener('submit', saveTask);
+    document.getElementById('contract-form')?.addEventListener('submit', saveContract);
+    document.getElementById('generate-tasks-form')?.addEventListener('submit', handleGenerateTasks);
+    document.getElementById('delete-task-btn')?.addEventListener('click', deleteTask);
+    document.getElementById('add-new-tag-btn')?.addEventListener('click', addTag);
 
     // File deletion in modal
-    document.getElementById('file-list-container').addEventListener('click', (e) => {
+    document.getElementById('file-list-container')?.addEventListener('click', (e) => {
         const deleteButton = e.target.closest('.delete-file-btn');
         if (deleteButton) {
             deleteFile(Number(deleteButton.dataset.fileId), deleteButton.dataset.filePath);
@@ -1185,10 +1222,10 @@ function initializeEventListeners() {
     });
 
     // Filters with debounce
-    document.getElementById('client-filter').addEventListener('change', (e) => debouncedApplyFilter('clientId', e.target.value));
-    document.getElementById('user-filter').addEventListener('change', (e) => debouncedApplyFilter('userId', e.target.value));
-    document.getElementById('channel-filter').addEventListener('change', (e) => debouncedApplyFilter('channelId', e.target.value));
-    document.getElementById('tag-filter').addEventListener('change', (e) => debouncedApplyFilter('tagId', e.target.value));
+    document.getElementById('client-filter')?.addEventListener('change', (e) => debouncedApplyFilter('clientId', e.target.value));
+    document.getElementById('user-filter')?.addEventListener('change', (e) => debouncedApplyFilter('userId', e.target.value));
+    document.getElementById('channel-filter')?.addEventListener('change', (e) => debouncedApplyFilter('channelId', e.target.value));
+    document.getElementById('tag-filter')?.addEventListener('change', (e) => debouncedApplyFilter('tagId', e.target.value));
 
     // Dashboard period filter (delegated)
     document.addEventListener('change', (e) => {
@@ -1211,8 +1248,8 @@ function initializeEventListeners() {
 // =================================================================================
 async function handleLogin(e) {
     e.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
     const errorDiv = document.getElementById('login-error');
     const submitButton = e.target.querySelector('button[type="submit"]');
 
@@ -1243,8 +1280,8 @@ async function processAuthentication(session) {
         return;
     }
 
+    // Check if we already have the current user loaded
     if (state.currentUser && state.currentUser.email === session.user.email && state.isAppInitialized) {
-        // Garante que auth_id está sempre disponível (pode não estar após reload)
         if (!state.currentUser.auth_id) {
             state.currentUser.auth_id = session.user.id;
         }
@@ -1252,19 +1289,26 @@ async function processAuthentication(session) {
     }
 
     try {
-        let profileData = await API.getUserProfile(session.user.email);
+        // If the session user comes from mkt_users (custom auth), it already has the profile data
+        let profileData = session.user;
+
+        // If it lacks expected profile fields (e.g. came from Supabase Auth), fetch from DB
+        if (!profileData.role || !profileData.name) {
+            profileData = await API.getUserProfile(session.user.email);
+        }
 
         if (!profileData) {
+            // Fallback for creating profile if it doesn't exist (mostly for Supabase Auth flow)
             profileData = await API.upsertUserProfile({
-                id: session.user.id,
+                id: session.user.id, // This might be UUID or Int
                 email: session.user.email,
-                name: session.user.user_metadata.full_name || session.user.email.split('@')[0],
-                photo_url: session.user.user_metadata.avatar_url
+                name: session.user.name || session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+                photo_url: session.user.photo_url || session.user.user_metadata?.avatar_url
             });
         }
 
-        // Adiciona o auth_id (UUID do Supabase Auth) ao perfil do usuário
-        // para uso em tabelas que referenciam auth.users (como mkt_ideas)
+        // Adiciona o auth_id ao perfil do usuário
+        // Se id for int (mkt_users), usa ele. Se for UUID (Supabase Auth), usa ele.
         state.currentUser = { ...profileData, auth_id: session.user.id };
 
         if (!state.isAppInitialized) {
@@ -1276,6 +1320,7 @@ async function processAuthentication(session) {
         DOM_CACHE.loginScreen.classList.add('hidden');
         await showPage(PAGE_IDS.DASHBOARD);
     } catch (error) {
+        console.error(error);
         showToast("Falha ao carregar perfil de usuário.");
         await handleLogout();
     }
@@ -1306,8 +1351,8 @@ function setupUserMenu() {
         DOM_CACHE.userMenuBtn.textContent = user.name.charAt(0).toUpperCase();
     }
 
-    document.getElementById('popup-user-name').textContent = user.name;
-    document.getElementById('popup-user-role').textContent = user.role || '';
+    document.getElementById('user-name-display').textContent = user.name;
+    document.getElementById('user-email-display').textContent = user.email || '';
 }
 
 // =================================================================================
@@ -1377,7 +1422,21 @@ async function initializeApp() {
     if (state.isAppInitialized) return;
 
     const globalData = await API.fetchGlobalData();
+
+    // DEBUG: Log what's being loaded
+    console.log('Dados carregados:', {
+        tasks: globalData.tasks?.length || 0,
+        taskFiles: globalData.taskFiles?.length || 0,
+        taskTags: globalData.taskTags?.length || 0
+    });
+
     Object.assign(state, globalData);
+
+    // DEBUG: Verify state assignment
+    console.log('State após assignment:', {
+        tasks: state.tasks?.length || 0,
+        taskFiles: state.taskFiles?.length || 0
+    });
 
     initializeEventListeners();
     setupQuillEditors();
@@ -1430,6 +1489,11 @@ async function mainAppFlow() {
 // START APPLICATION
 // =================================================================================
 document.addEventListener('DOMContentLoaded', () => {
+    // Ensure light theme is saved to localStorage if not set
+    if (!localStorage.getItem('theme')) {
+        localStorage.setItem('theme', 'light');
+    }
+
     document.getElementById('login-form').addEventListener('submit', handleLogin);
     mainAppFlow();
 });

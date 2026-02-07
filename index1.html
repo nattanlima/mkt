@@ -517,27 +517,26 @@
         });
 
         async function mainAppFlow() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session) {
-                await processAuthentication(session);
+            initModals(); // Inicializa modais se existirem funções para isso, ou garante que o DOM está pronto
+
+            const sessionUser = localStorage.getItem('mkt_session_user');
+            if (sessionUser) {
+                await processAuthentication({ user: JSON.parse(sessionUser) });
             } else {
                 showLoginScreen();
             }
 
-            if (state.authStateSubscription) {
-                state.authStateSubscription.unsubscribe();
-            }
-            const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(async (event, session) => {
-                switch (event) {
-                    case 'SIGNED_IN':
-                        await processAuthentication(session);
-                        break;
-                    case 'SIGNED_OUT':
-                        resetApplication();
-                        break;
+            // Removemos listeners de auth do Supabase pois estamos usando custom auth
+            // Mas mantemos o suporte a eventos customizados se quisermos sincronizar abas
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'mkt_session_user') {
+                    if (e.newValue) {
+                         processAuthentication({ user: JSON.parse(e.newValue) });
+                    } else {
+                         resetApplication();
+                    }
                 }
             });
-            state.authStateSubscription = subscription;
         }
 
         async function processAuthentication(session) {
@@ -546,14 +545,24 @@
                 return;
             }
 
-            const { data: profileData, error } = await supabaseClient
-                .from('mkt_users').select('*').eq('email', session.user.email).single();
+            // session.user já é o objeto do usuário vindo do banco (no caso do custom auth)
+            // ou pode ser o user do supabase normal.
+            
+            // Se já temos os dados completos no session.user (caso do login customizado)
+            let profileData = session.user;
 
-            if (error || !profileData) {
-                console.error("Erro ao buscar perfil ou perfil não encontrado:", error);
-                showToast("Falha ao carregar perfil de usuário.");
-                await handleLogout();
-                return;
+            // Se for login via Supabase Auth (legado/misturado), buscamos no banco
+            if (!profileData.role || !profileData.name) {
+                 const { data, error } = await supabaseClient
+                    .from('mkt_users').select('*').eq('email', session.user.email).single();
+                 
+                 if (error || !data) {
+                    console.error("Erro ao buscar perfil:", error);
+                    showToast("Falha ao carregar perfil.");
+                    await handleLogout();
+                    return;
+                 }
+                 profileData = data;
             }
 
             state.currentUser = profileData;
@@ -580,11 +589,6 @@
         function resetApplication() {
             state.currentUser = null;
             state.tasks = []; state.ideas = []; state.clients = [];
-
-            if (state.authStateSubscription) {
-                state.authStateSubscription.unsubscribe();
-                state.authStateSubscription = null;
-            }
             
             showLoginScreen();
         }
@@ -600,19 +604,28 @@
             toggleButtonLoading(submitButton, true);
             errorDiv.classList.add('hidden');
 
-            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            // Custom Auth: Query mkt_users directly
+            const { data, error } = await supabaseClient
+                .from('mkt_users')
+                .select('*')
+                .eq('email', email)
+                .eq('password', password)
+                .single();
 
             toggleButtonLoading(submitButton, false);
 
-            if (error) {
+            if (error || !data) {
                 errorDiv.textContent = 'E-mail ou senha inválidos.';
                 errorDiv.classList.remove('hidden');
+            } else {
+                localStorage.setItem('mkt_session_user', JSON.stringify(data));
+                await processAuthentication({ user: data });
             }
         }
 
         async function handleLogout() {
-            const { error } = await supabaseClient.auth.signOut();
-            if (error) handleSupabaseError(error, 'logout');
+            localStorage.removeItem('mkt_session_user');
+            resetApplication();
         }
 
         // =================================================================================

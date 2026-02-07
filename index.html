@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
@@ -14,6 +14,18 @@
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Theme Persistence (must be before any rendering) -->
+    <script>
+        (function () {
+            // Load theme from localStorage or default to light
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+
+            // Also set color-scheme for native elements
+            document.documentElement.style.colorScheme = savedTheme;
+        })();
+    </script>
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -64,7 +76,7 @@
         </div>
 
         <!-- Main App -->
-        <div id="main-app" class="hidden flex-grow flex flex-col h-screen overflow-hidden">
+        <div id="main-app-container" class="hidden flex-grow flex flex-col h-screen overflow-hidden">
             <!-- Header -->
             <header class="bg-white border-b border-slate-200 flex-shrink-0">
                 <div class="px-6 py-3 flex items-center justify-between">
@@ -98,10 +110,13 @@
                         </nav>
                     </div>
 
+                    <!-- Header Actions (Buttons) -->
+                    <div id="header-actions" class="flex items-center gap-3"></div>
+
                     <!-- User Actions -->
                     <div class="flex items-center gap-4">
                         <!-- Theme Toggle -->
-                        <button id="theme-toggle"
+                        <button id="theme-toggle-btn"
                             class="w-10 h-10 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-300 transition-colors"
                             title="Alternar tema">
                             <i id="theme-icon-light" class="fas fa-moon"></i>
@@ -130,13 +145,16 @@
                 <!-- Filter Bar -->
                 <div id="filter-bar" class="hidden border-t border-slate-100 px-6 py-3 bg-slate-50">
                     <div class="flex items-center gap-4">
-                        <select id="filter-client"
+                        <select id="client-filter"
                             class="filter-select bg-white border border-slate-200 rounded-lg text-sm font-medium py-2 pl-3 pr-8 focus:ring-emerald-500 focus:border-emerald-500">
                         </select>
-                        <select id="filter-channel"
+                        <select id="channel-filter"
                             class="filter-select bg-white border border-slate-200 rounded-lg text-sm font-medium py-2 pl-3 pr-8 focus:ring-emerald-500 focus:border-emerald-500">
                         </select>
-                        <select id="filter-status"
+                        <select id="user-filter"
+                            class="filter-select bg-white border border-slate-200 rounded-lg text-sm font-medium py-2 pl-3 pr-8 focus:ring-emerald-500 focus:border-emerald-500">
+                        </select>
+                        <select id="tag-filter"
                             class="filter-select bg-white border border-slate-200 rounded-lg text-sm font-medium py-2 pl-3 pr-8 focus:ring-emerald-500 focus:border-emerald-500">
                         </select>
                         <select id="filter-assignee"
@@ -152,11 +170,13 @@
             <!-- Main Content Area -->
             <main id="main-content-area" class="flex-grow overflow-hidden relative">
                 <!-- Page containers -->
-                <div id="page-dashboard" class="page-content absolute inset-0 overflow-auto p-6 hidden"></div>
-                <div id="page-clients" class="page-content absolute inset-0 overflow-auto p-6 hidden"></div>
-                <div id="page-ideas" class="page-content absolute inset-0 hidden"></div>
-                <div id="page-kanban" class="page-content absolute inset-0 flex flex-col p-6 hidden"></div>
-                <div id="page-calendar" class="page-content absolute inset-0 overflow-auto p-6 hidden"></div>
+                <div id="dashboard-page" class="page-content absolute inset-0 overflow-auto p-6 hidden"></div>
+                <div id="clients-page" class="page-content absolute inset-0 overflow-auto p-6 hidden"></div>
+                <div id="ideas-page" class="page-content absolute inset-0 hidden"></div>
+                <div id="kanban-page" class="page-content absolute inset-0 flex flex-col p-6 hidden">
+                    <div id="kanban-board" class="flex gap-4 overflow-x-auto h-full"></div>
+                </div>
+                <div id="calendar-page" class="page-content absolute inset-0 overflow-auto p-6 hidden"></div>
             </main>
         </div>
     </div>
@@ -168,24 +188,29 @@
         <div
             class="modal-enter bg-slate-50 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
             <div class="px-6 py-4 bg-white border-b border-slate-200 flex justify-between items-center flex-shrink-0">
-                <h3 class="text-lg font-bold text-slate-800">Detalhes da Tarefa</h3>
+                <h3 id="modal-title" class="text-lg font-bold text-slate-800">Detalhes da Tarefa</h3>
                 <button
                     class="btn-cancel text-slate-400 hover:text-slate-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors">
                     <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
-            <div class="flex flex-grow min-h-0">
+            <form id="task-form" class="flex flex-grow min-h-0">
+                <input type="hidden" id="task-id">
                 <div class="flex-1 flex flex-col bg-white border-r border-slate-200 min-w-0">
                     <div class="px-6 py-4 border-b border-slate-200">
                         <input type="text" id="task-title"
                             class="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-transparent bg-white text-gray-800">
                     </div>
                     <div class="flex border-b border-slate-200 flex-shrink-0">
-                        <button class="editor-tab active" data-tab="editor">Editor</button>
-                        <button class="editor-tab" data-tab="preview">Pré-visualização</button>
+                        <button type="button" class="editor-tab active" data-tab="ideia">Ideia</button>
+                        <button type="button" class="editor-tab" data-tab="roteiro">Roteiro</button>
+                        <button type="button" class="editor-tab" data-tab="script">Script</button>
+                        <button type="button" class="editor-tab" data-tab="inspiracoes">Inspirações</button>
                     </div>
                     <div id="editor-panel" class="flex-grow p-4 overflow-hidden">
-                        <div id="quill-editor" class="h-full bg-white border border-slate-200 rounded-lg"></div>
+                        <div id="quill-editor-container">
+                            <div id="quill-editor" class="h-full bg-white border border-slate-200 rounded-lg"></div>
+                        </div>
                     </div>
                     <div id="preview-panel" class="hidden flex-grow p-6 overflow-auto bg-white prose max-w-none"></div>
                 </div>
@@ -219,40 +244,50 @@
                         <div>
                             <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Tags</label>
                             <div class="relative">
-                                <button id="tag-dropdown-btn"
+                                <button id="add-tag-btn" type="button"
                                     class="w-full p-2.5 border border-slate-200 rounded-lg text-left text-slate-600 bg-white hover:border-emerald-400 transition-colors">
                                     Selecionar tags...
                                 </button>
-                                <div id="tag-dropdown"
+                                <div id="tag-select-dropdown"
                                     class="hidden absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-10 tag-select-dropdown">
                                 </div>
                             </div>
                             <div id="selected-tags" class="flex flex-wrap gap-1.5 mt-2"></div>
+                            <div id="task-tags-container" class="flex flex-wrap gap-1.5 mt-2"></div>
                         </div>
                     </div>
                     <!-- Attachments -->
                     <div class="p-5 border-t border-slate-200">
                         <label class="block text-xs font-semibold text-slate-500 uppercase mb-3">Anexos</label>
-                        <input type="file" id="task-attachments" multiple class="hidden">
-                        <button id="add-attachment-btn"
-                            class="w-full flex items-center justify-center gap-2 p-2.5 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 hover:border-emerald-400 hover:text-emerald-500 transition-colors">
-                            <i class="fas fa-paperclip"></i> Adicionar Anexo
-                        </button>
-                        <div id="attachments-list"
+                        <input type="file" id="task-file-input" multiple class="hidden">
+                        <div id="drop-zone"
+                            class="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-slate-300 rounded-lg text-slate-500 hover:border-emerald-400 hover:text-emerald-500 transition-colors cursor-pointer">
+                            <div id="drop-zone-content" class="flex items-center gap-2">
+                                <i class="fas fa-cloud-upload-alt"></i> Arraste arquivos ou clique para enviar
+                            </div>
+                        </div>
+                        <div id="file-list-container"
                             class="mt-2 p-3 bg-white rounded-lg max-h-32 overflow-y-auto space-y-2 text-xs border border-slate-200">
                         </div>
                     </div>
+                    <!-- Task Logs -->
+                    <div class="p-5 border-t border-slate-200">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-3">Histórico</label>
+                        <div id="task-logs-container" class="space-y-2 max-h-32 overflow-y-auto text-xs">
+                            <p class="text-sm text-gray-500">Nenhum histórico.</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </form>
             <div class="px-6 py-4 bg-white border-t border-slate-200 flex justify-between items-center flex-shrink-0">
-                <button id="delete-task-btn"
+                <button id="delete-task-btn" type="button"
                     class="px-4 py-2 text-sm font-semibold rounded-lg text-red-600 hover:bg-red-50 transition-colors hidden">
                     <i class="fas fa-trash mr-2"></i>Excluir
                 </button>
                 <div class="flex gap-3">
-                    <button
+                    <button type="button"
                         class="btn-cancel px-5 py-2.5 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
-                    <button id="save-task-btn"
+                    <button id="save-task-btn" type="submit" form="task-form"
                         class="px-5 py-2.5 text-sm font-semibold rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm transition-colors">Salvar</button>
                 </div>
             </div>
@@ -346,16 +381,60 @@
         </div>
     </div>
 
+    <!-- Image Preview Modal -->
+    <div id="image-preview-modal"
+        class="modal hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[80] p-4">
+        <button
+            class="btn-cancel absolute top-4 right-4 text-white hover:text-gray-300 w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">
+            <i class="fas fa-times text-xl"></i>
+        </button>
+        <img id="image-preview-content" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl" src=""
+            alt="Preview">
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="modal hidden fixed inset-0 bg-black/60 flex items-center justify-center z-[80] p-4">
+        <div class="modal-enter bg-white rounded-2xl shadow-xl w-full max-w-sm">
+            <div class="p-6 text-center">
+                <div class="mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-4 bg-red-100">
+                    <i class="fas fa-exclamation-triangle text-2xl text-red-500"></i>
+                </div>
+                <h3 id="confirm-modal-title" class="text-lg font-bold text-slate-800 mb-1">Confirmar</h3>
+                <p id="confirm-modal-text" class="text-slate-600">Tem certeza que deseja continuar?</p>
+            </div>
+            <div class="px-6 pb-6 flex justify-center gap-3">
+                <button
+                    class="btn-cancel px-5 py-2.5 text-sm font-semibold rounded-lg text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
+                <button id="confirm-modal-ok"
+                    class="px-5 py-2.5 text-sm font-semibold rounded-lg bg-red-500 text-white hover:bg-red-600 shadow-sm transition-colors">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast"
+        class="fixed bottom-4 right-4 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg z-[100] hidden transition-all transform translate-y-2 opacity-0">
+        <span id="toast-message"></span>
+    </div>
+    <div id="sync-toast"
+        class="fixed bottom-4 left-4 bg-emerald-600 text-white px-4 py-2 rounded-lg shadow-lg z-[100] hidden flex items-center gap-2">
+        <i class="fas fa-sync-alt animate-spin"></i>
+        <span>Sincronizando...</span>
+    </div>
+
     <!-- Quill JS -->
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <!-- Application JS Modules -->
-    <script src="js/config.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/state.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/app.js"></script>
+    <script type="module" src="js/config.js?v=2"></script>
+    <script type="module" src="js/utils.js?v=2"></script>
+    <script type="module" src="js/state.js?v=2"></script>
+    <script type="module" src="js/api.js?v=2"></script>
+    <script type="module" src="js/ui.js?v=2"></script>
+    <script type="module" src="js/app.js?v=2"></script>
 </body>
 
 </html>

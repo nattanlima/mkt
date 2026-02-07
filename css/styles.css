@@ -739,22 +739,38 @@ body {
 }
 
 /* =================================================================================
-   LOADING STATES
+   LOADING STATES & IMAGE ANIMATIONS
    ================================================================================= */
+
+/* Simple skeleton shimmer for general loading */
 .loading-skeleton {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background: linear-gradient(90deg,
+            var(--color-skeleton-base) 0%,
+            var(--color-skeleton-shine) 50%,
+            var(--color-skeleton-base) 100%);
     background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
+    animation: shimmer 1.5s infinite ease-in-out;
 }
 
-@keyframes skeleton-loading {
+@keyframes shimmer {
     0% {
-        background-position: 200% 0;
+        background-position: 100% 0;
     }
 
     100% {
-        background-position: -200% 0;
+        background-position: -100% 0;
     }
+}
+
+/* Card thumbnail with subtle fade-in on load */
+.card-thumbnail {
+    opacity: 0;
+    background: var(--color-skeleton-base);
+    transition: opacity 0.3s ease-in-out;
+}
+
+.card-thumbnail.loaded {
+    opacity: 1;
 }
 
 /* =================================================================================

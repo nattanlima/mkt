@@ -8,7 +8,7 @@ import { state, invalidateFilterCache } from './state.js';
 import { showToast, showSyncToast, sanitizeFileName } from './utils.js';
 
 // Inicializa cliente Supabase
-const { createClient } = supabase;
+const { createClient } = window.supabase;
 export const supabaseClient = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
     auth: {
         persistSession: true,
@@ -26,25 +26,46 @@ export function handleSupabaseError(error, context) {
 }
 
 // =================================================================================
-// AUTHENTICATION
+// AUTHENTICATION (CUSTOM MKT_USERS)
 // =================================================================================
 export async function signIn(email, password) {
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    return data;
+    // Busca usuário diretamente na tabela mkt_users
+    const { data, error } = await supabaseClient
+        .from('mkt_users')
+        .select('*')
+        .eq('email', email)
+        .eq('password', password)
+        .single();
+
+    if (error || !data) {
+        throw new Error('Email ou senha inválidos.');
+    }
+
+    // Persiste sessão localmente
+    localStorage.setItem('mkt_session_user', JSON.stringify(data));
+
+    // Dispara evento customizado para atualizar a UI
+    window.dispatchEvent(new CustomEvent('mkt_auth_change', { detail: { event: 'SIGNED_IN', session: { user: data } } }));
+
+    return { user: data, session: { user: data } };
 }
 
 export async function signOut() {
-    const { error } = await supabaseClient.auth.signOut();
-    if (error) throw error;
+    localStorage.removeItem('mkt_session_user');
+    window.dispatchEvent(new CustomEvent('mkt_auth_change', { detail: { event: 'SIGNED_OUT', session: null } }));
 }
 
 export async function getSession() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    return session;
+    const userJson = localStorage.getItem('mkt_session_user');
+    if (userJson) {
+        const user = JSON.parse(userJson);
+        return { user };
+    }
+    return null;
 }
 
 export async function getUserProfile(email) {
+    // Se já temos a sessão local, podemos retornar direto ou buscar atualizado
     const { data, error } = await supabaseClient
         .from('mkt_users')
         .select('*')
@@ -67,7 +88,28 @@ export async function upsertUserProfile(userData) {
 }
 
 export function onAuthStateChange(callback) {
-    return supabaseClient.auth.onAuthStateChange(callback);
+    // Wrapper para compatibilidade com o código existente
+    const listener = (event) => {
+        callback(event.detail.event, event.detail.session);
+    };
+    window.addEventListener('mkt_auth_change', listener);
+
+    // Verifica sessão atual ao registrar
+    getSession().then(session => {
+        if (session) {
+            callback('SIGNED_IN', session);
+        } else {
+            // callback('SIGNED_OUT', null); // Opcional, pode causar loops se não tratado
+        }
+    });
+
+    return {
+        data: {
+            subscription: {
+                unsubscribe: () => window.removeEventListener('mkt_auth_change', listener)
+            }
+        }
+    };
 }
 
 // =================================================================================
@@ -175,20 +217,29 @@ export async function updateTaskStatus(taskId, statusId) {
 // TASK TAGS
 // =================================================================================
 export async function saveTaskTags(taskId, selectedTagIds, existingTagIds) {
-    const tagsToAdd = selectedTagIds.filter(id => !existingTagIds.includes(id));
-    const tagsToRemove = existingTagIds.filter(id => !selectedTagIds.includes(id));
+    try {
+        const tagsToAdd = selectedTagIds.filter(id => !existingTagIds.includes(id));
+        const tagsToRemove = existingTagIds.filter(id => !selectedTagIds.includes(id));
 
-    if (tagsToRemove.length > 0) {
-        await supabaseClient
-            .from('mkt_task_tags')
-            .delete()
-            .eq('task_id', taskId)
-            .in('tag_id', tagsToRemove);
-    }
+        if (tagsToRemove.length > 0) {
+            const { error: deleteError } = await supabaseClient
+                .from('mkt_task_tags')
+                .delete()
+                .eq('task_id', taskId)
+                .in('tag_id', tagsToRemove);
+            if (deleteError) throw deleteError;
+        }
 
-    if (tagsToAdd.length > 0) {
-        const newRelations = tagsToAdd.map(tag_id => ({ task_id: taskId, tag_id }));
-        await supabaseClient.from('mkt_task_tags').insert(newRelations);
+        if (tagsToAdd.length > 0) {
+            const newRelations = tagsToAdd.map(tag_id => ({ task_id: taskId, tag_id }));
+            const { error: insertError } = await supabaseClient
+                .from('mkt_task_tags')
+                .insert(newRelations);
+            if (insertError) throw insertError;
+        }
+    } catch (error) {
+        handleSupabaseError(error, 'sincronizar tags da tarefa');
+        throw error;
     }
 }
 

@@ -61,14 +61,14 @@ export function createTaskCardHtml(task) {
                       style="background-color:${color}; color: ${getContrastColor(color)}">${escapeHtml(tag.name)}</span>`;
     }).join('');
 
-    // Thumbnail
-    const filesForTask = state.taskFiles.filter(f => f.task_id === task.id);
+    // Thumbnail with loading animation
+    const filesForTask = state.taskFiles.filter(f => Number(f.task_id) === Number(task.id));
     const firstImageFile = filesForTask.find(f => /\.(jpe?g|png|gif|webp)$/i.test(f.file_name));
 
     let fileThumbnailHtml = '';
     if (firstImageFile) {
         const publicUrl = getFilePublicUrl(firstImageFile.file_path);
-        fileThumbnailHtml = `<img src="${publicUrl}" class="w-full h-32 object-cover rounded-lg mb-3" loading="lazy">`;
+        fileThumbnailHtml = `<img src="${publicUrl}" class="card-thumbnail w-full h-32 object-cover rounded-lg mb-3" loading="lazy" onload="this.classList.add('loaded')">`;
     }
 
     // Client

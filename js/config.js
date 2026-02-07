@@ -35,7 +35,7 @@ export const DOM_CACHE = {
 };
 
 export function initDOMCache() {
-    DOM_CACHE.appContainer = document.getElementById('app-container');
+    DOM_CACHE.appContainer = document.getElementById('main-app-container');
     DOM_CACHE.loginScreen = document.getElementById('login-screen');
     DOM_CACHE.mainContentArea = document.getElementById('main-content-area');
     DOM_CACHE.headerActions = document.getElementById('header-actions');
@@ -44,19 +44,19 @@ export function initDOMCache() {
     DOM_CACHE.syncToast = document.getElementById('sync-toast');
     DOM_CACHE.userMenuBtn = document.getElementById('user-menu-btn');
     DOM_CACHE.logoutPopup = document.getElementById('logout-popup');
-    
+
     // Filtros
     DOM_CACHE.clientFilter = document.getElementById('client-filter');
     DOM_CACHE.userFilter = document.getElementById('user-filter');
     DOM_CACHE.channelFilter = document.getElementById('channel-filter');
     DOM_CACHE.tagFilter = document.getElementById('tag-filter');
-    
+
     // Forms
     DOM_CACHE.loginForm = document.getElementById('login-form');
     DOM_CACHE.taskForm = document.getElementById('task-form');
     DOM_CACHE.contractForm = document.getElementById('contract-form');
     DOM_CACHE.generateTasksForm = document.getElementById('generate-tasks-form');
-    
+
     // Pages
     DOM_CACHE.dashboardPage = document.getElementById('dashboard-page');
     DOM_CACHE.clientsPage = document.getElementById('clients-page');
